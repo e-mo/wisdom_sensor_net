@@ -27,7 +27,7 @@ pico_sdk_init()
 
 add_executable(node 
 	node.c
-	../rfm69hcw/rfm69hcw.c
+	../rfm69hcw/rfm69.c
 )
 
 pico_set_program_name(node "node")
@@ -44,7 +44,7 @@ target_link_libraries(node
 target_include_directories(node PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}
   ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts or any other standard includes, if required
-  ../rfm69hcw/
+  ../rfm69/
 )
 
 # Add any user requested libraries

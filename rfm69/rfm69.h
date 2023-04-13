@@ -6,9 +6,6 @@
 // Evan Morse
 // e.morse8686@gmail.com
 
-#include "pico/stdlib.h"
-#include "hardware/spi.h"
-
 #define REG_FIFO            0x00 // FIFO read/write access
 
 #define REG_OP_MODE         0x01 // Operating modes of the transceiver
@@ -123,39 +120,55 @@
 
 #define FIFO_SIZE             66 // The FIFO size is fixed to 66 bytes 
 
+#define MODE_SLEEP          0x00
+#define MODE_STANDBY        0x01
+
+#include "pico/stdlib.h"
+#include "hardware/spi.h"
+
+// Incomplete type representing Rfm69 radio module.
+typedef struct Rfm69 Rfm69;
+
+// Initializes are returns a pointer to Rfm69.
+// Pins must not be initialized before calling.
+// SPI instance must be initialized with spi_init() before calling. 
+Rfm69 *rfm69_init(spi_inst_t *spi,
+                  uint pin_miso,
+                  uint pin_mosi,
+                  uint pin_cs,
+                  uint pin_sck,
+                  uint pin_rst,
+                  uint pin_irq);
+
 // Resets the module by setting the reset pin for 100ms
 // and then waiting an additional 5ms after clearing as per the
 // RFM69HCW datasheet: https://cdn.sparkfun.com/datasheets/Wireless/General/RFM69HCW-V1.1.pdf
-void rfm69hcw_reset(uint pin_rst);
+void rfm69_reset(uint pin_rst);
 
 // Writes <len> bytes from <src> to RFM69 registers/FIFO over SPI.
 // SPI instance must be initialized before calling.
 // If src len > 1, address will be incremented between each byte (burst write).
 //
-// spi     - SPI instance (spi0 or spi1).
-// pin_cs  - chip select pin.
+// rfm     - initialized Rfm69 *
 // address - uint8_t buffer/FIFO address.
 // src     - an array of uint8_t to be written.
 // len     - src array length.
 // Returns number of bytes written (not including address byte).
-int rfm69hcw_write(spi_inst_t* spi, 
-                    const uint pin_cs,
-                    uint8_t address, 
-                    const uint8_t *src, 
-                    size_t len);
+int rfm69_write(Rfm69 *rfm, 
+                uint8_t address, 
+                const uint8_t *src, 
+                size_t len);
 
 // Reads <len> bytes into <dst> from RFM69 registers/FIFO over SPI.
 // SPI instance must be initialized before calling.
 // If src len > 1, address will be incremented between each byte (burst write).
 //
-// spi     - SPI instance (spi0 or spi1).
-// pin_cs  - chip select pin.
+// rfm     - initialized Rfm69 *
 // address - uint8_t buffer/FIFO address.
 // dst     - an array of uint8_t to be read into.
 // len     - dst array length.
 // Returns number of bytes written (not including address byte).
-int rfm69hcw_read(spi_inst_t* spi, 
-                   const uint pin_cs,
-                   uint8_t address, 
-                   uint8_t *dst, 
-                   size_t len);
+int rfm69_read(Rfm69 *rfm, 
+               uint8_t address, 
+               uint8_t *dst, 
+               size_t len);
