@@ -27,7 +27,7 @@ pico_sdk_init()
 
 add_executable(node 
 	node.c
-	../rfm69hcw/rfm69.c
+	../rfm69/rfm69.c
 )
 
 pico_set_program_name(node "node")

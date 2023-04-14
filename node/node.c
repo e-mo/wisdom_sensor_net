@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "pico/stdlib.h"
+#include "pico/binary_info.h"
 #include "hardware/spi.h"
 
 #include "rfm69.h"
@@ -57,12 +58,22 @@ void init_rfm(Rfm69 *rfm) {
 
     // REG_TEST_DAGC 
     // Fading margin improvement for AfcLowBetaOn = 0
-    uint8_t buf[0] = 0x30;
+    buf[0] = 0x30;
     rfm69_write(rfm, REG_OP_MODE, buf, 1);
 }
 
 int main()
 {
+    bi_decl(bi_program_name("Leaf Node"));
+    bi_decl(bi_program_description("WISDOM sensor network leaf node communications routine."))
+    bi_decl(bi_1pin_with_name(16, "MISO"));
+    bi_decl(bi_1pin_with_name(17, "CS"));
+    bi_decl(bi_1pin_with_name(18, "SCK"));
+    bi_decl(bi_1pin_with_name(19, "MOSI"));
+    bi_decl(bi_1pin_with_name(20, "RST"));
+    bi_decl(bi_1pin_with_name(21, "IRQ 1"));
+    bi_decl(bi_1pin_with_name(22, "IRQ 2"));
+
     stdio_init_all(); // To be able to use printf
     spi_init(SPI_PORT, 1000*1000); // Defaults to master mode
     Rfm69 *rfm = rfm69_init(
