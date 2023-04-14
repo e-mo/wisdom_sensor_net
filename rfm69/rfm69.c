@@ -1,4 +1,6 @@
 #include "rfm69.h"
+#include "stdlib.h"
+#include "pico/malloc.h"
 
 struct Rfm69 {
     spi_inst_t* spi;
