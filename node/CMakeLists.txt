@@ -28,10 +28,8 @@ pico_sdk_init()
 add_executable(node 
 	node.c
 	../rfm69/rfm69.c
+  ../error/error_report.c
 )
-
-pico_set_program_name(node "node")
-pico_set_program_version(node "0.1")
 
 pico_enable_stdio_uart(node 0)
 pico_enable_stdio_usb(node 1)
@@ -45,6 +43,7 @@ target_include_directories(node PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}
   ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts or any other standard includes, if required
   ../rfm69/
+  ../error/
 )
 
 # Add any user requested libraries
