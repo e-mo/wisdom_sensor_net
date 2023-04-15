@@ -1,9 +1,10 @@
 #include "rfm69.h"
 #include "stdlib.h"
 #include "pico/malloc.h"
+#include "error_report.h"
 
 struct Rfm69 {
-    spi_inst_t* spi;
+    spi_inst_t* spi; // Initialized SPI instance
     uint pin_cs;
 };
 
@@ -16,9 +17,11 @@ Rfm69 *rfm69_init(spi_inst_t *spi,
                   uint pin_irq)
 {
     // malloc on a pico. Yeehaw.
-    Rfm69 *rm = malloc(sizeof(Rfm69));    
-    rm->spi = spi;
-    rm->pin_cs = pin_cs;
+    Rfm69 *rfm = malloc(sizeof(Rfm69));    
+    if (rfm = NULL) return rfm;
+
+    rfm->spi = spi;
+    rfm->pin_cs = pin_cs;
 
     // SPI initialisation. This example will use SPI at 1MHz.
     gpio_set_function(pin_miso, GPIO_FUNC_SPI);
@@ -38,7 +41,14 @@ Rfm69 *rfm69_init(spi_inst_t *spi,
     gpio_set_dir(pin_rst, GPIO_OUT);
     gpio_put(pin_rst, 0);
 
-    return rm;
+    // Try to read version register
+    uint8_t buf[1] = {0x00};
+    rfm69_read(rfm, RFM69_REG_VERSION, buf, 1);
+    if (buf[0] == 0x00 || buf[0] == 0xFF) {
+        return NULL;
+    }
+
+    return rfm;
 }
 
 void rfm69_reset(uint pin_rst) {

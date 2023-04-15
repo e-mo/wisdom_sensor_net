@@ -54,12 +54,12 @@ void init_rfm(Rfm69 *rfm) {
     buf[8] = 0x00;
 
     // Burst write 9 sequential registers starting with SPI_PORT
-    rfm69_write(rfm, REG_OP_MODE, buf, 9);
+    rfm69_write(rfm, RFM69_REG_OP_MODE, buf, 9);
 
     // REG_TEST_DAGC 
     // Fading margin improvement for AfcLowBetaOn = 0
     buf[0] = 0x30;
-    rfm69_write(rfm, REG_OP_MODE, buf, 1);
+    rfm69_write(rfm, RFM69_REG_TEST_DAGC, buf, 1);
 }
 
 int main()
@@ -85,6 +85,13 @@ int main()
         PIN_RST,
         PIN_IRQ
     );
+
+    if (rfm == NULL) {
+        printf("Rfm69 driver failed to initialize.");
+        // Call blinking light error loop here instead of return
+        // Todo: error functions
+        return 1;
+    }
 
     for(ever) { // hehe
 
