@@ -128,16 +128,23 @@
 // Incomplete type representing Rfm69 radio module.
 typedef struct Rfm69 Rfm69;
 
+enum RFM69_ERR_CODE {
+    RFM69_NO_ERROR,
+    RFM69_INIT_MALLOC,
+    RFM69_INIT_TEST,
+};
+
 // Initializes are returns a pointer to Rfm69.
 // Pins must not be initialized before calling.
 // SPI instance must be initialized with spi_init() before calling. 
-Rfm69 *rfm69_init(spi_inst_t *spi,
-                  uint pin_miso,
-                  uint pin_mosi,
-                  uint pin_cs,
-                  uint pin_sck,
-                  uint pin_rst,
-                  uint pin_irq);
+enum RFM69_ERR_CODE rfm69_init(Rfm69 *rfm,
+                               spi_inst_t *spi,
+                               uint pin_miso,
+                               uint pin_mosi,
+                               uint pin_cs,
+                               uint pin_sck,
+                               uint pin_rst,
+                               uint pin_irq);
 
 // Resets the module by setting the reset pin for 100ms
 // and then waiting an additional 5ms after clearing as per the

@@ -1,24 +1,24 @@
 #include "rfm69.h"
 #include "stdlib.h"
 #include "pico/malloc.h"
-#include "error_report.h"
+
 
 struct Rfm69 {
     spi_inst_t* spi; // Initialized SPI instance
     uint pin_cs;
 };
 
-Rfm69 *rfm69_init(spi_inst_t *spi,
-                  uint pin_miso,
-                  uint pin_mosi,
-                  uint pin_cs,
-                  uint pin_sck,
-                  uint pin_rst,
-                  uint pin_irq)
+enum RFM69_ERR_CODE rfm69_init(Rfm69 *rfm,
+                               spi_inst_t *spi,
+                               uint pin_miso,
+                               uint pin_mosi,
+                               uint pin_cs,
+                               uint pin_sck,
+                               uint pin_rst,
+                               uint pin_irq)
 {
-    // malloc on a pico. Yeehaw.
-    Rfm69 *rfm = malloc(sizeof(Rfm69));    
-    if (rfm = NULL) return rfm;
+    rfm = malloc(sizeof(Rfm69));    
+    if (rfm == NULL) return RFM69_INIT_MALLOC;
 
     rfm->spi = spi;
     rfm->pin_cs = pin_cs;
@@ -44,11 +44,9 @@ Rfm69 *rfm69_init(spi_inst_t *spi,
     // Try to read version register
     uint8_t buf[1] = {0x00};
     rfm69_read(rfm, RFM69_REG_VERSION, buf, 1);
-    if (buf[0] == 0x00 || buf[0] == 0xFF) {
-        return NULL;
-    }
+    if (buf[0] == 0x00 || buf[0] == 0xFF) { return RFM69_INIT_TEST; }
 
-    return rfm;
+    return RFM69_NO_ERROR;
 }
 
 void rfm69_reset(uint pin_rst) {
