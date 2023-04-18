@@ -8,7 +8,7 @@ struct Rfm69 {
     uint pin_cs;
 };
 
-enum RFM69_ERR_CODE rfm69_init(Rfm69 *rfm,
+enum RFM69_ERR_CODE rfm69_init(Rfm69 **rfm,
                                spi_inst_t *spi,
                                uint pin_miso,
                                uint pin_mosi,
@@ -17,11 +17,11 @@ enum RFM69_ERR_CODE rfm69_init(Rfm69 *rfm,
                                uint pin_rst,
                                uint pin_irq)
 {
-    rfm = malloc(sizeof(Rfm69));    
+    *rfm = malloc(sizeof(Rfm69));    
     if (rfm == NULL) return RFM69_INIT_MALLOC;
 
-    rfm->spi = spi;
-    rfm->pin_cs = pin_cs;
+    (*rfm)->spi = spi;
+    (*rfm)->pin_cs = pin_cs;
 
     // SPI initialisation. This example will use SPI at 1MHz.
     gpio_set_function(pin_miso, GPIO_FUNC_SPI);
@@ -43,7 +43,7 @@ enum RFM69_ERR_CODE rfm69_init(Rfm69 *rfm,
 
     // Try to read version register
     uint8_t buf[1] = {0x00};
-    rfm69_read(rfm, RFM69_REG_VERSION, buf, 1);
+    rfm69_read(*rfm, RFM69_REG_VERSION, buf, 1);
     if (buf[0] == 0x00 || buf[0] == 0xFF) { return RFM69_INIT_TEST; }
 
     return RFM69_NO_ERROR;

@@ -137,7 +137,7 @@ enum RFM69_ERR_CODE {
 // Initializes are returns a pointer to Rfm69.
 // Pins must not be initialized before calling.
 // SPI instance must be initialized with spi_init() before calling. 
-enum RFM69_ERR_CODE rfm69_init(Rfm69 *rfm,
+enum RFM69_ERR_CODE rfm69_init(Rfm69 **rfm,
                                spi_inst_t *spi,
                                uint pin_miso,
                                uint pin_mosi,
