@@ -134,9 +134,16 @@ enum RFM69_ERR_CODE {
     RFM69_INIT_TEST,
 };
 
-// Initializes are returns a pointer to Rfm69.
-// Pins must not be initialized before calling.
-// SPI instance must be initialized with spi_init() before calling. 
+// Initializes passed in Rfm69 pointer and sets pins to proper
+// mode for spi communication. Passed pins must match the passed in
+// spi instane (e.g. spi0 pins for spi0 instance).
+//
+// This function assumes spi_inst_t *spi has already been inistialized. 
+// This function returns heap allocated memory. Since this kind of
+// module typically stays active for the lifetime of the process, I
+// see no reason to provide an rfm69 specific free function.
+// If freeing the memory is necessary, a simple call to standard free
+// will suffice.
 enum RFM69_ERR_CODE rfm69_init(Rfm69 **rfm,
                                spi_inst_t *spi,
                                uint pin_miso,
@@ -145,6 +152,8 @@ enum RFM69_ERR_CODE rfm69_init(Rfm69 **rfm,
                                uint pin_sck,
                                uint pin_rst,
                                uint pin_irq);
+
+
 
 // Resets the module by setting the reset pin for 100ms
 // and then waiting an additional 5ms after clearing as per the
