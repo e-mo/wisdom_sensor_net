@@ -27,14 +27,14 @@ pico_sdk_init()
 
 add_executable(
   gateway gateway.c
-  ../rfm69hcw/rfm69hcw.c
+  ../rfm69/rfm69.c
 )
 
 pico_set_program_name(gateway "gateway")
 pico_set_program_version(gateway "0.1")
 
-pico_enable_stdio_uart(gateway 1)
-pico_enable_stdio_usb(gateway 0)
+pico_enable_stdio_uart(gateway 0)
+pico_enable_stdio_usb(gateway 1)
 
 # Add the standard library to the build
 target_link_libraries(gateway
@@ -44,7 +44,7 @@ target_link_libraries(gateway
 target_include_directories(gateway PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}
   ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts or any other standard includes, if required
-  ../rfm69hcw/
+  ../rfm69/
 )
 
 # Add any user requested libraries

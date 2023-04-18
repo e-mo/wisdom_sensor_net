@@ -4,6 +4,7 @@
 #include "hardware/spi.h"
 
 #include "rfm69.h"
+#include "error_report.h"
 
 #define ever ;; 
 
@@ -39,10 +40,8 @@ void init_rfm(Rfm69 *rfm) {
     // FDA + BRF/2 =< 500 kHz
     // Fdev(13,0) = 0x1000 = 4092 khz
     // FDEV = Fdev(13,0) * FSTEP (61Hz) = ~250,000kHz
-    // 0.5 <= 2 * FDEV/BR <= 10 (MI)
-    // 2 * FDEV/BR (250,000kb/s) = ~2
-    // Knowing basically nothing about radio communications before a
-    // month ago, I feel good about a 2 modulation index.
+    // 0.5 <= 2 * FDEV/BR <= 10 (MI range)
+    // 2 * FDEV/BR (250,000kb/s) = ~2 (MI)
     buf[4] = 0x10;
     buf[5] = 0x00;
 
@@ -62,10 +61,9 @@ void init_rfm(Rfm69 *rfm) {
     rfm69_write(rfm, RFM69_REG_TEST_DAGC, buf, 1);
 }
 
-int main()
-{
+void set_bi() {
     bi_decl(bi_program_name("Leaf Node"));
-    bi_decl(bi_program_description("WISDOM sensor network leaf node communications routine."))
+    bi_decl(bi_program_description("WISDOM sensor network node communications routine."))
     bi_decl(bi_1pin_with_name(16, "MISO"));
     bi_decl(bi_1pin_with_name(17, "CS"));
     bi_decl(bi_1pin_with_name(18, "SCK"));
@@ -73,10 +71,18 @@ int main()
     bi_decl(bi_1pin_with_name(20, "RST"));
     bi_decl(bi_1pin_with_name(21, "IRQ 1"));
     bi_decl(bi_1pin_with_name(22, "IRQ 2"));
+}
 
+int main() {
+    // Set Picotool binary info
+    set_bi();
     stdio_init_all(); // To be able to use printf
-    spi_init(SPI_PORT, 1000*1000); // Defaults to master mode
-    Rfm69 *rfm = rfm69_init(
+
+    spi_init(SPI_PORT, 1000*1000); // Defaults to master mode, which we want
+
+    Rfm69 *rfm;
+    int rval = rfm69_init(
+        &rfm,
         SPI_PORT,
         PIN_MISO,
         PIN_MOSI,
@@ -86,15 +92,16 @@ int main()
         PIN_IRQ
     );
 
-    if (rfm == NULL) {
-        printf("Rfm69 driver failed to initialize.");
-        // Call blinking light error loop here instead of return
-        // Todo: error functions
-        return 1;
+    // Check if rfm69_init was successful
+    // Set last error and halt process if not.
+    if (rval != 0) {
+        set_last_error(rval); // Can use return value from rfm69_init directly
+        critical_error();
     }
 
-    for(ever) { // hehe
-
+    for(ever) { 
+        sleep_ms(300);
+        printf("meow\n"); // Some use Foo, I use meow. 
     }
     
     return 0;

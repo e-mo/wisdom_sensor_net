@@ -38,6 +38,13 @@ pico_enable_stdio_usb(node 1)
 target_link_libraries(node
         pico_stdlib)
 
+# Print error messages to UART
+target_compile_definitions(node PUBLIC ERROR_UART) 
+# Flash error codes on LED
+target_compile_definitions(node PUBLIC ERROR_LED) 
+# Log error messages (unimplemented)
+#target_compile_definitions(node PUBLIC ERROR_LOG) 
+
 # Add the standard include files to the build
 target_include_directories(node PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}

@@ -2,7 +2,7 @@
 #include "pico/stdlib.h"
 #include "hardware/spi.h"
 
-#include "rfm69hcw.h"
+#include "rfm69.h"
 
 // SPI Defines
 // We are going to use SPI 0, and allocate it to the following GPIO pins
@@ -69,16 +69,9 @@ void init(void) {
 int main()
 {
     init();
-    uint8_t buf[4];
-    buf[0] = 0x04;
-    rfm69hcw_write(SPI_PORT, PIN_CS, REG_OP_MODE, buf, 1);
-    buf[0] = 0x00;
-    //printf("%d", rval);
-    while (1) {
-        int rval = rfm69hcw_read(SPI_PORT, PIN_CS, REG_OP_MODE, buf, 4);
-        printf("%d\n", rval);
+    for(;;) {
         for (int i = 0; i < 4; i++) {
-            printf("0x%02X\n", buf[i]);
+            printf("MEOW");
         }
         sleep_ms(1000);
     }
