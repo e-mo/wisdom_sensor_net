@@ -39,9 +39,9 @@ void critical_error() {
 #ifdef ERROR_LED
         for (int i = 0; i < last_err; i++) {
             gpio_put(led_pin, 1);
-            sleep_ms(100);
+            sleep_ms(150);
             gpio_put(led_pin, 0);
-            sleep_ms(100);
+            sleep_ms(150);
         }
 #endif
         sleep_ms(3000); // If we display nothing, we still want to slow the loop.

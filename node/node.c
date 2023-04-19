@@ -81,7 +81,7 @@ int main() {
     spi_init(SPI_PORT, 1000*1000); // Defaults to master mode, which we want
 
     Rfm69 *rfm;
-    int rval = rfm69_init(
+    uint rval = rfm69_init(
         &rfm,
         SPI_PORT,
         PIN_MISO,
@@ -92,7 +92,7 @@ int main() {
         PIN_IRQ
     );
 
-    // Check if rfm69_init was successful
+    // Check if rfm69_init was successful (== 0)
     // Set last error and halt process if not.
     if (rval != 0) {
         set_last_error(rval); // Can use return value from rfm69_init directly
