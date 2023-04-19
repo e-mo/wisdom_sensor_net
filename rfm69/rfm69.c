@@ -98,3 +98,17 @@ int rfm69_read(Rfm69 *rfm,
     cs_deselect(rfm->pin_cs);
     return rval;
 }
+
+int rfm69_frequency_set(Rfm69 *rfm,
+                        uint frequency)
+{
+    // Frf = Fstep * Frf(23,0)
+    uint8_t buf[3];
+    frequency *= 1000000; // MHz to Hz
+    frequency /= RFM69_FSTEP; // Gives needed register value
+    // Split into three bytes.
+    buf[0] = (frequency & 0xFF0000) >> 16;
+    buf[1] = (frequency & 0x00FF00) >> 8;
+    buf[2] = (frequency & 0x0000FF);
+    return rfm69_write(rfm, RFM69_REG_FRF_MSB, buf, 3);
+}

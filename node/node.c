@@ -45,12 +45,7 @@ void init_rfm(Rfm69 *rfm) {
     buf[4] = 0x10;
     buf[5] = 0x00;
 
-    // RRG_FRF*
-    // Set the frequency to ~915MHz
-    // Frf = Fstep * Frf(23,0)
-    buf[6] = 0xE4;   
-    buf[7] = 0xC0;
-    buf[8] = 0x00;
+    rfm69_frequency_set(rfm, 915);
 
     // Burst write 9 sequential registers starting with SPI_PORT
     rfm69_write(rfm, RFM69_REG_OP_MODE, buf, 9);
@@ -99,9 +94,18 @@ int main() {
         critical_error();
     }
 
+
     for(ever) { 
+        uint8_t buf[3];
+        rfm69_read(rfm, RFM69_REG_FRF_MSB, buf, 3);
+        uint frequency = 0;
+        frequency |= (uint) buf[0] << 16;
+        frequency |= (uint) buf[1] << 8;
+        frequency |= (uint) buf[2];
+        printf("0x%2X\n", frequency);
+        // if this prints ~915Mhz, everthing is working
+        printf("%u\n", frequency * 61);
         sleep_ms(300);
-        printf("meow\n"); // Some use Foo, I use meow. 
     }
     
     return 0;

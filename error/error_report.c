@@ -48,3 +48,7 @@ void critical_error() {
                         // No reason to mash on the CPU and needlessly spend energy.
     }
 }
+
+void report_error() {
+
+}

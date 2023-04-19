@@ -8,6 +8,8 @@
 #ifndef RFM69_DRIVER_H
 #define RFM69_DRIVER_H
 
+#include <stdio.h> // for testing. remove later
+
 #include "pico/stdlib.h"
 #include "hardware/spi.h"
 
@@ -124,6 +126,7 @@
 #define RFM69_REG_TEST_AFC        0x71 // AFC offset for low modulation index AFC
 
 #define RFM69_FIFO_SIZE             66 // The FIFO size is fixed to 66 bytes 
+#define RFM69_FSTEP                 61
 
 // Incomplete type representing Rfm69 radio module.
 typedef struct Rfm69 Rfm69;
@@ -187,5 +190,8 @@ int rfm69_read(Rfm69 *rfm,
                uint8_t address, 
                uint8_t *dst, 
                size_t len);
+
+int rfm69_frequency_set(Rfm69 *rfm,
+                        uint frequency);
 
 #endif // RFM69_DRIVER_H
