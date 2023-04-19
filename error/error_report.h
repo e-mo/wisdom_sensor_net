@@ -17,6 +17,10 @@ enum ERR_CODE {
 // Sets last_error. Must be called before any error reading or reporting
 // functions.
 void set_last_error(enum ERR_CODE err_code);
+
+// Returns last error set with set_last_error
+// for when you might want to know what the error was,
+// but don't wish to report it or halt the process.
 enum ERR_CODE get_last_error();
 
 // Call if a critical non-recoverable error has occurred.
