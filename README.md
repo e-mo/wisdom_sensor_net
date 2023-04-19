@@ -1,3 +1,3 @@
-# pico_sensor_net
+# wisdom_sensor_net
 
 WISDOM team RPi Pico based sensor network
