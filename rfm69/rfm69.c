@@ -8,7 +8,7 @@ struct Rfm69 {
     uint pin_cs;
 };
 
-enum RFM69_ERR_CODE rfm69_init(Rfm69 **rfm,
+RFM69_ERR_CODE rfm69_init(Rfm69 **rfm,
                                spi_inst_t *spi,
                                uint pin_miso,
                                uint pin_mosi,

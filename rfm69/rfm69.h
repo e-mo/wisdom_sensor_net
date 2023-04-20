@@ -131,11 +131,59 @@
 // Incomplete type representing Rfm69 radio module.
 typedef struct Rfm69 Rfm69;
 
-enum RFM69_ERR_CODE {
+typedef enum _ERR_CODE {
     RFM69_NO_ERROR,
     RFM69_INIT_MALLOC,
     RFM69_INIT_TEST,
-};
+} RFM69_ERR_CODE;
+
+#define _DATA_MODE_OFFSET = 5
+typedef enum _DATA_MODE {
+    RFM69_DATA_MODE_PACKET,
+    RFM69_DATA_MODE_CONTINUOUS_BIT_SYNC = 0x02,
+    RFM69_DATA_MODE_CONTINUOUS = 0x03,
+} RFM69_DATA_MODE;
+
+#define _MODULATION_TYPE_OFFSET = 3
+typedef enum _MODULATION_TYPE {
+    RFM69_MODULATION_FSK,
+    RFM69_MODULATION_OOK,
+} RFM69_MODULATION_TYPE;
+
+typedef enum _MODULATION_SHAPING {
+    RFM69_NO_SHAPING,
+    RFM69_FSK_GAUSSIAN_1_0 = 0x01, RFM69_OOK_FCUTOFF_BR   = 0x01,
+    RFM69_FSK_GAUSSIAN_0_5 = 0x02, RFM69_OOK_FCUTOFF_2XBR = 0x02,
+    RFM69_FSK_GAUSSIAN_0_3 = 0x03,
+} RFM69_MODULATION_SHAPING;
+
+typedef enum _MODEM_BITRATE {
+// Classic modem baud rates (multiples of 1.2 kbps)
+    RFM69_MODEM_BITRATE_1_2   = 0x682B, // 1.2 kbps
+    RFM69_MODEM_BITRATE_2_4   = 0x3415, // 2.4 kbps
+    RFM69_MODEM_BITRATE_4_8   = 0x1A0B, // 4.8 kbps
+    RFM69_MODEM_BITRATE_9_6   = 0x0D05, // 9.6 kbps
+    RFM69_MODEM_BITRATE_19_2  = 0x0683, // 19.2 kbps
+    RFM69_MODEM_BITRATE_38_4  = 0x0341, // 38.4 kbps
+    RFM69_MODEM_BITRATE_76_8  = 0x01A1, // 76.8 kbps
+    RFM69_MODEM_BITRATE_153_6 = 0x00D0, // 153.6 kbps
+
+// Classic modem baud rates (multiples of 0.9 kbps)
+    RFM69_MODEM_BITRATE_57_6  = 0x022C, // 57.6 kbps
+    RFM69_MODEM_BITRATE_115_2 = 0x0116, // 115.2 kbps
+
+// Round bit rates (multiples of 12.5, 25, and 50 kbps)
+    RFM69_MODEM_BITRATE_12_5  = 0x0A00, // 12.5 kbps
+    RFM69_MODEM_BITRATE_25    = 0x0500, // 25 kbps
+    RFM69_MODEM_BITRATE_50    = 0x0280, // 50 kbps
+    RFM69_MODEM_BITRATE_100   = 0x0140, // 100 kbps
+    RFM69_MODEM_BITRATE_150   = 0x00D5, // 150 kbps
+    RFM69_MODEM_BITRATE_200   = 0x00A0, // 200 kbps
+    RFM69_MODEM_BITRATE_250   = 0x0080, // 250 kbps
+    RFM69_MODEM_BITRATE_300   = 0x006B, // 300 kbps
+
+    RFM69_MODEM_BITRATE_WATCH_XTAL = 0x03D1, // 32.768 kbps
+} RFM69_MODEM_BITRATE;
 
 // Initializes passed in Rfm69 pointer and sets pins to proper
 // mode for spi communication. Passed pins must match the passed in
@@ -147,7 +195,7 @@ enum RFM69_ERR_CODE {
 // see no reason to provide an rfm69 specific free function.
 // If freeing the memory is necessary, a simple call to standard free
 // will suffice.
-enum RFM69_ERR_CODE rfm69_init(Rfm69 **rfm,
+RFM69_ERR_CODE rfm69_init(Rfm69 **rfm,
                                spi_inst_t *spi,
                                uint pin_miso,
                                uint pin_mosi,
@@ -193,5 +241,6 @@ int rfm69_read(Rfm69 *rfm,
 
 int rfm69_frequency_set(Rfm69 *rfm,
                         uint frequency);
+
 
 #endif // RFM69_DRIVER_H
