@@ -17,7 +17,8 @@
 #define PIN_SCK  18
 #define PIN_MOSI 19
 #define PIN_RST  20
-#define PIN_IRQ  21
+#define PIN_IRQ_0  21
+#define PIN_IRQ_1  21
 
 void init_rfm(Rfm69 *rfm) {
     // REG_OP_MODE
@@ -59,13 +60,13 @@ void init_rfm(Rfm69 *rfm) {
 void set_bi() {
     bi_decl(bi_program_name("Leaf Node"));
     bi_decl(bi_program_description("WISDOM sensor network node communications routine."))
-    bi_decl(bi_1pin_with_name(16, "MISO"));
-    bi_decl(bi_1pin_with_name(17, "CS"));
-    bi_decl(bi_1pin_with_name(18, "SCK"));
-    bi_decl(bi_1pin_with_name(19, "MOSI"));
-    bi_decl(bi_1pin_with_name(20, "RST"));
-    bi_decl(bi_1pin_with_name(21, "IRQ 1"));
-    bi_decl(bi_1pin_with_name(22, "IRQ 2"));
+    bi_decl(bi_1pin_with_name(PIN_MISO, "MISO"));
+    bi_decl(bi_1pin_with_name(PIN_CS, "CS"));
+    bi_decl(bi_1pin_with_name(PIN_SCK, "SCK"));
+    bi_decl(bi_1pin_with_name(PIN_MOSI, "MOSI"));
+    bi_decl(bi_1pin_with_name(PIN_RST, "RST"));
+    bi_decl(bi_1pin_with_name(PIN_IRQ_0, "IRQ 0"));
+    bi_decl(bi_1pin_with_name(PIN_IRQ_1, "IRQ 0"));
 }
 
 int main() {
