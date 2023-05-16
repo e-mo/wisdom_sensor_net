@@ -137,19 +137,33 @@ typedef enum _ERR_CODE {
     RFM69_INIT_TEST,
 } RFM69_ERR_CODE;
 
-#define _DATA_MODE_OFFSET = 5
+#define _OP_MODE_OFFSET 2
+typedef enum _OP_MODE {
+    RFM69_OP_MODE_SLEEP,
+    RFM69_OP_MODE_STDBY = 0x01 << _OP_MODE_OFFSET,
+    RFM69_OP_MODE_FS = 0x02 << _OP_MODE_OFFSET,
+    RFM69_OP_MODE_TX = 0x03 << _OP_MODE_OFFSET,
+    RFM69_OP_MODE_RX = 0x04 << _OP_MODE_OFFSET,
+    RFM69_OP_MODE_MASK = 0x07 << _OP_MODE_OFFSET
+} RFM69_OP_MODE;
+
+#define _DATA_MODE_OFFSET 5
+#define _DATA_MODE_BITS 2
 typedef enum _DATA_MODE {
     RFM69_DATA_MODE_PACKET,
     RFM69_DATA_MODE_CONTINUOUS_BIT_SYNC = 0x02,
     RFM69_DATA_MODE_CONTINUOUS = 0x03,
 } RFM69_DATA_MODE;
 
-#define _MODULATION_TYPE_OFFSET = 3
+#define _MODULATION_TYPE_OFFSET 3
+#define _MODULATION_TYPE_BITS 2
 typedef enum _MODULATION_TYPE {
     RFM69_MODULATION_FSK,
     RFM69_MODULATION_OOK,
 } RFM69_MODULATION_TYPE;
 
+#define _MODULATION_SHAPING_OFFSET 0
+#define _MODULATION_SHAPING_BITS 2
 typedef enum _MODULATION_SHAPING {
     RFM69_NO_SHAPING,
     RFM69_FSK_GAUSSIAN_1_0 = 0x01, RFM69_OOK_FCUTOFF_BR   = 0x01,
@@ -195,21 +209,24 @@ typedef enum _MODEM_BITRATE {
 // see no reason to provide an rfm69 specific free function.
 // If freeing the memory is necessary, a simple call to standard free
 // will suffice.
-RFM69_ERR_CODE rfm69_init(Rfm69 **rfm,
-                               spi_inst_t *spi,
-                               uint pin_miso,
-                               uint pin_mosi,
-                               uint pin_cs,
-                               uint pin_sck,
-                               uint pin_rst,
-                               uint pin_irq);
+RFM69_ERR_CODE rfm69_init(
+    Rfm69 **rfm,
+    spi_inst_t *spi,
+    uint pin_miso,
+    uint pin_mosi,
+    uint pin_cs,
+    uint pin_sck,
+    uint pin_rst,
+    uint pin_irq_0,
+    uint pin_irq_1
+);
 
 
 
 // Resets the module by setting the reset pin for 100ms
 // and then waiting an additional 5ms after clearing as per the
 // RFM69HCW datasheet: https://cdn.sparkfun.com/datasheets/Wireless/General/RFM69HCW-V1.1.pdf
-void rfm69_reset(uint pin_rst);
+void rfm69_reset(Rfm69 *rfm);
 
 // Writes <len> bytes from <src> to RFM69 registers/FIFO over SPI.
 // SPI instance must be initialized before calling.
@@ -242,5 +259,11 @@ int rfm69_read(Rfm69 *rfm,
 int rfm69_frequency_set(Rfm69 *rfm,
                         uint frequency);
 
+int rfm69_frequency_get(Rfm69 *rfm, uint32_t *frequency);
+
+int rfm69_bitrate_set(Rfm69 *rfm,
+                      uint16_t bit_rate);
+
+int rfm69_bitrate_get(Rfm69 *rfm, uint16_t *bit_rate);
 
 #endif // RFM69_DRIVER_H

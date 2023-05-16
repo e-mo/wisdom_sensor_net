@@ -6,22 +6,27 @@
 struct Rfm69 {
     spi_inst_t* spi; // Initialized SPI instance
     uint pin_cs;
+    uint pin_rst;
 };
 
-RFM69_ERR_CODE rfm69_init(Rfm69 **rfm,
-                               spi_inst_t *spi,
-                               uint pin_miso,
-                               uint pin_mosi,
-                               uint pin_cs,
-                               uint pin_sck,
-                               uint pin_rst,
-                               uint pin_irq)
+RFM69_ERR_CODE rfm69_init(
+    Rfm69 **rfm,
+    spi_inst_t *spi,
+    uint pin_miso,
+    uint pin_mosi,
+    uint pin_cs,
+    uint pin_sck,
+    uint pin_rst,
+    uint pin_irq_0,
+    uint pin_irq_1
+) 
 {
     *rfm = malloc(sizeof(Rfm69));    
     if (rfm == NULL) return RFM69_INIT_MALLOC;
 
     (*rfm)->spi = spi;
     (*rfm)->pin_cs = pin_cs;
+    (*rfm)->pin_rst;
 
     // SPI initialisation. This example will use SPI at 1MHz.
     gpio_set_function(pin_miso, GPIO_FUNC_SPI);
@@ -49,17 +54,17 @@ RFM69_ERR_CODE rfm69_init(Rfm69 **rfm,
     return RFM69_NO_ERROR;
 }
 
-void rfm69_reset(uint pin_rst) {
-    gpio_put(pin_rst, 1);
+void rfm69_reset(Rfm69 *rfm) {
+    gpio_put(rfm->pin_rst, 1);
     sleep_ms(100);
-    gpio_put(pin_rst, 0);
+    gpio_put(rfm->pin_rst, 0);
     sleep_ms(5);
 }
 
 // I actually have no idea why this is necessary, but every
 // single SPI example in the documentation spends three cycles
 // doing nothing before and after the cs pin is set/cleared.
-// I'm not going to question it.
+// Likely to allow time for pins to settle?
 static inline void cs_select(uint pin_cs) {
     asm volatile("nop \n nop \n nop");
     gpio_put(pin_cs, 0);  // Active low
@@ -78,10 +83,10 @@ int rfm69_write(Rfm69 *rfm,
                 const uint8_t *src,
                 size_t len)
 {
-    address |= 0x80; // Set rw bit
+    address |= 0x80; // Clear rw bit
     cs_select(rfm->pin_cs);
-    spi_write_blocking(rfm->spi, &address, 1);
-    int rval = spi_write_blocking(rfm->spi, src, len);
+    int rval = spi_write_blocking(rfm->spi, &address, 1);
+    rval += spi_write_blocking(rfm->spi, src, len);
     cs_deselect(rfm->pin_cs);
     return rval;
 }
@@ -93,8 +98,8 @@ int rfm69_read(Rfm69 *rfm,
 {
     address &= 0x7F; // Clear rw bit
     cs_select(rfm->pin_cs);
-    spi_write_blocking(rfm->spi, &address, 1);
-    int rval = spi_read_blocking(rfm->spi, 0, dst, len);
+    int rval = spi_write_blocking(rfm->spi, &address, 1);
+    spi_read_blocking(rfm->spi, 0, dst, len);
     cs_deselect(rfm->pin_cs);
     return rval;
 }
@@ -103,12 +108,57 @@ int rfm69_frequency_set(Rfm69 *rfm,
                         uint frequency)
 {
     // Frf = Fstep * Frf(23,0)
-    uint8_t buf[3];
     frequency *= 1000000; // MHz to Hz
     frequency /= RFM69_FSTEP; // Gives needed register value
     // Split into three bytes.
-    buf[0] = (frequency & 0xFF0000) >> 16;
-    buf[1] = (frequency & 0x00FF00) >> 8;
-    buf[2] = (frequency & 0x0000FF);
+    uint8_t buf[3] = {
+        (frequency >> 16) & 0xFF,
+        (frequency >> 8) & 0xFF,
+        frequency & 0xFF
+    };
     return rfm69_write(rfm, RFM69_REG_FRF_MSB, buf, 3);
+}
+
+int rfm69_frequency_get(Rfm69 *rfm, uint32_t *frequency) {
+        uint8_t buf[3] = {0};
+        int rval = rfm69_read(rfm, RFM69_REG_FRF_MSB, buf, 3);
+
+        *frequency = (uint32_t) buf[0] << 16;
+        *frequency |= (uint32_t) buf[1] << 8;
+        *frequency |= (uint32_t) buf[2];
+        *frequency *= RFM69_FSTEP;
+
+        return rval;
+}
+
+int rfm69_bitrate_set(Rfm69 *rfm,
+                      uint16_t bit_rate)
+{
+    uint8_t bytes[2] = {
+        (bit_rate & 0xFF00) >> 8,
+        bit_rate & 0xFF
+    }; 
+    return rfm69_write(rfm, RFM69_REG_BITRATE_MSB, bytes, 2);
+}
+
+int rfm69_bitrate_get(Rfm69 *rfm, uint16_t *bit_rate) {
+    uint8_t buf[2] = {0}; 
+    int rval = rfm69_read(rfm, RFM69_REG_BITRATE_MSB, buf, 2);
+
+    *bit_rate = (uint16_t) buf[0] << 8;
+    *bit_rate |= (uint16_t) buf[1];
+
+    return rval;
+}
+
+int rfm69_mode_set(Rfm69 *rfm, RFM69_OP_MODE mode) {
+    uint8_t reg;
+    int rval = rfm69_read(rfm, RFM69_REG_OP_MODE, &reg, 1);
+
+    reg &= ~(RFM69_OP_MODE_MASK); 
+    reg |= mode;
+
+    rval += rfm69_write(rfm, RFM69_REG_OP_MODE, &reg, 1);
+
+    return rval ;
 }

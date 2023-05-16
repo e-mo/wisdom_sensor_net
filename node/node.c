@@ -21,6 +21,7 @@
 #define PIN_IRQ_1  21
 
 void init_rfm(Rfm69 *rfm) {
+    rfm69_reset(rfm);
     // REG_OP_MODE
     // Set into sleep mode
     uint8_t buf[9];
@@ -32,10 +33,9 @@ void init_rfm(Rfm69 *rfm) {
     // No modulation shaping
     buf[1] = 0x00;
 
+    rfm69_write(rfm, RFM69_REG_OP_MODE, &buf[1], 1);
     // REG_BITRATE*
     // Set bit rate to 250kb/s
-    buf[2] = 0x00; // MSB
-    buf[3] = 0x80; // LSB
 
     // REG_FDEV*
     // FDA + BRF/2 =< 500 kHz
@@ -46,10 +46,10 @@ void init_rfm(Rfm69 *rfm) {
     buf[4] = 0x10;
     buf[5] = 0x00;
 
-    rfm69_frequency_set(rfm, 915);
+    rfm69_bitrate_set(rfm, RFM69_MODEM_BITRATE_1_2);
+    rfm69_frequency_set(rfm, 400);
 
     // Burst write 9 sequential registers starting with SPI_PORT
-    rfm69_write(rfm, RFM69_REG_OP_MODE, buf, 9);
 
     // REG_TEST_DAGC 
     // Fading margin improvement for AfcLowBetaOn = 0
@@ -85,8 +85,12 @@ int main() {
         PIN_CS,
         PIN_SCK,
         PIN_RST,
-        PIN_IRQ
+        PIN_IRQ_0,
+        PIN_IRQ_1
     );
+    
+
+    init_rfm(rfm);
 
     // Check if rfm69_init was successful (== 0)
     // Set last error and halt process if not.
@@ -97,16 +101,14 @@ int main() {
 
 
     for(ever) { 
-        uint8_t buf[3];
-        rfm69_read(rfm, RFM69_REG_FRF_MSB, buf, 3);
-        uint frequency = 0;
-        frequency |= (uint) buf[0] << 16;
-        frequency |= (uint) buf[1] << 8;
-        frequency |= (uint) buf[2];
-        printf("0x%2X\n", frequency);
+        uint32_t frequency;
+        rfm69_frequency_get(rfm, &frequency);
         // if this prints ~915Mhz, everthing is working
-        printf("%u\n", frequency * 61);
-        sleep_ms(300);
+        printf("freq: %u\n", frequency);
+        sleep_ms(1000);
+        uint16_t bitrate;
+        rfm69_bitrate_get(rfm, &bitrate);
+        printf("bitr: 0x%04X\n", bitrate);
     }
     
     return 0;
