@@ -20,43 +20,6 @@
 #define PIN_IRQ_0  21
 #define PIN_IRQ_1  21
 
-void init_rfm(Rfm69 *rfm) {
-    rfm69_reset(rfm);
-    // REG_OP_MODE
-    // Set into sleep mode
-    uint8_t buf[9];
-    buf[0] = 0x00;
-
-    // REG_DATA_MODUL
-    // Set Packet mode
-    // Set FSK
-    // No modulation shaping
-    buf[1] = 0x00;
-
-    rfm69_write(rfm, RFM69_REG_OP_MODE, &buf[1], 1);
-    // REG_BITRATE*
-    // Set bit rate to 250kb/s
-
-    // REG_FDEV*
-    // FDA + BRF/2 =< 500 kHz
-    // Fdev(13,0) = 0x1000 = 4092 khz
-    // FDEV = Fdev(13,0) * FSTEP (61Hz) = ~250,000kHz
-    // 0.5 <= 2 * FDEV/BR <= 10 (MI range)
-    // 2 * FDEV/BR (250,000kb/s) = ~2 (MI)
-    buf[4] = 0x10;
-    buf[5] = 0x00;
-
-    rfm69_bitrate_set(rfm, RFM69_MODEM_BITRATE_1_2);
-    rfm69_frequency_set(rfm, 400);
-
-    // Burst write 9 sequential registers starting with SPI_PORT
-
-    // REG_TEST_DAGC 
-    // Fading margin improvement for AfcLowBetaOn = 0
-    buf[0] = 0x30;
-    rfm69_write(rfm, RFM69_REG_TEST_DAGC, buf, 1);
-}
-
 void set_bi() {
     bi_decl(bi_program_name("Leaf Node"));
     bi_decl(bi_program_description("WISDOM sensor network node communications routine."))
@@ -89,8 +52,13 @@ int main() {
         PIN_IRQ_1
     );
     
+    rfm69_reset(rfm);
+    rfm69_mode_set(rfm, RFM69_OP_MODE_STDBY);
 
-    init_rfm(rfm);
+    rfm69_bitrate_set(rfm, RFM69_MODEM_BITRATE_250);
+    rfm69_frequency_set(rfm, 915);
+
+    rfm69_mode_set(rfm, RFM69_OP_MODE_SLEEP);
 
     // Check if rfm69_init was successful (== 0)
     // Set last error and halt process if not.
@@ -109,7 +77,10 @@ int main() {
         uint16_t bitrate;
         rfm69_bitrate_get(rfm, &bitrate);
         printf("bitr: 0x%04X\n", bitrate);
+        sleep_ms(1000);
     }
     
     return 0;
 }
+
+
