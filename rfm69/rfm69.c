@@ -1,5 +1,6 @@
 #include "rfm69.h"
 #include "stdlib.h"
+#include "math.h"
 #include "pico/malloc.h"
 
 
@@ -56,9 +57,9 @@ RFM69_ERR_CODE rfm69_init(
 
 void rfm69_reset(Rfm69 *rfm) {
     gpio_put(rfm->pin_rst, 1);
-    sleep_ms(100);
+    sleep_us(100);
     gpio_put(rfm->pin_rst, 0);
-    sleep_ms(5);
+    sleep_ms(15);
 }
 
 // I actually have no idea why this is necessary, but every
@@ -104,12 +105,33 @@ int rfm69_read(Rfm69 *rfm,
     return rval;
 }
 
+
+int rfm69_irq1_flag_state(Rfm69 *rfm, RFM69_IRQ1_FLAG flag, bool *state) {
+    uint8_t reg;
+    int rval = rfm69_read(rfm, RFM69_REG_IRQ_FLAGS_1, &reg, 1);
+
+    if (reg & flag) *state = true;
+    else *state = false;
+
+    return rval;
+}
+
+int rfm69_irq2_flag_state(Rfm69 *rfm, RFM69_IRQ2_FLAG flag, bool *state) {
+    uint8_t reg;
+    int rval = rfm69_read(rfm, RFM69_REG_IRQ_FLAGS_2, &reg, 1);
+
+    if (reg & flag != 0) *state = true;
+    else *state = false;
+
+    return rval;
+}
+
 int rfm69_frequency_set(Rfm69 *rfm,
                         uint frequency)
 {
     // Frf = Fstep * Frf(23,0)
     frequency *= 1000000; // MHz to Hz
-    frequency /= RFM69_FSTEP; // Gives needed register value
+    frequency = round(frequency / RFM69_FSTEP); // Gives needed register value
     // Split into three bytes.
     uint8_t buf[3] = {
         (frequency >> 16) & 0xFF,
@@ -156,9 +178,26 @@ int rfm69_mode_set(Rfm69 *rfm, RFM69_OP_MODE mode) {
     int rval = rfm69_read(rfm, RFM69_REG_OP_MODE, &reg, 1);
 
     reg &= ~(RFM69_OP_MODE_MASK); 
-    reg |= mode;
+    reg |= mode & RFM69_OP_MODE_MASK;
 
     rval += rfm69_write(rfm, RFM69_REG_OP_MODE, &reg, 1);
 
-    return rval ;
+    rval += rfm69_mode_wait_until_ready(rfm);
+
+    return rval;
+}
+
+int rfm69_mode_ready(Rfm69 *rfm, bool *ready) {
+    return rfm69_irq1_flag_state(rfm, RFM69_IRQ1_FLAG_MODE_READY, ready);
+}
+
+int rfm69_mode_wait_until_ready(Rfm69 *rfm) {
+    int rval = 0;
+
+    bool ready = false;
+    while (!ready) {
+        rval += rfm69_mode_ready(rfm, &ready);
+    }
+
+    return rval;
 }

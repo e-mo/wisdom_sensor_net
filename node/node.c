@@ -21,7 +21,6 @@
 #define PIN_IRQ_1  21
 
 void init_rfm(Rfm69 *rfm) {
-    rfm69_reset(rfm);
     // REG_OP_MODE
     // Set into sleep mode
     uint8_t buf[9];
@@ -89,8 +88,10 @@ int main() {
         PIN_IRQ_1
     );
     
-
-    init_rfm(rfm);
+    rfm69_reset(rfm);
+    rfm69_mode_set(rfm, RFM69_OP_MODE_STDBY);
+    rfm69_bitrate_set(rfm, RFM69_MODEM_BITRATE_1_2);
+    rfm69_frequency_set(rfm, 915);
 
     // Check if rfm69_init was successful (== 0)
     // Set last error and halt process if not.
@@ -101,6 +102,7 @@ int main() {
 
 
     for(ever) { 
+        rfm69_mode_set(rfm, RFM69_OP_MODE_STDBY);
         uint32_t frequency;
         rfm69_frequency_get(rfm, &frequency);
         // if this prints ~915Mhz, everthing is working
@@ -109,6 +111,8 @@ int main() {
         uint16_t bitrate;
         rfm69_bitrate_get(rfm, &bitrate);
         printf("bitr: 0x%04X\n", bitrate);
+        rfm69_mode_set(rfm, RFM69_OP_MODE_SLEEP);
+        sleep_ms(1000);
     }
     
     return 0;

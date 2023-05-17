@@ -200,24 +200,24 @@ typedef enum _MODEM_BITRATE {
 } RFM69_MODEM_BITRATE;
 
 typedef enum _IRQ1_FLAG {
-    RFM69_IRQ1_FLAG_SYNC_ADDRESS_MATCH,
-    RFM69_IRQ1_FLAG_AUTO_MODE,
-    RFM69_IRQ1_FLAG_TIMEOUT,
-    RFM69_IRQ1_FLAG_RSSI,
-    RFM69_IRQ1_FLAG_PLL_LOCK,
-    RFM69_IRQ1_FLAG_TX_READY,
-    RFM69_IRQ1_FLAG_RX_READY,
-    RFM69_IRQ1_FLAG_MODE_READY
+    RFM69_IRQ1_FLAG_SYNC_ADDRESS_MATCH  = 0x01,
+    RFM69_IRQ1_FLAG_AUTO_MODE           = 0x02,
+    RFM69_IRQ1_FLAG_TIMEOUT             = 0x04,
+    RFM69_IRQ1_FLAG_RSSI                = 0x08,
+    RFM69_IRQ1_FLAG_PLL_LOCK            = 0x10,
+    RFM69_IRQ1_FLAG_TX_READY            = 0x20,
+    RFM69_IRQ1_FLAG_RX_READY            = 0x40,
+    RFM69_IRQ1_FLAG_MODE_READY          = 0x80
 } RFM69_IRQ1_FLAG;
 
 typedef enum _IRQ_2_FLAG {
-    RFM69_IRQ2_FLAG_CRC_OK = 0x01,
-    RFM69_IRQ2_FLAG_PAYLOAD_READY,
-    RFM69_IRQ2_FLAG_PACKET_SENT,
-    RFM69_IRQ2_FLAG_FIFO_OVERRUN,
-    RFM69_IRQ2_FLAG_FIFO_LEVEL,
-    RFM69_IRQ2_FLAG_FIFO_NOT_EMPTY,
-    RFM69_IRQ2_FLAG_FIFO_FULL
+    RFM69_IRQ2_FLAG_CRC_OK              = 0x02,
+    RFM69_IRQ2_FLAG_PAYLOAD_READY       = 0x04,
+    RFM69_IRQ2_FLAG_PACKET_SENT         = 0x08,
+    RFM69_IRQ2_FLAG_FIFO_OVERRUN        = 0x10,
+    RFM69_IRQ2_FLAG_FIFO_LEVEL          = 0x20,
+    RFM69_IRQ2_FLAG_FIFO_NOT_EMPTY      = 0x40,
+    RFM69_IRQ2_FLAG_FIFO_FULL           = 0x80
 } RFM69_IRQ2_FLAG;
 
 // Initializes passed in Rfm69 pointer and sets pins to proper
@@ -277,6 +277,9 @@ int rfm69_read(Rfm69 *rfm,
                uint8_t *dst, 
                size_t len);
 
+int rfm69_irq1_flag_state(Rfm69 *rfm, RFM69_IRQ1_FLAG flag, bool *state);
+int rfm69_irq2_flag_state(Rfm69 *rfm, RFM69_IRQ2_FLAG flag, bool *state);
+
 int rfm69_frequency_set(Rfm69 *rfm,
                         uint frequency);
 
@@ -288,11 +291,10 @@ int rfm69_bitrate_set(Rfm69 *rfm,
 int rfm69_bitrate_get(Rfm69 *rfm, uint16_t *bit_rate);
 
 int rfm69_mode_set(Rfm69 *rfm, RFM69_OP_MODE mode);
+int rfm69_mode_get(Rfm69 *rfm, uint8_t *mode);
 
-int rfm69_mode_ready(Rfm69 *rfm, bool mode_ready);
+int rfm69_mode_ready(Rfm69 *rfm, bool *ready);
 
-int rfm69_irq1_flag_state(Rfm69 *rfm, RFM69_IRQ1_FLAG flag, bool state);
-int rfm69_irq2_flag_state(Rfm69 *rfm, RFM69_IRQ2_FLAG flag, bool state);
-
+int rfm69_mode_wait_until_ready(Rfm69 *rfm);
 
 #endif // RFM69_DRIVER_H
