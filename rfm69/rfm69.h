@@ -199,6 +199,11 @@ typedef enum _MODEM_BITRATE {
     RFM69_MODEM_BITRATE_WATCH_XTAL = 0x03D1, // 32.768 kbps
 } RFM69_MODEM_BITRATE;
 
+typdef enum _IRQ_FLAG {
+    RFM69_IRQ_FLAG_SYNC_ADDRESS_MATCH,
+    RFM69_IRQ_FLAG_,
+} RFM69_IRQ_FLAG;
+
 // Initializes passed in Rfm69 pointer and sets pins to proper
 // mode for spi communication. Passed pins must match the passed in
 // spi instane (e.g. spi0 pins for spi0 instance).
@@ -265,5 +270,8 @@ int rfm69_bitrate_set(Rfm69 *rfm,
                       uint16_t bit_rate);
 
 int rfm69_bitrate_get(Rfm69 *rfm, uint16_t *bit_rate);
+
+int rfm69_mode_set(Rfm69 *rfm, RFM69_OP_MODE mode);
+
 
 #endif // RFM69_DRIVER_H
