@@ -148,11 +148,11 @@ typedef enum _OP_MODE {
 } RFM69_OP_MODE;
 
 #define _DATA_MODE_OFFSET 5
-#define _DATA_MODE_BITS 2
 typedef enum _DATA_MODE {
     RFM69_DATA_MODE_PACKET,
-    RFM69_DATA_MODE_CONTINUOUS_BIT_SYNC = 0x02,
-    RFM69_DATA_MODE_CONTINUOUS = 0x03,
+    RFM69_DATA_MODE_CONTINUOUS_BIT_SYNC = 0x02 << _DATA_MODE_OFFSET,
+    RFM69_DATA_MODE_CONTINUOUS = 0x03 << _DATA_MODE_OFFSET,
+    RFM69_DATA_MODE_MASK = 0x60
 } RFM69_DATA_MODE;
 
 #define _MODULATION_TYPE_OFFSET 3
@@ -319,5 +319,14 @@ int rfm69_mode_ready(Rfm69 *rfm, bool *ready);
 
 // Blocks until mode ready IRQ flag is set. 
 int rfm69_mode_wait_until_ready(Rfm69 *rfm);
+
+int rfm69_data_mode_set(Rfm69 *rfm, RFM69_DATA_MODE mode);
+int rfm69_data_mode_get(Rfm69 *rfm, uint8_t *mode);
+
+int rfm69_modulation_type_set(Rfm69 *rfm, RFM69_MODULATION_TYPE type);
+int rfm69_modulation_type_get(Rfm69 *rfm, uint8_t *type);
+
+int rfm69_modulation_shaping_set(Rfm69 *rfm, RFM69_MODULATION_SHAPING shaping);
+int rfm69_modulation_shaping_get(Rfm69 *rfm, uint8_t *shaping);
 
 #endif // RFM69_DRIVER_H

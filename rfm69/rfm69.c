@@ -85,8 +85,10 @@ int rfm69_write(Rfm69 *rfm,
 {
     address |= 0x80; // Clear rw bit
     cs_select(rfm->pin_cs);
+
     int rval = spi_write_blocking(rfm->spi, &address, 1);
     rval += spi_write_blocking(rfm->spi, src, len);
+
     cs_deselect(rfm->pin_cs);
     return rval;
 }
