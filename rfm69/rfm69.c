@@ -214,7 +214,14 @@ int rfm69_data_mode_set(Rfm69 *rfm, RFM69_DATA_MODE mode) {
     return rval;
 }
 
-int rfm69_data_mode_get(Rfm69 *rfm, uint8_t *mode);
+int rfm69_data_mode_get(Rfm69 *rfm, uint8_t *mode) {
+    uint8_t reg;
+    int rval = rfm69_read(rfm, RFM69_REG_DATA_MODUL, &reg, 1);
+
+    *mode = reg & RFM69_DATA_MODE_MASK;
+
+    return rval;
+}
 
 int rfm69_modulation_type_set(Rfm69 *rfm, RFM69_MODULATION_TYPE type);
 int rfm69_modulation_type_get(Rfm69 *rfm, uint8_t *type);
