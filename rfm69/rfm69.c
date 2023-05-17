@@ -178,11 +178,10 @@ int rfm69_mode_set(Rfm69 *rfm, RFM69_OP_MODE mode) {
     uint8_t reg;
     int rval = rfm69_read(rfm, RFM69_REG_OP_MODE, &reg, 1);
 
-    reg &= ~(RFM69_OP_MODE_MASK); 
+    reg &= ~RFM69_OP_MODE_MASK; 
     reg |= mode & RFM69_OP_MODE_MASK;
 
     rval += rfm69_write(rfm, RFM69_REG_OP_MODE, &reg, 1);
-
     rval += rfm69_mode_wait_until_ready(rfm);
 
     return rval;
@@ -202,3 +201,23 @@ int rfm69_mode_wait_until_ready(Rfm69 *rfm) {
 
     return rval;
 }
+
+int rfm69_data_mode_set(Rfm69 *rfm, RFM69_DATA_MODE mode) {
+    uint8_t reg;
+    int rval = rfm69_read(rfm, RFM69_REG_DATA_MODUL, &reg, 1);
+
+    reg &= ~RFM69_DATA_MODE_MASK;
+    reg |= mode & RFM69_DATA_MODE_MASK;
+
+    rval += rfm69_write(rfm, RFM69_REG_DATA_MODUL, &reg, 1);
+
+    return rval;
+}
+
+int rfm69_data_mode_get(Rfm69 *rfm, uint8_t *mode);
+
+int rfm69_modulation_type_set(Rfm69 *rfm, RFM69_MODULATION_TYPE type);
+int rfm69_modulation_type_get(Rfm69 *rfm, uint8_t *type);
+
+int rfm69_modulation_shaping_set(Rfm69 *rfm, RFM69_MODULATION_SHAPING shaping);
+int rfm69_modulation_shaping_get(Rfm69 *rfm, uint8_t *shaping);
