@@ -300,3 +300,30 @@ int rfm69_modulation_shaping_get(Rfm69 *rfm, uint8_t *shaping) {
         RFM69_MODULATION_SHAPING_MASK
     );
 }
+
+//reads rssi - see p.68 of rfm69 datasheet
+int rfm69_rssi_get(Rfm69 *rfm, int8_t *rssi) {
+	uint8_t reg;
+
+	int rval = rfm69_read(rfm, RFM69_REG_RSSI_CONFIG, &reg, 1);
+	if(reg != 0x2) return 0; //checks RssiDone flag - all other bits should be 0
+
+	rval += rfm69_read(rfm, RFM69_REG_RSSI_VALUE, &reg, 1);
+
+	*rssi = 0 - (reg / 2);
+
+	return rval;
+}
+
+//triggers the rfm69 to check rssi
+//probably best to run this function before calling rfm69_rssi_get
+int rfm69_rssi_trig(Rfm69 *rfm) {
+	uint8_t reg;
+
+	int rval = rfm69_read(rfm, RFM69_REG_RSSI_CONFIG, &reg, 1);
+
+	reg |= 0x1;
+
+	rval += rfm69_write(rfm, RFM69_REG_RSSI_CONFIG, &reg, 1);
+	return rval;
+}
