@@ -10,16 +10,15 @@ struct Rfm69 {
 };
 
 RFM69_ERR_CODE rfm69_init(
-    Rfm69 **rfm,
-    spi_inst_t *spi,
-    uint pin_miso,
-    uint pin_mosi,
-    uint pin_cs,
-    uint pin_sck,
-    uint pin_rst,
-    uint pin_irq_0,
-    uint pin_irq_1
-) 
+        Rfm69 **rfm,
+        spi_inst_t *spi,
+        uint pin_miso,
+        uint pin_mosi,
+        uint pin_cs,
+        uint pin_sck,
+        uint pin_rst,
+        uint pin_irq_0,
+        uint pin_irq_1) 
 {
     *rfm = malloc(sizeof(Rfm69));    
     if (rfm == NULL) return RFM69_INIT_MALLOC;
@@ -56,9 +55,9 @@ RFM69_ERR_CODE rfm69_init(
 
 void rfm69_reset(Rfm69 *rfm) {
     gpio_put(rfm->pin_rst, 1);
-    sleep_ms(100);
+    sleep_us(100);
     gpio_put(rfm->pin_rst, 0);
-    sleep_ms(5);
+    sleep_ms(15);
 }
 
 // I actually have no idea why this is necessary, but every
@@ -78,23 +77,42 @@ static inline void cs_deselect(uint pin_cs) {
 }
 
 
-int rfm69_write(Rfm69 *rfm, 
-                uint8_t address, 
-                const uint8_t *src,
-                size_t len)
+int rfm69_write(
+        Rfm69 *rfm, 
+        uint8_t address, 
+        const uint8_t *src,
+        size_t len)
 {
     address |= 0x80; // Clear rw bit
     cs_select(rfm->pin_cs);
+
     int rval = spi_write_blocking(rfm->spi, &address, 1);
     rval += spi_write_blocking(rfm->spi, src, len);
+
     cs_deselect(rfm->pin_cs);
     return rval;
 }
 
-int rfm69_read(Rfm69 *rfm, 
-               uint8_t address, 
-               uint8_t *dst,
-               size_t len)
+int rfm69_write_masked(
+        Rfm69 *rfm, 
+        uint8_t address, 
+        const uint8_t src,
+        const uint8_t mask)
+{
+    uint8_t reg;
+    int rval = rfm69_read(rfm, address, &reg, 1); 
+
+    reg &= ~mask;
+    reg |= src & mask;
+
+    rval += rfm69_write(rfm, address, &reg, 1);
+}
+
+int rfm69_read(
+        Rfm69 *rfm, 
+        uint8_t address, 
+        uint8_t *dst,
+        size_t len)
 {
     address &= 0x7F; // Clear rw bit
     cs_select(rfm->pin_cs);
@@ -104,12 +122,55 @@ int rfm69_read(Rfm69 *rfm,
     return rval;
 }
 
+int rfm69_read_masked(
+        Rfm69 *rfm,
+        uint8_t address,
+        uint8_t *dst,
+        const uint8_t mask)
+{
+    int rval = rfm69_read(rfm, address, dst, 1);
+    *dst &= mask;
+
+    return rval;
+}
+
+
+int rfm69_irq1_flag_state(Rfm69 *rfm, RFM69_IRQ1_FLAG flag, bool *state) {
+    uint8_t reg;
+    int rval = rfm69_read_masked(
+        rfm,
+        RFM69_REG_IRQ_FLAGS_1,
+        &reg,
+        flag
+    );
+
+    if (reg) *state = true;
+    else *state = false;
+
+    return rval;
+}
+
+int rfm69_irq2_flag_state(Rfm69 *rfm, RFM69_IRQ2_FLAG flag, bool *state) {
+    uint8_t reg;
+    int rval = rfm69_read_masked(
+        rfm,
+        RFM69_REG_IRQ_FLAGS_2,
+        &reg,
+        flag
+    );
+
+    if (reg) *state = true;
+    else *state = false;
+
+    return rval;
+}
+
 int rfm69_frequency_set(Rfm69 *rfm,
                         uint frequency)
 {
     // Frf = Fstep * Frf(23,0)
     frequency *= 1000000; // MHz to Hz
-    frequency /= RFM69_FSTEP; // Gives needed register value
+    frequency =(frequency / RFM69_FSTEP) + 0.5; // Gives needed register value
     // Split into three bytes.
     uint8_t buf[3] = {
         (frequency >> 16) & 0xFF,
@@ -152,15 +213,92 @@ int rfm69_bitrate_get(Rfm69 *rfm, uint16_t *bit_rate) {
 }
 
 int rfm69_mode_set(Rfm69 *rfm, RFM69_OP_MODE mode) {
-    uint8_t reg;
-    int rval = rfm69_read(rfm, RFM69_REG_OP_MODE, &reg, 1);
 
-    reg &= ~(RFM69_OP_MODE_MASK); 
-    reg |= mode;
+    return rfm69_write_masked(
+        rfm, 
+        RFM69_REG_OP_MODE,
+        mode,
+        RFM69_OP_MODE_MASK
+    );
+}
 
-    rval += rfm69_write(rfm, RFM69_REG_OP_MODE, &reg, 1);
+int rfm69_mode_get(Rfm69 *rfm, uint8_t *mode) {
 
-    return rval ;
+    return rfm69_read_masked(
+        rfm,
+        RFM69_REG_OP_MODE,
+        mode,
+        RFM69_OP_MODE_MASK
+    );
+}
+
+int rfm69_mode_ready(Rfm69 *rfm, bool *ready) {
+    return rfm69_irq1_flag_state(rfm, RFM69_IRQ1_FLAG_MODE_READY, ready);
+}
+
+int rfm69_mode_wait_until_ready(Rfm69 *rfm) {
+    int rval = 0;
+
+    bool ready = false;
+    while (!ready) {
+        rval += rfm69_mode_ready(rfm, &ready);
+    }
+
+    return rval;
+}
+
+int rfm69_data_mode_set(Rfm69 *rfm, RFM69_DATA_MODE mode) {
+    return rfm69_write_masked(
+        rfm, 
+        RFM69_REG_DATA_MODUL,
+        mode,
+        RFM69_DATA_MODE_MASK
+    );
+}
+
+int rfm69_data_mode_get(Rfm69 *rfm, uint8_t *mode) {
+    return rfm69_read_masked(
+        rfm,
+        RFM69_REG_DATA_MODUL,
+        mode,
+        RFM69_DATA_MODE_MASK
+    );
+}
+
+int rfm69_modulation_type_set(Rfm69 *rfm, RFM69_MODULATION_TYPE type) {
+    return rfm69_write_masked(
+        rfm,
+        RFM69_REG_DATA_MODUL,
+        type,
+        RFM69_MODULATION_TYPE_MASK
+    );
+}
+
+int rfm69_modulation_type_get(Rfm69 *rfm, uint8_t *type) {
+    return rfm69_read_masked(
+        rfm,
+        RFM69_REG_DATA_MODUL,
+        type,
+        RFM69_MODULATION_TYPE_MASK
+    );
+}
+
+int rfm69_modulation_shaping_set(Rfm69 *rfm, RFM69_MODULATION_SHAPING shaping) {
+    return rfm69_write_masked(
+        rfm,
+        RFM69_REG_DATA_MODUL,
+        shaping,
+        RFM69_MODULATION_SHAPING_MASK
+    );
+}
+
+int rfm69_modulation_shaping_get(Rfm69 *rfm, uint8_t *shaping) {
+    return rfm69_read_masked(
+        rfm,
+        RFM69_REG_DATA_MODUL,
+        shaping,
+        RFM69_MODULATION_SHAPING_MASK
+    );
 }
 
 //reads rssi - see p.68 of rfm69 datasheet
