@@ -141,34 +141,34 @@ typedef enum _ERR_CODE {
 typedef enum _OP_MODE {
     RFM69_OP_MODE_SLEEP,
     RFM69_OP_MODE_STDBY = 0x01 << _OP_MODE_OFFSET,
-    RFM69_OP_MODE_FS = 0x02 << _OP_MODE_OFFSET,
-    RFM69_OP_MODE_TX = 0x03 << _OP_MODE_OFFSET,
-    RFM69_OP_MODE_RX = 0x04 << _OP_MODE_OFFSET,
-    RFM69_OP_MODE_MASK = 0x07 << _OP_MODE_OFFSET
+    RFM69_OP_MODE_FS    = 0x02 << _OP_MODE_OFFSET,
+    RFM69_OP_MODE_TX    = 0x03 << _OP_MODE_OFFSET,
+    RFM69_OP_MODE_RX    = 0x04 << _OP_MODE_OFFSET,
+    RFM69_OP_MODE_MASK  = 0x07 << _OP_MODE_OFFSET
 } RFM69_OP_MODE;
 
 #define _DATA_MODE_OFFSET 5
 typedef enum _DATA_MODE {
     RFM69_DATA_MODE_PACKET,
     RFM69_DATA_MODE_CONTINUOUS_BIT_SYNC = 0x02 << _DATA_MODE_OFFSET,
-    RFM69_DATA_MODE_CONTINUOUS = 0x03 << _DATA_MODE_OFFSET,
-    RFM69_DATA_MODE_MASK = 0x60
+    RFM69_DATA_MODE_CONTINUOUS          = 0x03 << _DATA_MODE_OFFSET,
+    RFM69_DATA_MODE_MASK                = 0x60
 } RFM69_DATA_MODE;
 
 #define _MODULATION_TYPE_OFFSET 3
-#define _MODULATION_TYPE_BITS 2
 typedef enum _MODULATION_TYPE {
     RFM69_MODULATION_FSK,
-    RFM69_MODULATION_OOK,
+    RFM69_MODULATION_OOK       = 0x01 << _MODULATION_TYPE_OFFSET,
+    RFM69_MODULATION_TYPE_MASK = 0x18
 } RFM69_MODULATION_TYPE;
 
 #define _MODULATION_SHAPING_OFFSET 0
-#define _MODULATION_SHAPING_BITS 2
 typedef enum _MODULATION_SHAPING {
     RFM69_NO_SHAPING,
     RFM69_FSK_GAUSSIAN_1_0 = 0x01, RFM69_OOK_FCUTOFF_BR   = 0x01,
     RFM69_FSK_GAUSSIAN_0_5 = 0x02, RFM69_OOK_FCUTOFF_2XBR = 0x02,
     RFM69_FSK_GAUSSIAN_0_3 = 0x03,
+    RFM69_MODULATION_SHAPING_MASK = 0x03
 } RFM69_MODULATION_SHAPING;
 
 typedef enum _MODEM_BITRATE {
@@ -263,6 +263,12 @@ int rfm69_write(Rfm69 *rfm,
                 const uint8_t *src, 
                 size_t len);
 
+int rfm69_write_masked(
+        Rfm69 *rfm, 
+        uint8_t address, 
+        const uint8_t src,
+        const uint8_t mask);
+
 // Reads <len> bytes into <dst> from RFM69 registers/FIFO over SPI.
 // SPI instance must be initialized before calling.
 // If src len > 1, address will be incremented between each byte (burst write).
@@ -276,6 +282,12 @@ int rfm69_read(Rfm69 *rfm,
                uint8_t address, 
                uint8_t *dst, 
                size_t len);
+
+int rfm69_read_masked(
+        Rfm69 *rfm,
+        uint8_t address,
+        uint8_t *dst,
+        const uint8_t mask);
 
 // Reads state of IRQ flags. Each function corresponds with one
 // of the flag registers.
