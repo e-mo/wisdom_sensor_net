@@ -277,24 +277,47 @@ int rfm69_read(Rfm69 *rfm,
                uint8_t *dst, 
                size_t len);
 
+// Reads state of IRQ flags. Each function corresponds with one
+// of the flag registers.
+// flag    - IRQ flag constant you want to check.
+// state   - stores flag state.
+//
+// Returns number of bytes written. 
 int rfm69_irq1_flag_state(Rfm69 *rfm, RFM69_IRQ1_FLAG flag, bool *state);
 int rfm69_irq2_flag_state(Rfm69 *rfm, RFM69_IRQ2_FLAG flag, bool *state);
 
+// Sets the opterating frequency of the module.
+// frequency - desired frequency in MHz.
+//
+// Returns number of bytes written. 
 int rfm69_frequency_set(Rfm69 *rfm,
                         uint frequency);
 
+// Reads operating frequency from module.
+// Note - might not reflect set freqency until a mode change.
+// frequency - stores frequency in Hz.
+//
+// Returns number of bytes written. 
 int rfm69_frequency_get(Rfm69 *rfm, uint32_t *frequency);
 
+// Sets modem bitrate.
 int rfm69_bitrate_set(Rfm69 *rfm,
-                      uint16_t bit_rate);
+                      RFM69_MODEM_BITRATE bit_rate);
 
+// Reads modem bitrate.
 int rfm69_bitrate_get(Rfm69 *rfm, uint16_t *bit_rate);
 
+// Sets module into a new mode.
+// Blocks until mode is ready.
 int rfm69_mode_set(Rfm69 *rfm, RFM69_OP_MODE mode);
+
+// Gets current mode.
 int rfm69_mode_get(Rfm69 *rfm, uint8_t *mode);
 
+// Checks if current mode is ready.
 int rfm69_mode_ready(Rfm69 *rfm, bool *ready);
 
+// Blocks until mode ready IRQ flag is set. 
 int rfm69_mode_wait_until_ready(Rfm69 *rfm);
 
 #endif // RFM69_DRIVER_H

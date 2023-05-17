@@ -1,6 +1,5 @@
 #include "rfm69.h"
 #include "stdlib.h"
-#include "math.h"
 #include "pico/malloc.h"
 
 
@@ -131,7 +130,7 @@ int rfm69_frequency_set(Rfm69 *rfm,
 {
     // Frf = Fstep * Frf(23,0)
     frequency *= 1000000; // MHz to Hz
-    frequency = round(frequency / RFM69_FSTEP); // Gives needed register value
+    frequency =(frequency / RFM69_FSTEP) + 0.5; // Gives needed register value
     // Split into three bytes.
     uint8_t buf[3] = {
         (frequency >> 16) & 0xFF,
