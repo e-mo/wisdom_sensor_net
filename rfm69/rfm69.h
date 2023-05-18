@@ -341,7 +341,7 @@ int rfm69_modulation_type_get(Rfm69 *rfm, uint8_t *type);
 int rfm69_modulation_shaping_set(Rfm69 *rfm, RFM69_MODULATION_SHAPING shaping);
 int rfm69_modulation_shaping_get(Rfm69 *rfm, uint8_t *shaping);
 
-int rfm69_rssi_get(Rfm69 *rfm, int8_t *rssi);
-int rfm69_rssi_trig(Rfm69 *rfm);
+int rfm69_rssi_measurment_get(Rfm69 *rfm, int8_t *rssi);
+int rfm69_rssi_measurment_start(Rfm69 *rfm);
 
 #endif // RFM69_DRIVER_H
