@@ -306,7 +306,7 @@ int rfm69_rssi_measurment_get(Rfm69 *rfm, int8_t *rssi) {
 	uint8_t reg;
 
 	int rval = rfm69_read(rfm, RFM69_REG_RSSI_CONFIG, &reg, 1);
-	if(reg != 0x2) return 0; //checks RssiDone flag - all other bits should be 0
+	if(reg != RFM69_RSSI_MEASURMENT_DONE) return 0; //checks RssiDone flag - all other bits should be 0
 
 	rval += rfm69_read(rfm, RFM69_REG_RSSI_VALUE, &reg, 1);
 
@@ -322,7 +322,7 @@ int rfm69_rssi_measurment_start(Rfm69 *rfm) {
 
 	int rval = rfm69_read(rfm, RFM69_REG_RSSI_CONFIG, &reg, 1);
 
-	reg |= 0x1;
+	reg |= RFM69_RSSI_MEASURMENT_START;
 
 	rval += rfm69_write(rfm, RFM69_REG_RSSI_CONFIG, &reg, 1);
 	return rval;

@@ -220,6 +220,11 @@ typedef enum _IRQ_2_FLAG {
     RFM69_IRQ2_FLAG_FIFO_FULL           = 0x80
 } RFM69_IRQ2_FLAG;
 
+typedef enum _RSSI_CONFIG {
+    RFM69_RSSI_MEASURMENT_START         = 0x01,
+    RFM69_RSSI_MEASURMENT_DONE          = 0x02
+} RFM69_RSSI_CONFIG;
+
 // Initializes passed in Rfm69 pointer and sets pins to proper
 // mode for spi communication. Passed pins must match the passed in
 // spi instane (e.g. spi0 pins for spi0 instance).
