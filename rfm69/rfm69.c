@@ -51,7 +51,7 @@ RFM69_RETURN rfm69_init(
     uint8_t buf;
     RFM69_RETURN rval = rfm69_read(*rfm, RFM69_REG_VERSION, &buf, 1);
     if (rval == RFM69_OK) {
-        if (*buf == 0x00 || *buf == 0xFF) { rval = RFM69_INIT_TEST; }
+        if (buf == 0x00 || buf == 0xFF) { rval = RFM69_INIT_TEST; }
     }
 
     return rval;
