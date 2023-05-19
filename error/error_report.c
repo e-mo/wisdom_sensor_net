@@ -8,6 +8,7 @@ static char *err_msg_table[] = {
     "no error reported",
     "rfm69_init: malloc failed to allocate memory",
     "rfm69_init: failed read version register test",
+    "spi: unexpected return value"
 };
 
 // TODO: Make this function thread safe

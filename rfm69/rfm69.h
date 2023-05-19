@@ -131,20 +131,24 @@
 // Incomplete type representing Rfm69 radio module.
 typedef struct Rfm69 Rfm69;
 
-typedef enum _ERR_CODE {
-    RFM69_NO_ERROR,
-    RFM69_INIT_MALLOC,
-    RFM69_INIT_TEST,
-} RFM69_ERR_CODE;
+typedef enum _RETURN {
+    RFM69_OK                      = 0,
+    RFM69_INIT_MALLOC             = -1,
+    RFM69_INIT_TEST               = -2,
+    RFM69_SPI_UNEXPECTED_RETURN   = -3,
+    RFM69_MODE_ALREADY_SET        = -4,
+    RFM69_RSSI_BUSY               = -5,
+} RFM69_RETURN;
 
 #define _OP_MODE_OFFSET 2
 typedef enum _OP_MODE {
-    RFM69_OP_MODE_SLEEP,
-    RFM69_OP_MODE_STDBY = 0x01 << _OP_MODE_OFFSET,
-    RFM69_OP_MODE_FS    = 0x02 << _OP_MODE_OFFSET,
-    RFM69_OP_MODE_TX    = 0x03 << _OP_MODE_OFFSET,
-    RFM69_OP_MODE_RX    = 0x04 << _OP_MODE_OFFSET,
-    RFM69_OP_MODE_MASK  = 0x07 << _OP_MODE_OFFSET
+    RFM69_OP_MODE_UNKNOWN = 0xFF,
+    RFM69_OP_MODE_SLEEP   = 0x00,
+    RFM69_OP_MODE_STDBY   = 0x01 << _OP_MODE_OFFSET,
+    RFM69_OP_MODE_FS      = 0x02 << _OP_MODE_OFFSET,
+    RFM69_OP_MODE_TX      = 0x03 << _OP_MODE_OFFSET,
+    RFM69_OP_MODE_RX      = 0x04 << _OP_MODE_OFFSET,
+    RFM69_OP_MODE_MASK    = 0x07 << _OP_MODE_OFFSET
 } RFM69_OP_MODE;
 
 #define _DATA_MODE_OFFSET 5
@@ -235,7 +239,7 @@ typedef enum _RSSI_CONFIG {
 // see no reason to provide an rfm69 specific free function.
 // If freeing the memory is necessary, a simple call to standard free
 // will suffice.
-RFM69_ERR_CODE rfm69_init(
+RFM69_RETURN rfm69_init(
     Rfm69 **rfm,
     spi_inst_t *spi,
     uint pin_miso,
@@ -263,12 +267,12 @@ void rfm69_reset(Rfm69 *rfm);
 // src     - an array of uint8_t to be written.
 // len     - src array length.
 // Returns number of bytes written (not including address byte).
-int rfm69_write(Rfm69 *rfm, 
+RFM69_RETURN rfm69_write(Rfm69 *rfm, 
                 uint8_t address, 
                 const uint8_t *src, 
                 size_t len);
 
-int rfm69_write_masked(
+RFM69_RETURN rfm69_write_masked(
         Rfm69 *rfm, 
         uint8_t address, 
         const uint8_t src,
@@ -283,12 +287,12 @@ int rfm69_write_masked(
 // dst     - an array of uint8_t to be read into.
 // len     - dst array length.
 // Returns number of bytes written (not including address byte).
-int rfm69_read(Rfm69 *rfm, 
+RFM69_RETURN rfm69_read(Rfm69 *rfm, 
                uint8_t address, 
                uint8_t *dst, 
                size_t len);
 
-int rfm69_read_masked(
+RFM69_RETURN rfm69_read_masked(
         Rfm69 *rfm,
         uint8_t address,
         uint8_t *dst,
@@ -300,14 +304,14 @@ int rfm69_read_masked(
 // state   - stores flag state.
 //
 // Returns number of bytes written. 
-int rfm69_irq1_flag_state(Rfm69 *rfm, RFM69_IRQ1_FLAG flag, bool *state);
-int rfm69_irq2_flag_state(Rfm69 *rfm, RFM69_IRQ2_FLAG flag, bool *state);
+RFM69_RETURN rfm69_irq1_flag_state(Rfm69 *rfm, RFM69_IRQ1_FLAG flag, bool *state);
+RFM69_RETURN rfm69_irq2_flag_state(Rfm69 *rfm, RFM69_IRQ2_FLAG flag, bool *state);
 
 // Sets the opterating frequency of the module.
 // frequency - desired frequency in MHz.
 //
 // Returns number of bytes written. 
-int rfm69_frequency_set(Rfm69 *rfm,
+RFM69_RETURN rfm69_frequency_set(Rfm69 *rfm,
                         uint frequency);
 
 // Reads operating frequency from module.
@@ -315,38 +319,38 @@ int rfm69_frequency_set(Rfm69 *rfm,
 // frequency - stores frequency in Hz.
 //
 // Returns number of bytes written. 
-int rfm69_frequency_get(Rfm69 *rfm, uint32_t *frequency);
+RFM69_RETURN rfm69_frequency_get(Rfm69 *rfm, uint32_t *frequency);
 
 // Sets modem bitrate.
-int rfm69_bitrate_set(Rfm69 *rfm,
+RFM69_RETURN rfm69_bitrate_set(Rfm69 *rfm,
                       RFM69_MODEM_BITRATE bit_rate);
 
 // Reads modem bitrate.
-int rfm69_bitrate_get(Rfm69 *rfm, uint16_t *bit_rate);
+RFM69_RETURN rfm69_bitrate_get(Rfm69 *rfm, uint16_t *bit_rate);
 
 // Sets module into a new mode.
 // Blocks until mode is ready.
-int rfm69_mode_set(Rfm69 *rfm, RFM69_OP_MODE mode);
+RFM69_RETURN rfm69_mode_set(Rfm69 *rfm, RFM69_OP_MODE mode);
 
 // Gets current mode.
-int rfm69_mode_get(Rfm69 *rfm, uint8_t *mode);
+RFM69_RETURN rfm69_mode_get(Rfm69 *rfm, uint8_t *mode);
 
 // Checks if current mode is ready.
-int rfm69_mode_ready(Rfm69 *rfm, bool *ready);
+RFM69_RETURN rfm69_mode_ready(Rfm69 *rfm, bool *ready);
 
 // Blocks until mode ready IRQ flag is set. 
-int rfm69_mode_wait_until_ready(Rfm69 *rfm);
+RFM69_RETURN rfm69_mode_wait_until_ready(Rfm69 *rfm);
 
-int rfm69_data_mode_set(Rfm69 *rfm, RFM69_DATA_MODE mode);
-int rfm69_data_mode_get(Rfm69 *rfm, uint8_t *mode);
+RFM69_RETURN rfm69_data_mode_set(Rfm69 *rfm, RFM69_DATA_MODE mode);
+RFM69_RETURN rfm69_data_mode_get(Rfm69 *rfm, uint8_t *mode);
 
-int rfm69_modulation_type_set(Rfm69 *rfm, RFM69_MODULATION_TYPE type);
-int rfm69_modulation_type_get(Rfm69 *rfm, uint8_t *type);
+RFM69_RETURN rfm69_modulation_type_set(Rfm69 *rfm, RFM69_MODULATION_TYPE type);
+RFM69_RETURN rfm69_modulation_type_get(Rfm69 *rfm, uint8_t *type);
 
-int rfm69_modulation_shaping_set(Rfm69 *rfm, RFM69_MODULATION_SHAPING shaping);
-int rfm69_modulation_shaping_get(Rfm69 *rfm, uint8_t *shaping);
+RFM69_RETURN rfm69_modulation_shaping_set(Rfm69 *rfm, RFM69_MODULATION_SHAPING shaping);
+RFM69_RETURN rfm69_modulation_shaping_get(Rfm69 *rfm, uint8_t *shaping);
 
-int rfm69_rssi_measurment_get(Rfm69 *rfm, int8_t *rssi);
-int rfm69_rssi_measurment_start(Rfm69 *rfm);
+RFM69_RETURN rfm69_rssi_measurment_get(Rfm69 *rfm, int8_t *rssi);
+RFM69_RETURN rfm69_rssi_measurment_start(Rfm69 *rfm);
 
 #endif // RFM69_DRIVER_H

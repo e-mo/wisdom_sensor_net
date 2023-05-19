@@ -9,9 +9,10 @@
 #define ERROR_REPORT_H
 
 enum ERR_CODE {
-    ERR_NONE,
-    ERR_INIT_MALLOC,
-    ERR_INIT_TEST,
+    ERR_NONE = 0, 
+    ERR_INIT_MALLOC = -1,
+    ERR_INIT_TEST = -2,
+    ERR_SPI_UNEXPECTED_VALUE = -3
 };
 
 // Sets last_error. Must be called before any error reading or reporting
