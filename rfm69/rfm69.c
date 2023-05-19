@@ -396,7 +396,7 @@ RFM69_RETURN rfm69_power_level_set(Rfm69 *rfm, int8_t pa_level) {
             pa_level = 20;
 
         // PA1 on only
-        if (pa_level < 2) {
+        if (pa_level < 13) {
             pa_mode = RFM69_PA_MODE_PA1;
             pout = pa_level + 18; 
         }
