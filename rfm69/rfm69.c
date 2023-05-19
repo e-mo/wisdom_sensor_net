@@ -27,7 +27,7 @@ RFM69_RETURN rfm69_init(
     *rfm = malloc(sizeof(Rfm69));    
     if (rfm == NULL) return RFM69_INIT_MALLOC;
 
-    rfm69_reset(rfm);
+    rfm69_reset(*rfm);
 
     (*rfm)->spi = spi;
     (*rfm)->pin_cs = pin_cs;
@@ -35,6 +35,7 @@ RFM69_RETURN rfm69_init(
     (*rfm)->op_mode = RFM69_OP_MODE_STDBY;
     (*rfm)->pa_level = RFM69_PA_LEVEL_DEFAULT - 18;
     (*rfm)->pa_mode = RFM69_PA_MODE_PA0;
+    (*rfm)->ocp_trim = RFM69_OCP_TRIM_DEFAULT;
 
     // SPI initialisation. This example will use SPI at 1MHz.
     gpio_set_function(pin_miso, GPIO_FUNC_SPI);
@@ -257,13 +258,7 @@ RFM69_RETURN rfm69_mode_set(Rfm69 *rfm, RFM69_OP_MODE mode) {
     return rval;
 }
 
-void rfm69_mode_get(Rfm69 *rfm, uint8_t *mode) {
-    RFM69_RETURN rval;
-
-    *mode = rfm->op_mode;
-
-    return RFM69_OK;
-}
+void rfm69_mode_get(Rfm69 *rfm, uint8_t *mode) { *mode = rfm->op_mode; }
 
 RFM69_RETURN rfm69_mode_ready(Rfm69 *rfm, bool *ready) {
     return rfm69_irq1_flag_state(rfm, RFM69_IRQ1_FLAG_MODE_READY, ready);
@@ -412,9 +407,9 @@ RFM69_RETURN rfm69_power_level_set(Rfm69 *rfm, int8_t pa_level) {
         pa_mode = RFM69_PA_MODE_PA0;
         // Pull pa_level within acceptible bounds 
         if (pa_level < -18)
-            power = -18;
+            pa_level = -18;
         else if (pa_level > 13)
-            power = 13;
+            pa_level = 13;
 
         pout = pa_level + 18;
     }
@@ -448,49 +443,58 @@ RFM69_RETURN rfm69_power_mode_set(Rfm69 *rfm, RFM69_PA_MODE mode) {
     RFM69_OCP ocp_trim = rfm->ocp_trim;
     
     // Skip if we are already in this mode
-    if (rfm->power_mode == mode)
+    if (rfm->pa_mode == mode)
         rval = RFM69_REG_ALREADY_SET;
     else {
         switch (mode) {
             case RFM69_PA_MODE_PA0:
-                buf |= RFM69_PAO_ON;
+                buf[0] |= RFM69_PA0_ON;
                 break;
             case RFM69_PA_MODE_PA1:
-                buf |= RFM69_PA1_ON;
+                buf[0] |= RFM69_PA1_ON;
                 break;
             case RFM69_PA_MODE_PA1_PA2:
-                buf |= RFM69_PA1_ON | RFM69_PA2_ON;
+                buf[0] |= RFM69_PA1_ON | RFM69_PA2_ON;
                 break;
             case RFM69_PA_MODE_HIGH:
-                buf |= RFM69_PA1_ON | RFM69_PA2_ON;
+                buf[0] |= RFM69_PA1_ON | RFM69_PA2_ON;
                 pa1 = RFM69_HP_PA1_HIGH;
                 pa2 = RFM69_HP_PA2_HIGH;
                 break;
         } 
 
-        // Set into high or low power mode
-        buf[0] = pa1;
-        buf[1] = pa2;
-        rval = rfm69_write(
+        // Set PA pins
+        rval = rfm69_write_masked(
             rfm,
-            RFM69_REG_TEST_PA1,
-            buf,
-            2
+            RFM69_REG_PA_LEVEL,
+            buf[0],
+            RFM69_PA_PINS_MASK
         );
         if (rval == RFM69_OK) {
-            rval = rfm69_ocp_set(rfm, ocp);
+            // Set into high or low power mode
+            buf[0] = pa1;
+            buf[1] = pa2;
+            rval = rfm69_write(
+                rfm,
+                RFM69_REG_TEST_PA1,
+                buf,
+                2
+            );
             if (rval == RFM69_OK) {
-                // If we are entering high power mode, also
-                // set OCP trim to high setting
-                if (pa1 == RFM69_HP_PA1_HIGH)
-                    ocp_trim = RFM69_OCP_TRIM_HIGH
-                    
-                rval = rfm69_write_masked(
-                    rfm,
-                    RFM69_REG_OCP,
-                    ocp_trim,
-                    RFM69_OCP_TRIM_MASK
-                );
+                rval = rfm69_ocp_set(rfm, ocp);
+                if (rval == RFM69_OK) {
+                    // If we are entering high power mode, also
+                    // set OCP trim to high setting
+                    if (pa1 == RFM69_HP_PA1_HIGH)
+                        ocp_trim = RFM69_OCP_TRIM_HIGH;
+                        
+                    rval = rfm69_write_masked(
+                        rfm,
+                        RFM69_REG_OCP,
+                        ocp_trim,
+                        RFM69_OCP_TRIM_MASK
+                    );
+                }
             }
         }
     }
@@ -498,7 +502,7 @@ RFM69_RETURN rfm69_power_mode_set(Rfm69 *rfm, RFM69_PA_MODE mode) {
     return rval;
 }
 
-RFM69_RETURN rfm69_ocp_set(Rfm69 *rfm, RFM69_OCP_STATE state) {
+RFM69_RETURN rfm69_ocp_set(Rfm69 *rfm, RFM69_OCP state) {
     return rfm69_write_masked(
             rfm,
             RFM69_REG_OCP,

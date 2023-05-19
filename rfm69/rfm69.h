@@ -244,20 +244,20 @@ enum _PA_LEVEL {
     RFM69_PA2_ON           = 0x01 << 5,
     RFM69_PA_PINS_MASK     = 0x03 << 5,
     RFM69_PA_OUTPUT_MASK   = 0x1F
-}
+};
 
-enum _HP_CONFIG {
+typedef enum _HP_CONFIG {
     RFM69_HP_PA1_HIGH = 0x5D,
     RFM69_HP_PA1_LOW  = 0x55,
     RFM69_HP_PA2_HIGH = 0x5C,
-    RFM69_HP_PA2_low  = 0x70,
+    RFM69_HP_PA2_LOW  = 0x70,
 } RFM69_HP_CONFIG;
 
-#define _OCP_STATE_OFFSET = 4;
+#define _OCP_STATE_OFFSET 4
 typedef enum _OCP {
     RFM69_OCP_DISABLED     = 0x00,
     RFM69_OCP_ENABLED      = 0x01 << _OCP_STATE_OFFSET,
-    RFM69_OCP_TRIM_MASK    = 0x0F, RFM69_OCP_TRIM_HIGH = 0x0F 
+    RFM69_OCP_TRIM_MASK    = 0x0F, RFM69_OCP_TRIM_HIGH = 0x0F, 
     RFM69_OCP_TRIM_DEFAULT = 0x0A
 } RFM69_OCP;
 
@@ -365,7 +365,7 @@ RFM69_RETURN rfm69_bitrate_get(Rfm69 *rfm, uint16_t *bit_rate);
 RFM69_RETURN rfm69_mode_set(Rfm69 *rfm, RFM69_OP_MODE mode);
 
 // Gets current mode.
-RFM69_RETURN rfm69_mode_get(Rfm69 *rfm, uint8_t *mode);
+void rfm69_mode_get(Rfm69 *rfm, uint8_t *mode);
 
 // Checks if current mode is ready.
 RFM69_RETURN rfm69_mode_ready(Rfm69 *rfm, bool *ready);
@@ -388,6 +388,6 @@ RFM69_RETURN rfm69_rssi_measurment_start(Rfm69 *rfm);
 RFM69_RETURN rfm69_power_level_set(Rfm69 *rfm, int8_t power);
 RFM69_RETURN rfm69_power_mode_set(Rfm69 *rfm, RFM69_PA_MODE mode);
 
-RFM69_RETURN rfm69_ocp_set(Rfm69 *rfm, RFM69_OCP_STATE state);
+RFM69_RETURN rfm69_ocp_set(Rfm69 *rfm, RFM69_OCP state);
 
 #endif // RFM69_DRIVER_H
