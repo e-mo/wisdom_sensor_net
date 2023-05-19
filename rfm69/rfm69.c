@@ -48,10 +48,10 @@ RFM69_RETURN rfm69_init(
     gpio_put(pin_rst, 0);
 
     // Try to read version register
-    uint8_t buf[1] = {0x00};
-    RFM69_RETURN rval = rfm69_read(*rfm, RFM69_REG_VERSION, buf, 1);
+    uint8_t buf;
+    RFM69_RETURN rval = rfm69_read(*rfm, RFM69_REG_VERSION, &buf, 1);
     if (rval == RFM69_OK) {
-        if (buf[0] == 0x00 || buf[0] == 0xFF) { rval = RFM69_INIT_TEST; }
+        if (*buf == 0x00 || *buf == 0xFF) { rval = RFM69_INIT_TEST; }
     }
 
     return rval;
@@ -230,6 +230,7 @@ RFM69_RETURN rfm69_bitrate_get(Rfm69 *rfm, uint16_t *bit_rate) {
 
 RFM69_RETURN rfm69_mode_set(Rfm69 *rfm, RFM69_OP_MODE mode) {
     RFM69_RETURN rval;
+
     if (rfm->op_mode != mode) {
         rfm->op_mode = mode;
         rval = rfm69_write_masked(
@@ -267,7 +268,7 @@ RFM69_RETURN rfm69_mode_get(Rfm69 *rfm, uint8_t *mode) {
         *mode = rfm->op_mode;
         rval = RFM69_OK;
     }
-    return rval
+    return rval;
 }
 
 RFM69_RETURN rfm69_mode_ready(Rfm69 *rfm, bool *ready) {
