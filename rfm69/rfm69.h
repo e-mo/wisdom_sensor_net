@@ -120,8 +120,8 @@
 #define RFM69_REG_TEMP_2          0x4F // Temperature readout
 
 #define RFM69_REG_TEST_LNA        0x58 // Sensitivity boost
-#define RFM69_REG_TEST_PA_1       0x5A // High Power PA settings
-#define RFM69_REG_TEST_PA_2       0x5C // High Power PA settings
+#define RFM69_REG_TEST_PA1        0x5A // High Power PA settings
+#define RFM69_REG_TEST_PA2        0x5C // High Power PA settings
 #define RFM69_REG_TEST_DAGC       0x6F // Fading Margin Improvement
 #define RFM69_REG_TEST_AFC        0x71 // AFC offset for low modulation index AFC
 
@@ -136,13 +136,13 @@ typedef enum _RETURN {
     RFM69_INIT_MALLOC             = -1,
     RFM69_INIT_TEST               = -2,
     RFM69_SPI_UNEXPECTED_RETURN   = -3,
-    RFM69_MODE_ALREADY_SET        = -4,
+    RFM69_REG_ALREADY_SET         = -4,
     RFM69_RSSI_BUSY               = -5,
 } RFM69_RETURN;
 
 #define _OP_MODE_OFFSET 2
 typedef enum _OP_MODE {
-    RFM69_OP_MODE_UNKNOWN = 0xFF,
+    RFM69_OP_MODE_DEFAULT = 0x01,
     RFM69_OP_MODE_SLEEP   = 0x00,
     RFM69_OP_MODE_STDBY   = 0x01 << _OP_MODE_OFFSET,
     RFM69_OP_MODE_FS      = 0x02 << _OP_MODE_OFFSET,
@@ -228,6 +228,38 @@ typedef enum _RSSI_CONFIG {
     RFM69_RSSI_MEASURMENT_START         = 0x01,
     RFM69_RSSI_MEASURMENT_DONE          = 0x02
 } RFM69_RSSI_CONFIG;
+
+typedef enum _PA_MODE {
+    RFM69_PA_MODE_UNKNOWN,
+    RFM69_PA_MODE_PA0,
+    RFM69_PA_MODE_PA1,
+    RFM69_PA_MODE_PA1_PA2,
+    RFM69_PA_MODE_HIGH
+} RFM69_PA_MODE;
+
+enum _PA_LEVEL {
+    RFM69_PA_LEVEL_DEFAULT = 0x1F,
+    RFM69_PA0_ON           = 0x01 << 7,
+    RFM69_PA1_ON           = 0x01 << 6,
+    RFM69_PA2_ON           = 0x01 << 5,
+    RFM69_PA_PINS_MASK     = 0x03 << 5,
+    RFM69_PA_OUTPUT_MASK   = 0x1F
+}
+
+enum _HP_CONFIG {
+    RFM69_HP_PA1_HIGH = 0x5D,
+    RFM69_HP_PA1_LOW  = 0x55,
+    RFM69_HP_PA2_HIGH = 0x5C,
+    RFM69_HP_PA2_low  = 0x70,
+} RFM69_HP_CONFIG;
+
+#define _OCP_STATE_OFFSET = 4;
+typedef enum _OCP {
+    RFM69_OCP_DISABLED     = 0x00,
+    RFM69_OCP_ENABLED      = 0x01 << _OCP_STATE_OFFSET,
+    RFM69_OCP_TRIM_MASK    = 0x0F, RFM69_OCP_TRIM_HIGH = 0x0F 
+    RFM69_OCP_TRIM_DEFAULT = 0x0A
+} RFM69_OCP;
 
 // Initializes passed in Rfm69 pointer and sets pins to proper
 // mode for spi communication. Passed pins must match the passed in
@@ -352,5 +384,10 @@ RFM69_RETURN rfm69_modulation_shaping_get(Rfm69 *rfm, uint8_t *shaping);
 
 RFM69_RETURN rfm69_rssi_measurment_get(Rfm69 *rfm, int8_t *rssi);
 RFM69_RETURN rfm69_rssi_measurment_start(Rfm69 *rfm);
+
+RFM69_RETURN rfm69_power_level_set(Rfm69 *rfm, int8_t power);
+RFM69_RETURN rfm69_power_mode_set(Rfm69 *rfm, RFM69_PA_MODE mode);
+
+RFM69_RETURN rfm69_ocp_set(Rfm69 *rfm, RFM69_OCP_STATE state);
 
 #endif // RFM69_DRIVER_H
