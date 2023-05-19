@@ -50,11 +50,11 @@ RFM69_RETURN rfm69_init(
     // Try to read version register
     uint8_t buf[1] = {0x00};
     RFM69_RETURN rval = rfm69_read(*rfm, RFM69_REG_VERSION, buf, 1);
-    // We expect 2 bytes written/read
-    if (rval != 2) { return RFM69_SPI_UNEXPECTED_RETURN; }
-    if (buf[0] == 0x00 || buf[0] == 0xFF) { return RFM69_INIT_TEST; }
+    if (rval == RFM69_OK) {
+        if (buf[0] == 0x00 || buf[0] == 0xFF) { rval = RFM69_INIT_TEST; }
+    }
 
-    return RFM69_OK;
+    return rval;
 }
 
 void rfm69_reset(Rfm69 *rfm) {
