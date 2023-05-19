@@ -27,17 +27,20 @@ RFM69_RETURN rfm69_init(
     *rfm = malloc(sizeof(Rfm69));    
     if (rfm == NULL) return RFM69_INIT_MALLOC;
 
+    // Reset so that we can guarantee default register values
     rfm69_reset(*rfm);
 
     (*rfm)->spi = spi;
     (*rfm)->pin_cs = pin_cs;
     (*rfm)->pin_rst = pin_rst;
+    
+    // These are the default values for every version
+    // of the RFM69 I can find.
     (*rfm)->op_mode = RFM69_OP_MODE_STDBY;
-    (*rfm)->pa_level = RFM69_PA_LEVEL_DEFAULT - 18;
+    (*rfm)->pa_level = RFM69_PA_LEVEL_DEFAULT - 18; // 13
     (*rfm)->pa_mode = RFM69_PA_MODE_PA0;
     (*rfm)->ocp_trim = RFM69_OCP_TRIM_DEFAULT;
 
-    // SPI initialisation. This example will use SPI at 1MHz.
     gpio_set_function(pin_miso, GPIO_FUNC_SPI);
     gpio_set_function(pin_sck,  GPIO_FUNC_SPI);
     gpio_set_function(pin_mosi, GPIO_FUNC_SPI);
@@ -56,6 +59,9 @@ RFM69_RETURN rfm69_init(
     gpio_put(pin_rst, 0);
 
     // Try to read version register
+    // As long as this returns anything other than 0 or 255, this passes.
+    // The most common return is 0x24, but I can't guarantee that future
+    // modules will return the same value.
     uint8_t buf;
     RFM69_RETURN rval = rfm69_read(*rfm, RFM69_REG_VERSION, &buf, 1);
     if (rval == RFM69_OK) {
@@ -65,6 +71,7 @@ RFM69_RETURN rfm69_init(
     return rval;
 }
 
+// Have you tried turning it off and on again?
 void rfm69_reset(Rfm69 *rfm) {
     gpio_put(rfm->pin_rst, 1);
     sleep_us(100);
@@ -376,8 +383,11 @@ RFM69_RETURN rfm69_power_level_set(Rfm69 *rfm, int8_t pa_level) {
 #endif
 
     // High power modules have to follow slightly different bounds
-    // regarding the PA_LEVEL. -2 -> 20 Dbm. 
-    // TODO: Make the levels constants
+    // regarding PA_LEVEL. -2 -> 20 Dbm. 
+    // TODO: Make the levels constant
+    //
+    // HW and HCW modules use only the PA1 and PA2 pins
+    // 
     if (high_power) {
         // Pull pa_level within acceptible bounds 
         if (pa_level < -2)

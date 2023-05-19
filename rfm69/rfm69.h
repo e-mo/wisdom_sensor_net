@@ -265,12 +265,10 @@ typedef enum _OCP {
 // mode for spi communication. Passed pins must match the passed in
 // spi instane (e.g. spi0 pins for spi0 instance).
 //
-// This function assumes spi_inst_t *spi has already been inistialized. 
+// This function assumes spi_inst_t *spi has already been initialized. 
 // This function returns heap allocated memory. Since this kind of
 // module typically stays active for the lifetime of the process, I
 // see no reason to provide an rfm69 specific free function.
-// If freeing the memory is necessary, a simple call to standard free
-// will suffice.
 RFM69_RETURN rfm69_init(
     Rfm69 **rfm,
     spi_inst_t *spi,
@@ -299,10 +297,11 @@ void rfm69_reset(Rfm69 *rfm);
 // src     - an array of uint8_t to be written.
 // len     - src array length.
 // Returns number of bytes written (not including address byte).
-RFM69_RETURN rfm69_write(Rfm69 *rfm, 
-                uint8_t address, 
-                const uint8_t *src, 
-                size_t len);
+RFM69_RETURN rfm69_write(
+        Rfm69 *rfm, 
+        uint8_t address, 
+        const uint8_t *src, 
+        size_t len);
 
 RFM69_RETURN rfm69_write_masked(
         Rfm69 *rfm, 
@@ -319,12 +318,12 @@ RFM69_RETURN rfm69_write_masked(
 // dst     - an array of uint8_t to be read into.
 // len     - dst array length.
 // Returns number of bytes written (not including address byte).
-RFM69_RETURN rfm69_read(Rfm69 *rfm, 
-               uint8_t address, 
-               uint8_t *dst, 
-               size_t len);
+static RFM69_RETURN rfm69_read(Rfm69 *rfm, 
+        uint8_t address, 
+        uint8_t *dst, 
+        size_t len);
 
-RFM69_RETURN rfm69_read_masked(
+static RFM69_RETURN rfm69_read_masked(
         Rfm69 *rfm,
         uint8_t address,
         uint8_t *dst,
@@ -343,8 +342,7 @@ RFM69_RETURN rfm69_irq2_flag_state(Rfm69 *rfm, RFM69_IRQ2_FLAG flag, bool *state
 // frequency - desired frequency in MHz.
 //
 // Returns number of bytes written. 
-RFM69_RETURN rfm69_frequency_set(Rfm69 *rfm,
-                        uint frequency);
+RFM69_RETURN rfm69_frequency_set(Rfm69 *rfm, uint32_t frequency);
 
 // Reads operating frequency from module.
 // Note - might not reflect set freqency until a mode change.
@@ -368,26 +366,37 @@ RFM69_RETURN rfm69_mode_set(Rfm69 *rfm, RFM69_OP_MODE mode);
 void rfm69_mode_get(Rfm69 *rfm, uint8_t *mode);
 
 // Checks if current mode is ready.
-RFM69_RETURN rfm69_mode_ready(Rfm69 *rfm, bool *ready);
+static RFM69_RETURN rfm69_mode_ready(Rfm69 *rfm, bool *ready);
 
 // Blocks until mode ready IRQ flag is set. 
-RFM69_RETURN rfm69_mode_wait_until_ready(Rfm69 *rfm);
+static RFM69_RETURN rfm69_mode_wait_until_ready(Rfm69 *rfm);
 
+// Sets module into packet or continuous mode. 
 RFM69_RETURN rfm69_data_mode_set(Rfm69 *rfm, RFM69_DATA_MODE mode);
+// Read data mode register. For testing. 
 RFM69_RETURN rfm69_data_mode_get(Rfm69 *rfm, uint8_t *mode);
 
+// Sets modulation scheme (FSK or OOK)
 RFM69_RETURN rfm69_modulation_type_set(Rfm69 *rfm, RFM69_MODULATION_TYPE type);
 RFM69_RETURN rfm69_modulation_type_get(Rfm69 *rfm, uint8_t *type);
 
 RFM69_RETURN rfm69_modulation_shaping_set(Rfm69 *rfm, RFM69_MODULATION_SHAPING shaping);
 RFM69_RETURN rfm69_modulation_shaping_get(Rfm69 *rfm, uint8_t *shaping);
 
+// Read value of last RSSI measurment
 RFM69_RETURN rfm69_rssi_measurment_get(Rfm69 *rfm, int8_t *rssi);
+// Trigger a new RSSI reading
 RFM69_RETURN rfm69_rssi_measurment_start(Rfm69 *rfm);
 
+// Sets power level of module.
+// Low power modules accept power levels -18 -> 13 
+// High power modules accept power levels -2 -> 20
+//
+// Define RFM69_HIGH_POWER for high power modules. 
 RFM69_RETURN rfm69_power_level_set(Rfm69 *rfm, int8_t power);
-RFM69_RETURN rfm69_power_mode_set(Rfm69 *rfm, RFM69_PA_MODE mode);
+static RFM69_RETURN rfm69_power_mode_set(Rfm69 *rfm, RFM69_PA_MODE mode);
 
-RFM69_RETURN rfm69_ocp_set(Rfm69 *rfm, RFM69_OCP state);
+// Enable or disable overcurent protection
+static RFM69_RETURN rfm69_ocp_set(Rfm69 *rfm, RFM69_OCP state);
 
 #endif // RFM69_DRIVER_H
