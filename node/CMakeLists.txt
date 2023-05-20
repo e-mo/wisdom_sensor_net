@@ -44,6 +44,8 @@ target_compile_definitions(node PUBLIC ERROR_UART)
 target_compile_definitions(node PUBLIC ERROR_LED) 
 # Log error messages (unimplemented)
 #target_compile_definitions(node PUBLIC ERROR_LOG) 
+# Enable high power module range
+target_compile_definitions(node PUBLIC RFM69_HIGH_POWER)
 
 # Add the standard include files to the build
 target_include_directories(node PRIVATE

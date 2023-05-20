@@ -239,7 +239,14 @@ typedef enum _PA_MODE {
 
 enum _PA_LEVEL {
     RFM69_PA_LEVEL_DEFAULT = 0x1F,
-    RFM69_PA0_ON           = 0x01 << 7,
+
+    RFM69_PA_HIGH_MIN      = -2,
+    RFM69_PA_HIGH_MAX      = 20,
+
+    RFM69_PA_LOW_MIN       = -18,
+    RFM69_PA_LOW_MAX       = 13,
+
+    RFM69_PA0_ON           = 0X01 << 7,
     RFM69_PA1_ON           = 0x01 << 6,
     RFM69_PA2_ON           = 0x01 << 5,
     RFM69_PA_PINS_MASK     = 0x03 << 5,
@@ -293,7 +300,7 @@ void rfm69_reset(Rfm69 *rfm);
 // If src len > 1, address will be incremented between each byte (burst write).
 //
 // rfm     - initialized Rfm69 *
-// address - uint8_t buffer/FIFO address.
+// address - uint8_t register/FIFO address.
 // src     - an array of uint8_t to be written.
 // len     - src array length.
 // Returns number of bytes written (not including address byte).
@@ -303,6 +310,12 @@ RFM69_RETURN rfm69_write(
         const uint8_t *src, 
         size_t len);
 
+// For writing to a specific bit field within a register.
+// Only writes one byte of data.
+//
+// address - register address
+// src     - properly aligned value to be written
+// mask    - mask for clearing bit field
 RFM69_RETURN rfm69_write_masked(
         Rfm69 *rfm, 
         uint8_t address, 
@@ -314,16 +327,22 @@ RFM69_RETURN rfm69_write_masked(
 // If src len > 1, address will be incremented between each byte (burst write).
 //
 // rfm     - initialized Rfm69 *
-// address - uint8_t buffer/FIFO address.
+// address - uint8_t register/FIFO address.
 // dst     - an array of uint8_t to be read into.
 // len     - dst array length.
 // Returns number of bytes written (not including address byte).
-static RFM69_RETURN rfm69_read(Rfm69 *rfm, 
+RFM69_RETURN rfm69_read(Rfm69 *rfm, 
         uint8_t address, 
         uint8_t *dst, 
         size_t len);
 
-static RFM69_RETURN rfm69_read_masked(
+// For writing to a specific bit field within a register.
+// Only writes one byte of data.
+//
+// address - register address
+// src     - buffer to read field into
+// mask    - mask for isolating bit field
+RFM69_RETURN rfm69_read_masked(
         Rfm69 *rfm,
         uint8_t address,
         uint8_t *dst,
@@ -366,10 +385,10 @@ RFM69_RETURN rfm69_mode_set(Rfm69 *rfm, RFM69_OP_MODE mode);
 void rfm69_mode_get(Rfm69 *rfm, uint8_t *mode);
 
 // Checks if current mode is ready.
-static RFM69_RETURN rfm69_mode_ready(Rfm69 *rfm, bool *ready);
+static RFM69_RETURN _mode_ready(Rfm69 *rfm, bool *ready);
 
 // Blocks until mode ready IRQ flag is set. 
-static RFM69_RETURN rfm69_mode_wait_until_ready(Rfm69 *rfm);
+static RFM69_RETURN _mode_wait_until_ready(Rfm69 *rfm);
 
 // Sets module into packet or continuous mode. 
 RFM69_RETURN rfm69_data_mode_set(Rfm69 *rfm, RFM69_DATA_MODE mode);
@@ -393,10 +412,12 @@ RFM69_RETURN rfm69_rssi_measurment_start(Rfm69 *rfm);
 // High power modules accept power levels -2 -> 20
 //
 // Define RFM69_HIGH_POWER for high power modules. 
-RFM69_RETURN rfm69_power_level_set(Rfm69 *rfm, int8_t power);
-static RFM69_RETURN rfm69_power_mode_set(Rfm69 *rfm, RFM69_PA_MODE mode);
+// Also sets appropriate PA* and high power flags based
+// on desired power level. 
+RFM69_RETURN rfm69_power_level_set(Rfm69 *rfm, int8_t pa_level);
+static RFM69_RETURN _power_mode_set(Rfm69 *rfm, RFM69_PA_MODE mode);
 
 // Enable or disable overcurent protection
-static RFM69_RETURN rfm69_ocp_set(Rfm69 *rfm, RFM69_OCP state);
+static RFM69_RETURN _ocp_set(Rfm69 *rfm, RFM69_OCP state);
 
 #endif // RFM69_DRIVER_H
