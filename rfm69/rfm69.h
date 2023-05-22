@@ -370,6 +370,11 @@ RFM69_RETURN rfm69_frequency_set(Rfm69 *rfm, uint32_t frequency);
 // Returns number of bytes written. 
 RFM69_RETURN rfm69_frequency_get(Rfm69 *rfm, uint32_t *frequency);
 
+// Sets frequency deviation. 
+// Note: 0.5 <= 2* Fdev/Bitrate <= 10
+// Beta value should stay within this range per specification.
+RFM69_RETURN rfm69_fdev_set(Rfm69 *rfm, uint32_t fdev);
+
 // Sets modem bitrate.
 RFM69_RETURN rfm69_bitrate_set(Rfm69 *rfm,
                       RFM69_MODEM_BITRATE bit_rate);

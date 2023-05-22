@@ -210,15 +210,25 @@ RFM69_RETURN rfm69_frequency_set(Rfm69 *rfm, uint32_t frequency) {
 }
 
 RFM69_RETURN rfm69_frequency_get(Rfm69 *rfm, uint32_t *frequency) {
-        uint8_t buf[3] = {0};
-        RFM69_RETURN rval = rfm69_read(rfm, RFM69_REG_FRF_MSB, buf, 3);
+    uint8_t buf[3] = {0};
+    RFM69_RETURN rval = rfm69_read(rfm, RFM69_REG_FRF_MSB, buf, 3);
 
-        *frequency = (uint32_t) buf[0] << 16;
-        *frequency |= (uint32_t) buf[1] << 8;
-        *frequency |= (uint32_t) buf[2];
-        *frequency *= RFM69_FSTEP;
+    *frequency = (uint32_t) buf[0] << 16;
+    *frequency |= (uint32_t) buf[1] << 8;
+    *frequency |= (uint32_t) buf[2];
+    *frequency *= RFM69_FSTEP;
 
-        return rval;
+    return rval;
+}
+
+RFM69_RETURN rfm69_fdev_set(Rfm69 *rfm, uint16_t fdev) {
+    fdev = (fdev / RFM69_FSTEP) + 0.5;
+
+    uint8_t buf[2] = {
+        (fdev >> 8) & 0x3F, // MSB only uses
+        fdev & 0xFF 
+    };
+    return rfm69_write(rfm, RFM69_REG_BITRATE_MSB, buf, 2);
 }
 
 RFM69_RETURN rfm69_bitrate_set(Rfm69 *rfm,
