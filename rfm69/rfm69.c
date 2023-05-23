@@ -199,6 +199,8 @@ RFM69_RETURN rfm69_irq2_flag_state(Rfm69 *rfm, RFM69_IRQ2_FLAG flag, bool *state
 RFM69_RETURN rfm69_frequency_set(Rfm69 *rfm, uint32_t frequency) {
     // Frf = Fstep * Frf(23,0)
     frequency *= 1000000; // MHz to Hz
+
+
     frequency =(frequency / RFM69_FSTEP) + 0.5; // Gives needed register value
     // Split into three bytes.
     uint8_t buf[3] = {
@@ -229,6 +231,21 @@ RFM69_RETURN rfm69_fdev_set(Rfm69 *rfm, uint16_t fdev) {
         fdev & 0xFF 
     };
     return rfm69_write(rfm, RFM69_REG_BITRATE_MSB, buf, 2);
+}
+
+RFM69_RETURN rfm69_rxbw_set(Rfm69 *rfm, RFM69_RXBW_CONFIG mantissa, uint8_t exponent) {
+    // Mask all inputs to prevent invalid input
+    exponent &= RFM69_RXBW_EXPONENT_MASK;
+    mantissa &= RFM69_RXBW_MANTISSA_MASK;
+
+    uint8_t buf = exponent | mantissa;
+
+    return rfm69_write_masked(
+        rfm,
+        RFM69_REG_RXBW,
+        buf,
+        RFM69_RXBW_EXPONENT_MASK | RFM69_RXBW_MANTISSA_MASK
+    );
 }
 
 RFM69_RETURN rfm69_bitrate_set(Rfm69 *rfm,

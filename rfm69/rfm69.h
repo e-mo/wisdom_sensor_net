@@ -46,8 +46,8 @@
 
 #define RFM69_REG_LNA             0x18 // LNA settings
 
-#define RFM69_REG_RX_BW           0x19 // Channel Filter BW Control
-#define RFM69_REG_AFC_BW          0x1A // Channel Filter BW control during the AFC routine
+#define RFM69_REG_RXBW           0x19 // Channel Filter BW Control
+#define RFM69_REG_AFCBW          0x1A // Channel Filter BW control during the AFC routine
 
 #define RFM69_REG_OOK_PEAK        0x1B // OOK demodulator selection and control in peak mode
 #define RFM69_REG_OOK_AVG         0x1C // Average threshold control of the OOK demodulator
@@ -268,6 +268,15 @@ typedef enum _OCP {
     RFM69_OCP_TRIM_DEFAULT = 0x0A
 } RFM69_OCP;
 
+#define _RXBW_MANTISSA_OFFSET 3
+typedef enum _RXBW_CONFIG {
+    RFM69_RXBW_MANTISSA_16 = 0x0 << _RXBW_MANTISSA_OFFSET, 
+    RFM69_RXBW_MANTISSA_20 = 0x1 << _RXBW_MANTISSA_OFFSET, 
+    RFM69_RXBW_MANTISSA_24 = 0x2 << _RXBW_MANTISSA_OFFSET, 
+    RFM69_RXBW_MANTISSA_MASK = 0x18,
+    RFM69_RXBW_EXPONENT_MASK = 0x07
+} RFM69_RXBW_CONFIG ;
+
 // Initializes passed in Rfm69 pointer and sets pins to proper
 // mode for spi communication. Passed pins must match the passed in
 // spi instane (e.g. spi0 pins for spi0 instance).
@@ -368,12 +377,14 @@ RFM69_RETURN rfm69_frequency_set(Rfm69 *rfm, uint32_t frequency);
 // frequency - stores frequency in Hz.
 //
 // Returns number of bytes written. 
-RFM69_RETURN rfm69_frequency_get(Rfm69 *rfm, uint32_t *frequency);
+RFM69_RETURN rfm69_frequency_get(Rfm69 *rfm, uint16_t *frequency);
 
 // Sets frequency deviation. 
 // Note: 0.5 <= 2* Fdev/Bitrate <= 10
 // Beta value should stay within this range per specification.
 RFM69_RETURN rfm69_fdev_set(Rfm69 *rfm, uint32_t fdev);
+
+RFM69_RETURN rfm69_rxbw_set(Rfm69 *rfm, RFM69_RXBW_CONFIG mantissa, uint8_t exponent);
 
 // Sets modem bitrate.
 RFM69_RETURN rfm69_bitrate_set(Rfm69 *rfm,
@@ -417,7 +428,7 @@ RFM69_RETURN rfm69_rssi_measurment_start(Rfm69 *rfm);
 // High power modules accept power levels -2 -> 20
 //
 // Define RFM69_HIGH_POWER for high power modules. 
-// Also sets appropriate PA* and high power flags based
+// Also sets appropriate PA* and power flags based
 // on desired power level. 
 RFM69_RETURN rfm69_power_level_set(Rfm69 *rfm, int8_t pa_level);
 static RFM69_RETURN _power_mode_set(Rfm69 *rfm, RFM69_PA_MODE mode);
