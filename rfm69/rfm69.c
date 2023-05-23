@@ -169,10 +169,10 @@ RFM69_RETURN rfm69_read_masked(
 RFM69_RETURN rfm69_irq1_flag_state(Rfm69 *rfm, RFM69_IRQ1_FLAG flag, bool *state) {
     uint8_t reg;
     RFM69_RETURN rval = rfm69_read_masked(
-        rfm,
-        RFM69_REG_IRQ_FLAGS_1,
-        &reg,
-        flag
+            rfm,
+            RFM69_REG_IRQ_FLAGS_1,
+            &reg,
+            flag
     );
 
     if (reg) *state = true;
@@ -184,10 +184,10 @@ RFM69_RETURN rfm69_irq1_flag_state(Rfm69 *rfm, RFM69_IRQ1_FLAG flag, bool *state
 RFM69_RETURN rfm69_irq2_flag_state(Rfm69 *rfm, RFM69_IRQ2_FLAG flag, bool *state) {
     uint8_t reg;
     RFM69_RETURN rval = rfm69_read_masked(
-        rfm,
-        RFM69_REG_IRQ_FLAGS_2,
-        &reg,
-        flag
+            rfm,
+            RFM69_REG_IRQ_FLAGS_2,
+            &reg,
+            flag
     );
 
     if (reg) *state = true;
@@ -233,7 +233,7 @@ RFM69_RETURN rfm69_fdev_set(Rfm69 *rfm, uint16_t fdev) {
     return rfm69_write(rfm, RFM69_REG_BITRATE_MSB, buf, 2);
 }
 
-RFM69_RETURN rfm69_rxbw_set(Rfm69 *rfm, RFM69_RXBW_CONFIG mantissa, uint8_t exponent) {
+RFM69_RETURN rfm69_rxbw_set(Rfm69 *rfm, RFM69_RXBW_MANTISSA mantissa, uint8_t exponent) {
     // Mask all inputs to prevent invalid input
     exponent &= RFM69_RXBW_EXPONENT_MASK;
     mantissa &= RFM69_RXBW_MANTISSA_MASK;
@@ -241,10 +241,10 @@ RFM69_RETURN rfm69_rxbw_set(Rfm69 *rfm, RFM69_RXBW_CONFIG mantissa, uint8_t expo
     uint8_t buf = exponent | mantissa;
 
     return rfm69_write_masked(
-        rfm,
-        RFM69_REG_RXBW,
-        buf,
-        RFM69_RXBW_EXPONENT_MASK | RFM69_RXBW_MANTISSA_MASK
+            rfm,
+            RFM69_REG_RXBW,
+            buf,
+            RFM69_RXBW_EXPONENT_MASK | RFM69_RXBW_MANTISSA_MASK
     );
 }
 
@@ -311,55 +311,55 @@ static RFM69_RETURN _mode_wait_until_ready(Rfm69 *rfm) {
 
 RFM69_RETURN rfm69_data_mode_set(Rfm69 *rfm, RFM69_DATA_MODE mode) {
     return rfm69_write_masked(
-        rfm, 
-        RFM69_REG_DATA_MODUL,
-        mode,
-        RFM69_DATA_MODE_MASK
+            rfm, 
+            RFM69_REG_DATA_MODUL,
+            mode,
+            RFM69_DATA_MODE_MASK
     );
 }
 
 RFM69_RETURN rfm69_data_mode_get(Rfm69 *rfm, uint8_t *mode) {
     return rfm69_read_masked(
-        rfm,
-        RFM69_REG_DATA_MODUL,
-        mode,
-        RFM69_DATA_MODE_MASK
+            rfm,
+            RFM69_REG_DATA_MODUL,
+            mode,
+            RFM69_DATA_MODE_MASK
     );
 }
 
 RFM69_RETURN rfm69_modulation_type_set(Rfm69 *rfm, RFM69_MODULATION_TYPE type) {
     return rfm69_write_masked(
-        rfm,
-        RFM69_REG_DATA_MODUL,
-        type,
-        RFM69_MODULATION_TYPE_MASK
+            rfm,
+            RFM69_REG_DATA_MODUL,
+            type,
+            RFM69_MODULATION_TYPE_MASK
     );
 }
 
 RFM69_RETURN rfm69_modulation_type_get(Rfm69 *rfm, uint8_t *type) {
     return rfm69_read_masked(
-        rfm,
-        RFM69_REG_DATA_MODUL,
-        type,
-        RFM69_MODULATION_TYPE_MASK
+            rfm,
+            RFM69_REG_DATA_MODUL,
+            type,
+            RFM69_MODULATION_TYPE_MASK
     );
 }
 
 RFM69_RETURN rfm69_modulation_shaping_set(Rfm69 *rfm, RFM69_MODULATION_SHAPING shaping) {
     return rfm69_write_masked(
-        rfm,
-        RFM69_REG_DATA_MODUL,
-        shaping,
-        RFM69_MODULATION_SHAPING_MASK
+            rfm,
+            RFM69_REG_DATA_MODUL,
+            shaping,
+            RFM69_MODULATION_SHAPING_MASK
     );
 }
 
 RFM69_RETURN rfm69_modulation_shaping_get(Rfm69 *rfm, uint8_t *shaping) {
     return rfm69_read_masked(
-        rfm,
-        RFM69_REG_DATA_MODUL,
-        shaping,
-        RFM69_MODULATION_SHAPING_MASK
+            rfm,
+            RFM69_REG_DATA_MODUL,
+            shaping,
+            RFM69_MODULATION_SHAPING_MASK
     );
 }
 
@@ -454,10 +454,10 @@ RFM69_RETURN rfm69_power_level_set(Rfm69 *rfm, int8_t pa_level) {
     if (rval == RFM69_OK || rval == RFM69_REG_ALREADY_SET) {
         rfm->pa_mode = pa_mode;
         rval = rfm69_write_masked(
-            rfm,
-            RFM69_REG_PA_LEVEL,
-            pout,
-            RFM69_PA_OUTPUT_MASK
+                rfm,
+                RFM69_REG_PA_LEVEL,
+                pout,
+                RFM69_PA_OUTPUT_MASK
         );
         // If power level was successfully set, cache value
         if (rval == RFM69_OK)
@@ -512,10 +512,10 @@ static RFM69_RETURN _power_mode_set(Rfm69 *rfm, RFM69_PA_MODE pa_mode) {
             buf[0] = pa1;
             buf[1] = pa2;
             rval = rfm69_write(
-                rfm,
-                RFM69_REG_TEST_PA1,
-                buf,
-                2
+                    rfm,
+                    RFM69_REG_TEST_PA1,
+                    buf,
+                    2
             );
 
             if (rval == RFM69_OK) {
@@ -528,10 +528,10 @@ static RFM69_RETURN _power_mode_set(Rfm69 *rfm, RFM69_PA_MODE pa_mode) {
                         ocp_trim = RFM69_OCP_TRIM_HIGH;
                         
                     rval = rfm69_write_masked(
-                        rfm,
-                        RFM69_REG_OCP,
-                        ocp_trim,
-                        RFM69_OCP_TRIM_MASK
+                            rfm,
+                            RFM69_REG_OCP,
+                            ocp_trim,
+                            RFM69_OCP_TRIM_MASK
                     );
                 }
             }
@@ -547,5 +547,23 @@ static RFM69_RETURN _ocp_set(Rfm69 *rfm, RFM69_OCP state) {
             RFM69_REG_OCP,
             state,
             RFM69_OCP_ENABLED
+    );
+}
+
+RFM69_RETURN rfm69_tx_start_condition_set(Rfm69 *rfm, RFM69_TX_START_CONDITION condition) {
+    return rfm69_write_masked(
+            rfm,
+            RFM69_REG_FIFO_THRESH,
+            condition,
+            _TX_START_CONDITION_MASK
+    );
+}
+
+RFM69_RETURN rfm69_payload_length_set(Rfm69 *rfm, uint8_t length) {
+    return rfm69_write(
+            rfm,
+            RFM69_REG_PAYLOAD_LENGTH,
+            &length,
+            1
     );
 }

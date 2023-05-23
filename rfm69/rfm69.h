@@ -46,8 +46,8 @@
 
 #define RFM69_REG_LNA             0x18 // LNA settings
 
-#define RFM69_REG_RXBW           0x19 // Channel Filter BW Control
-#define RFM69_REG_AFCBW          0x1A // Channel Filter BW control during the AFC routine
+#define RFM69_REG_RXBW            0x19 // Channel Filter BW Control
+#define RFM69_REG_AFCBW           0x1A // Channel Filter BW control during the AFC routine
 
 #define RFM69_REG_OOK_PEAK        0x1B // OOK demodulator selection and control in peak mode
 #define RFM69_REG_OOK_AVG         0x1C // Average threshold control of the OOK demodulator
@@ -132,7 +132,7 @@
 typedef struct Rfm69 Rfm69;
 
 typedef enum _RETURN {
-    RFM69_OK                      = 0,
+    RFM69_OK                      =  0,
     RFM69_INIT_MALLOC             = -1,
     RFM69_INIT_TEST               = -2,
     RFM69_SPI_UNEXPECTED_RETURN   = -3,
@@ -169,64 +169,64 @@ typedef enum _MODULATION_TYPE {
 #define _MODULATION_SHAPING_OFFSET 0
 typedef enum _MODULATION_SHAPING {
     RFM69_NO_SHAPING,
-    RFM69_FSK_GAUSSIAN_1_0 = 0x01, RFM69_OOK_FCUTOFF_BR   = 0x01,
-    RFM69_FSK_GAUSSIAN_0_5 = 0x02, RFM69_OOK_FCUTOFF_2XBR = 0x02,
-    RFM69_FSK_GAUSSIAN_0_3 = 0x03,
+    RFM69_FSK_GAUSSIAN_1_0        = 0x01, RFM69_OOK_FCUTOFF_BR   = 0x01,
+    RFM69_FSK_GAUSSIAN_0_5        = 0x02, RFM69_OOK_FCUTOFF_2XBR = 0x02,
+    RFM69_FSK_GAUSSIAN_0_3        = 0x03,
     RFM69_MODULATION_SHAPING_MASK = 0x03
 } RFM69_MODULATION_SHAPING;
 
 typedef enum _MODEM_BITRATE {
 // Classic modem baud rates (multiples of 1.2 kbps)
-    RFM69_MODEM_BITRATE_1_2   = 0x682B, // 1.2 kbps
-    RFM69_MODEM_BITRATE_2_4   = 0x3415, // 2.4 kbps
-    RFM69_MODEM_BITRATE_4_8   = 0x1A0B, // 4.8 kbps
-    RFM69_MODEM_BITRATE_9_6   = 0x0D05, // 9.6 kbps
-    RFM69_MODEM_BITRATE_19_2  = 0x0683, // 19.2 kbps
-    RFM69_MODEM_BITRATE_38_4  = 0x0341, // 38.4 kbps
-    RFM69_MODEM_BITRATE_76_8  = 0x01A1, // 76.8 kbps
-    RFM69_MODEM_BITRATE_153_6 = 0x00D0, // 153.6 kbps
+    RFM69_MODEM_BITRATE_1_2        = 0x682B, // 1.2 kbps
+    RFM69_MODEM_BITRATE_2_4        = 0x3415, // 2.4 kbps
+    RFM69_MODEM_BITRATE_4_8        = 0x1A0B, // 4.8 kbps
+    RFM69_MODEM_BITRATE_9_6        = 0x0D05, // 9.6 kbps
+    RFM69_MODEM_BITRATE_19_2       = 0x0683, // 19.2 kbps
+    RFM69_MODEM_BITRATE_38_4       = 0x0341, // 38.4 kbps
+    RFM69_MODEM_BITRATE_76_8       = 0x01A1, // 76.8 kbps
+    RFM69_MODEM_BITRATE_153_6      = 0x00D0, // 153.6 kbps
 
 // Classic modem baud rates (multiples of 0.9 kbps)
-    RFM69_MODEM_BITRATE_57_6  = 0x022C, // 57.6 kbps
-    RFM69_MODEM_BITRATE_115_2 = 0x0116, // 115.2 kbps
+    RFM69_MODEM_BITRATE_57_6       = 0x022C, // 57.6 kbps
+    RFM69_MODEM_BITRATE_115_2      = 0x0116, // 115.2 kbps
 
 // Round bit rates (multiples of 12.5, 25, and 50 kbps)
-    RFM69_MODEM_BITRATE_12_5  = 0x0A00, // 12.5 kbps
-    RFM69_MODEM_BITRATE_25    = 0x0500, // 25 kbps
-    RFM69_MODEM_BITRATE_50    = 0x0280, // 50 kbps
-    RFM69_MODEM_BITRATE_100   = 0x0140, // 100 kbps
-    RFM69_MODEM_BITRATE_150   = 0x00D5, // 150 kbps
-    RFM69_MODEM_BITRATE_200   = 0x00A0, // 200 kbps
-    RFM69_MODEM_BITRATE_250   = 0x0080, // 250 kbps
-    RFM69_MODEM_BITRATE_300   = 0x006B, // 300 kbps
+    RFM69_MODEM_BITRATE_12_5       = 0x0A00, // 12.5 kbps
+    RFM69_MODEM_BITRATE_25         = 0x0500, // 25 kbps
+    RFM69_MODEM_BITRATE_50         = 0x0280, // 50 kbps
+    RFM69_MODEM_BITRATE_100        = 0x0140, // 100 kbps
+    RFM69_MODEM_BITRATE_150        = 0x00D5, // 150 kbps
+    RFM69_MODEM_BITRATE_200        = 0x00A0, // 200 kbps
+    RFM69_MODEM_BITRATE_250        = 0x0080, // 250 kbps
+    RFM69_MODEM_BITRATE_300        = 0x006B, // 300 kbps
 
     RFM69_MODEM_BITRATE_WATCH_XTAL = 0x03D1, // 32.768 kbps
 } RFM69_MODEM_BITRATE;
 
 typedef enum _IRQ1_FLAG {
-    RFM69_IRQ1_FLAG_SYNC_ADDRESS_MATCH  = 0x01,
-    RFM69_IRQ1_FLAG_AUTO_MODE           = 0x02,
-    RFM69_IRQ1_FLAG_TIMEOUT             = 0x04,
-    RFM69_IRQ1_FLAG_RSSI                = 0x08,
-    RFM69_IRQ1_FLAG_PLL_LOCK            = 0x10,
-    RFM69_IRQ1_FLAG_TX_READY            = 0x20,
-    RFM69_IRQ1_FLAG_RX_READY            = 0x40,
-    RFM69_IRQ1_FLAG_MODE_READY          = 0x80
+    RFM69_IRQ1_FLAG_SYNC_ADDRESS_MATCH = 0x01,
+    RFM69_IRQ1_FLAG_AUTO_MODE          = 0x02,
+    RFM69_IRQ1_FLAG_TIMEOUT            = 0x04,
+    RFM69_IRQ1_FLAG_RSSI               = 0x08,
+    RFM69_IRQ1_FLAG_PLL_LOCK           = 0x10,
+    RFM69_IRQ1_FLAG_TX_READY           = 0x20,
+    RFM69_IRQ1_FLAG_RX_READY           = 0x40,
+    RFM69_IRQ1_FLAG_MODE_READY         = 0x80
 } RFM69_IRQ1_FLAG;
 
 typedef enum _IRQ_2_FLAG {
-    RFM69_IRQ2_FLAG_CRC_OK              = 0x02,
-    RFM69_IRQ2_FLAG_PAYLOAD_READY       = 0x04,
-    RFM69_IRQ2_FLAG_PACKET_SENT         = 0x08,
-    RFM69_IRQ2_FLAG_FIFO_OVERRUN        = 0x10,
-    RFM69_IRQ2_FLAG_FIFO_LEVEL          = 0x20,
-    RFM69_IRQ2_FLAG_FIFO_NOT_EMPTY      = 0x40,
-    RFM69_IRQ2_FLAG_FIFO_FULL           = 0x80
+    RFM69_IRQ2_FLAG_CRC_OK         = 0x02,
+    RFM69_IRQ2_FLAG_PAYLOAD_READY  = 0x04,
+    RFM69_IRQ2_FLAG_PACKET_SENT    = 0x08,
+    RFM69_IRQ2_FLAG_FIFO_OVERRUN   = 0x10,
+    RFM69_IRQ2_FLAG_FIFO_LEVEL     = 0x20,
+    RFM69_IRQ2_FLAG_FIFO_NOT_EMPTY = 0x40,
+    RFM69_IRQ2_FLAG_FIFO_FULL      = 0x80
 } RFM69_IRQ2_FLAG;
 
 typedef enum _RSSI_CONFIG {
-    RFM69_RSSI_MEASURMENT_START         = 0x01,
-    RFM69_RSSI_MEASURMENT_DONE          = 0x02
+    RFM69_RSSI_MEASURMENT_START = 0x01,
+    RFM69_RSSI_MEASURMENT_DONE  = 0x02
 } RFM69_RSSI_CONFIG;
 
 typedef enum _PA_MODE {
@@ -241,10 +241,10 @@ enum _PA_LEVEL {
     RFM69_PA_LEVEL_DEFAULT = 0x1F,
 
     RFM69_PA_HIGH_MIN      = -2,
-    RFM69_PA_HIGH_MAX      = 20,
+    RFM69_PA_HIGH_MAX      =  20,
 
     RFM69_PA_LOW_MIN       = -18,
-    RFM69_PA_LOW_MAX       = 13,
+    RFM69_PA_LOW_MAX       =  13,
 
     RFM69_PA0_ON           = 0X01 << 7,
     RFM69_PA1_ON           = 0x01 << 6,
@@ -264,18 +264,26 @@ typedef enum _HP_CONFIG {
 typedef enum _OCP {
     RFM69_OCP_DISABLED     = 0x00,
     RFM69_OCP_ENABLED      = 0x01 << _OCP_STATE_OFFSET,
-    RFM69_OCP_TRIM_MASK    = 0x0F, RFM69_OCP_TRIM_HIGH = 0x0F, 
+    RFM69_OCP_TRIM_HIGH    = 0x0F, 
     RFM69_OCP_TRIM_DEFAULT = 0x0A
 } RFM69_OCP;
+#define RFM69_OCP_TRIM_MASK 0x0F
 
 #define _RXBW_MANTISSA_OFFSET 3
-typedef enum _RXBW_CONFIG {
-    RFM69_RXBW_MANTISSA_16 = 0x0 << _RXBW_MANTISSA_OFFSET, 
-    RFM69_RXBW_MANTISSA_20 = 0x1 << _RXBW_MANTISSA_OFFSET, 
-    RFM69_RXBW_MANTISSA_24 = 0x2 << _RXBW_MANTISSA_OFFSET, 
-    RFM69_RXBW_MANTISSA_MASK = 0x18,
-    RFM69_RXBW_EXPONENT_MASK = 0x07
-} RFM69_RXBW_CONFIG ;
+typedef enum _RXBW_MANTISSA {
+    RFM69_RXBW_MANTISSA_16   = 0x0 << _RXBW_MANTISSA_OFFSET, 
+    RFM69_RXBW_MANTISSA_20   = 0x1 << _RXBW_MANTISSA_OFFSET, 
+    RFM69_RXBW_MANTISSA_24   = 0x2 << _RXBW_MANTISSA_OFFSET, 
+} RFM69_RXBW_MANTISSA ;
+#define RFM69_RXBW_EXPONENT_MASK 0x07
+#define RFM69_RXBW_MANTISSA_MASK = 0x18,
+
+#define _TX_START_CONDITION_OFFSET 7
+typedef enum _TX_START_CONDITION {
+    RFM69_TX_FIFO_LEVEL     = 0x00,
+    RFM69_TX_FIFO_NOT_EMPTY = 0x01 << _TX_START_CONDITION_OFFSET,
+} RFM69_TX_START_CONDITION;
+#define _TX_START_CONDITION_MASK 0x80
 
 // Initializes passed in Rfm69 pointer and sets pins to proper
 // mode for spi communication. Passed pins must match the passed in
@@ -384,7 +392,7 @@ RFM69_RETURN rfm69_frequency_get(Rfm69 *rfm, uint16_t *frequency);
 // Beta value should stay within this range per specification.
 RFM69_RETURN rfm69_fdev_set(Rfm69 *rfm, uint32_t fdev);
 
-RFM69_RETURN rfm69_rxbw_set(Rfm69 *rfm, RFM69_RXBW_CONFIG mantissa, uint8_t exponent);
+RFM69_RETURN rfm69_rxbw_set(Rfm69 *rfm, RFM69_RXBW_MANTISSA mantissa, uint8_t exponent);
 
 // Sets modem bitrate.
 RFM69_RETURN rfm69_bitrate_set(Rfm69 *rfm,
@@ -435,5 +443,9 @@ static RFM69_RETURN _power_mode_set(Rfm69 *rfm, RFM69_PA_MODE mode);
 
 // Enable or disable overcurent protection
 static RFM69_RETURN _ocp_set(Rfm69 *rfm, RFM69_OCP state);
+
+RFM69_RETURN rfm69_tx_start_condition_set(Rfm69 *rfm, RFM69_TX_START_CONDITION condition);
+
+RFM69_RETURN rfm69_payload_length_set(Rfm69 *rfm, uint8_t length);
 
 #endif // RFM69_DRIVER_H
