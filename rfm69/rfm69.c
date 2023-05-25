@@ -223,7 +223,7 @@ RFM69_RETURN rfm69_frequency_get(Rfm69 *rfm, uint32_t *frequency) {
     return rval;
 }
 
-RFM69_RETURN rfm69_fdev_set(Rfm69 *rfm, uint16_t fdev) {
+RFM69_RETURN rfm69_fdev_set(Rfm69 *rfm, uint32_t fdev) {
     fdev = (fdev / RFM69_FSTEP) + 0.5;
 
     uint8_t buf[2] = {
@@ -564,6 +564,33 @@ RFM69_RETURN rfm69_payload_length_set(Rfm69 *rfm, uint8_t length) {
             rfm,
             RFM69_REG_PAYLOAD_LENGTH,
             &length,
+            1
+    );
+}
+
+RFM69_RETURN rfm69_address_filter_set(Rfm69 *rfm, RFM69_ADDRESS_FILTER filter) {
+    return rfm69_write_masked(
+            rfm,
+            RFM69_REG_PACKET_CONFIG_1,
+            filter,
+            _ADDRESS_FILTER_MASK
+    );
+}
+
+RFM69_RETURN rfm69_node_address_set(Rfm69 *rfm, uint8_t address) {
+    return rfm69_write(
+            rfm,
+            RFM69_REG_NODE_ADRS,
+            &address,
+            1
+    );
+}
+
+RFM69_RETURN rfm69_broadcast_address_set(Rfm69 *rfm, uint8_t address) {
+    return rfm69_write(
+            rfm,
+            RFM69_REG_BROADCAST_ADRS,
+            &address,
             1
     );
 }

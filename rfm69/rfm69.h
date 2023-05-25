@@ -276,7 +276,7 @@ typedef enum _RXBW_MANTISSA {
     RFM69_RXBW_MANTISSA_24   = 0x2 << _RXBW_MANTISSA_OFFSET, 
 } RFM69_RXBW_MANTISSA ;
 #define RFM69_RXBW_EXPONENT_MASK 0x07
-#define RFM69_RXBW_MANTISSA_MASK = 0x18,
+#define RFM69_RXBW_MANTISSA_MASK 0x18
 
 #define _TX_START_CONDITION_OFFSET 7
 typedef enum _TX_START_CONDITION {
@@ -284,6 +284,20 @@ typedef enum _TX_START_CONDITION {
     RFM69_TX_FIFO_NOT_EMPTY = 0x01 << _TX_START_CONDITION_OFFSET,
 } RFM69_TX_START_CONDITION;
 #define _TX_START_CONDITION_MASK 0x80
+
+#define _ADDRESS_FILTER_OFFSET 1
+typedef enum _ADDRESS_FILTER {
+    RFM69_FILTER_NONE           = 0x00,
+    RFM69_FILTER_NODE           = 0x01 << _ADDRESS_FILTER_OFFSET,
+    RFM69_FILTER_NODE_BROADCAST = 0x02 << _ADDRESS_FILTER_OFFSET
+} RFM69_ADDRESS_FILTER;
+#define _ADDRESS_FILTER_MASK 0x06
+
+typedef enum _DC_FREE_SETTING {
+    RFM69_DC_FREE_OFF,
+    RFM69_DC_FREE_MANCHESTER,
+    RFM69_DC_FREE_WHITENING
+} RFM69_DC_FREE_SETTING;
 
 // Initializes passed in Rfm69 pointer and sets pins to proper
 // mode for spi communication. Passed pins must match the passed in
@@ -385,7 +399,7 @@ RFM69_RETURN rfm69_frequency_set(Rfm69 *rfm, uint32_t frequency);
 // frequency - stores frequency in Hz.
 //
 // Returns number of bytes written. 
-RFM69_RETURN rfm69_frequency_get(Rfm69 *rfm, uint16_t *frequency);
+RFM69_RETURN rfm69_frequency_get(Rfm69 *rfm, uint32_t *frequency);
 
 // Sets frequency deviation. 
 // Note: 0.5 <= 2* Fdev/Bitrate <= 10
@@ -447,5 +461,9 @@ static RFM69_RETURN _ocp_set(Rfm69 *rfm, RFM69_OCP state);
 RFM69_RETURN rfm69_tx_start_condition_set(Rfm69 *rfm, RFM69_TX_START_CONDITION condition);
 
 RFM69_RETURN rfm69_payload_length_set(Rfm69 *rfm, uint8_t length);
+
+RFM69_RETURN rfm69_address_filter_set(Rfm69 *rfm, RFM69_ADDRESS_FILTER filter);
+RFM69_RETURN rfm69_node_address_set(Rfm69 *rfm, uint8_t address);
+RFM69_RETURN rfm69_broadcast_address_set(Rfm69 *rfm, uint8_t address);
 
 #endif // RFM69_DRIVER_H

@@ -53,12 +53,24 @@ int main() {
     );
     
     rfm69_reset(rfm);
-    rfm69_mode_set(rfm, RFM69_OP_MODE_STDBY);
-
-    rfm69_bitrate_set(rfm, RFM69_MODEM_BITRATE_250);
-    rfm69_frequency_set(rfm, 915);
-
     rfm69_mode_set(rfm, RFM69_OP_MODE_SLEEP);
+
+    // Packet mode 
+    rfm69_data_mode_set(rfm, RFM69_DATA_MODE_PACKET);
+    // 250kb/s baud rate
+    rfm69_bitrate_set(rfm, RFM69_MODEM_BITRATE_250);
+    // ~2 beta 
+    rfm69_fdev_set(rfm, 250000);
+    // 915MHz 
+    rfm69_frequency_set(rfm, 915);
+    // RXBW >= fdev + br/2
+    rfm69_rxbw_set(rfm, RFM69_RXBW_MANTISSA_20, 0);
+    // Transmit starts with any data in the FIFO
+    rfm69_tx_start_condition_set(rfm, RFM69_TX_FIFO_NOT_EMPTY);
+
+    // Change into standby mode to make sure all registers
+    // actually change.
+    rfm69_mode_set(rfm, RFM69_OP_MODE_STDBY);
 
     // Check if rfm69_init was successful (== 0)
     // Set last error and halt process if not.
@@ -68,16 +80,20 @@ int main() {
     }
 
 
+    uint8_t buf;
     for(ever) { 
-        uint32_t frequency;
-        rfm69_frequency_get(rfm, &frequency);
-        // if this prints ~915Mhz, everthing is working
-        printf("freq: %u\n", frequency);
-        sleep_ms(1000);
-        uint16_t bitrate;
-        rfm69_bitrate_get(rfm, &bitrate);
-        printf("bitr: 0x%04X\n", bitrate);
-        sleep_ms(1000);
+        // Print registers 0x01 -> 0x4F
+        for (int i = 1; i < 0x50; i++) {
+            rfm69_read(
+                    rfm,
+                    i,
+                    &buf,
+                    1
+            );
+            printf("0x%02X: %02X\n", i, buf);
+        }
+        sleep_ms(5000);
+        printf("\n");
     }
     
     return 0;
