@@ -17,55 +17,19 @@
 #define PIN_SCK  18
 #define PIN_MOSI 19
 #define PIN_RST  20
-#define PIN_IRQ  21
-
-void init_rfm(Rfm69 *rfm) {
-    // REG_OP_MODE
-    // Set into sleep mode
-    uint8_t buf[9];
-    buf[0] = 0x00;
-
-    // REG_DATA_MODUL
-    // Set Packet mode
-    // Set FSK
-    // No modulation shaping
-    buf[1] = 0x00;
-
-    // REG_BITRATE*
-    // Set bit rate to 250kb/s
-    buf[2] = 0x00; // MSB
-    buf[3] = 0x80; // LSB
-
-    // REG_FDEV*
-    // FDA + BRF/2 =< 500 kHz
-    // Fdev(13,0) = 0x1000 = 4092 khz
-    // FDEV = Fdev(13,0) * FSTEP (61Hz) = ~250,000kHz
-    // 0.5 <= 2 * FDEV/BR <= 10 (MI range)
-    // 2 * FDEV/BR (250,000kb/s) = ~2 (MI)
-    buf[4] = 0x10;
-    buf[5] = 0x00;
-
-    rfm69_frequency_set(rfm, 915);
-
-    // Burst write 9 sequential registers starting with SPI_PORT
-    rfm69_write(rfm, RFM69_REG_OP_MODE, buf, 9);
-
-    // REG_TEST_DAGC 
-    // Fading margin improvement for AfcLowBetaOn = 0
-    buf[0] = 0x30;
-    rfm69_write(rfm, RFM69_REG_TEST_DAGC, buf, 1);
-}
+#define PIN_IRQ_0  21
+#define PIN_IRQ_1  21
 
 void set_bi() {
     bi_decl(bi_program_name("Leaf Node"));
     bi_decl(bi_program_description("WISDOM sensor network node communications routine."))
-    bi_decl(bi_1pin_with_name(16, "MISO"));
-    bi_decl(bi_1pin_with_name(17, "CS"));
-    bi_decl(bi_1pin_with_name(18, "SCK"));
-    bi_decl(bi_1pin_with_name(19, "MOSI"));
-    bi_decl(bi_1pin_with_name(20, "RST"));
-    bi_decl(bi_1pin_with_name(21, "IRQ 1"));
-    bi_decl(bi_1pin_with_name(22, "IRQ 2"));
+    bi_decl(bi_1pin_with_name(PIN_MISO, "MISO"));
+    bi_decl(bi_1pin_with_name(PIN_CS, "CS"));
+    bi_decl(bi_1pin_with_name(PIN_SCK, "SCK"));
+    bi_decl(bi_1pin_with_name(PIN_MOSI, "MOSI"));
+    bi_decl(bi_1pin_with_name(PIN_RST, "RST"));
+    bi_decl(bi_1pin_with_name(PIN_IRQ_0, "IRQ 0"));
+    bi_decl(bi_1pin_with_name(PIN_IRQ_1, "IRQ 0"));
 }
 
 int main() {
@@ -84,8 +48,45 @@ int main() {
         PIN_CS,
         PIN_SCK,
         PIN_RST,
-        PIN_IRQ
+        PIN_IRQ_0,
+        PIN_IRQ_1
     );
+    
+    rfm69_reset(rfm);
+    rfm69_mode_set(rfm, RFM69_OP_MODE_SLEEP);
+
+    // Packet mode 
+    rfm69_data_mode_set(rfm, RFM69_DATA_MODE_PACKET);
+    // 250kb/s baud rate
+    rfm69_bitrate_set(rfm, RFM69_MODEM_BITRATE_250);
+    // ~2 beta 
+    rfm69_fdev_set(rfm, 250000);
+    // 915MHz 
+    rfm69_frequency_set(rfm, 915);
+    // RXBW >= fdev + br/2
+    rfm69_rxbw_set(rfm, RFM69_RXBW_MANTISSA_20, 0);
+    // Transmit starts with any data in the FIFO
+    rfm69_tx_start_condition_set(rfm, RFM69_TX_FIFO_NOT_EMPTY);
+
+    // Set sync value (essentially functions as subnet)
+    uint8_t sync[3] = {0x01, 0x01, 0x01};
+    rfm69_sync_value_set(rfm, sync, 3);
+
+    rfm69_node_address_set(rfm, 0x01); 
+    rfm69_broadcast_address_set(rfm, 0x86); 
+
+    // Set to filter by node and broadcast address
+    rfm69_address_filter_set(rfm, RFM69_FILTER_NODE_BROADCAST);
+
+    // Two byte payload for testing. One address byte, one byte of data.
+    rfm69_payload_length_set(rfm, 2);
+
+    // Recommended rssi thresh default setting
+    rfm69_rssi_threshold_set(rfm, 0xE4);
+
+    // Change into standby mode to make sure all registers
+    // actually change.
+    rfm69_mode_set(rfm, RFM69_OP_MODE_STDBY);
 
     // Check if rfm69_init was successful (== 0)
     // Set last error and halt process if not.
@@ -95,18 +96,23 @@ int main() {
     }
 
 
+    uint8_t buf;
     for(ever) { 
-        uint8_t buf[3];
-        rfm69_read(rfm, RFM69_REG_FRF_MSB, buf, 3);
-        uint frequency = 0;
-        frequency |= (uint) buf[0] << 16;
-        frequency |= (uint) buf[1] << 8;
-        frequency |= (uint) buf[2];
-        printf("0x%2X\n", frequency);
-        // if this prints ~915Mhz, everthing is working
-        printf("%u\n", frequency * 61);
-        sleep_ms(300);
+        // Print registers 0x01 -> 0x4F
+        for (int i = 1; i < 0x50; i++) {
+            rfm69_read(
+                    rfm,
+                    i,
+                    &buf,
+                    1
+            );
+            printf("0x%02X: %02X\n", i, buf);
+        }
+        sleep_ms(5000);
+        printf("\n");
     }
     
     return 0;
 }
+
+
