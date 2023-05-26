@@ -405,6 +405,15 @@ RFM69_RETURN rfm69_rssi_measurment_start(Rfm69 *rfm) {
 	return rfm69_write(rfm, RFM69_REG_RSSI_CONFIG, &reg, 1);
 }
 
+RFM69_RETURN rfm69_rssi_threshold_set(Rfm69 *rfm, uint8_t threshold) {
+    return rfm69_write(
+            rfm,
+            RFM69_REG_RSSI_THRESH,
+            &threshold,
+            1
+    );
+}
+
 RFM69_RETURN rfm69_power_level_set(Rfm69 *rfm, int8_t pa_level) {
     if (rfm->pa_level == pa_level)
         return RFM69_REG_ALREADY_SET;

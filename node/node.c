@@ -78,6 +78,12 @@ int main() {
     // Set to filter by node and broadcast address
     rfm69_address_filter_set(rfm, RFM69_FILTER_NODE_BROADCAST);
 
+    // Two byte payload for testing. One address byte, one byte of data.
+    rfm69_payload_length_set(rfm, 2);
+
+    // Recommended rssi thresh default setting
+    rfm69_rssi_threshold_set(rfm, 0xE4);
+
     // Change into standby mode to make sure all registers
     // actually change.
     rfm69_mode_set(rfm, RFM69_OP_MODE_STDBY);
