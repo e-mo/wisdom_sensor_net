@@ -68,6 +68,16 @@ int main() {
     // Transmit starts with any data in the FIFO
     rfm69_tx_start_condition_set(rfm, RFM69_TX_FIFO_NOT_EMPTY);
 
+    // Set sync value (essentially functions as subnet)
+    uint8_t sync[3] = {0x01, 0x01, 0x01};
+    rfm69_sync_value_set(rfm, sync, 3);
+
+    rfm69_node_address_set(rfm, 0x01); 
+    rfm69_broadcast_address_set(rfm, 0x86); 
+
+    // Set to filter by node and broadcast address
+    rfm69_address_filter_set(rfm, RFM69_FILTER_NODE_BROADCAST);
+
     // Change into standby mode to make sure all registers
     // actually change.
     rfm69_mode_set(rfm, RFM69_OP_MODE_STDBY);

@@ -237,6 +237,9 @@ typedef enum _PA_MODE {
     RFM69_PA_MODE_HIGH
 } RFM69_PA_MODE;
 
+#define _SYNC_SIZE_OFFSET 3
+#define _SYNC_SIZE_MASK 0x38
+
 enum _PA_LEVEL {
     RFM69_PA_LEVEL_DEFAULT = 0x1F,
 
@@ -254,20 +257,25 @@ enum _PA_LEVEL {
 };
 
 typedef enum _HP_CONFIG {
+    RFM69_HP_ENABLE,
+    RFM69_HP_DISABLE,
     RFM69_HP_PA1_HIGH = 0x5D,
     RFM69_HP_PA1_LOW  = 0x55,
     RFM69_HP_PA2_HIGH = 0x5C,
     RFM69_HP_PA2_LOW  = 0x70,
 } RFM69_HP_CONFIG;
 
-#define _OCP_STATE_OFFSET 4
+#define _OCP_OFFSET 4
 typedef enum _OCP {
     RFM69_OCP_DISABLED     = 0x00,
-    RFM69_OCP_ENABLED      = 0x01 << _OCP_STATE_OFFSET,
+    RFM69_OCP_ENABLED      = 0x01 << _OCP_OFFSET
+} RFM69_OCP;
+
+typedef enum _OCP_TRIM {
     RFM69_OCP_TRIM_HIGH    = 0x0F, 
     RFM69_OCP_TRIM_DEFAULT = 0x0A
-} RFM69_OCP;
-#define RFM69_OCP_TRIM_MASK 0x0F
+} RFM69_OCP_TRIM;
+#define _OCP_TRIM_MASK 0x0F
 
 #define _RXBW_MANTISSA_OFFSET 3
 typedef enum _RXBW_MANTISSA {
@@ -457,6 +465,8 @@ static RFM69_RETURN _power_mode_set(Rfm69 *rfm, RFM69_PA_MODE mode);
 
 // Enable or disable overcurent protection
 static RFM69_RETURN _ocp_set(Rfm69 *rfm, RFM69_OCP state);
+// Enable or disable high power settings
+static RFM69_RETURN _hp_set(Rfm69 *rfm, RFM69_HP_CONFIG enable);
 
 RFM69_RETURN rfm69_tx_start_condition_set(Rfm69 *rfm, RFM69_TX_START_CONDITION condition);
 
@@ -465,5 +475,7 @@ RFM69_RETURN rfm69_payload_length_set(Rfm69 *rfm, uint8_t length);
 RFM69_RETURN rfm69_address_filter_set(Rfm69 *rfm, RFM69_ADDRESS_FILTER filter);
 RFM69_RETURN rfm69_node_address_set(Rfm69 *rfm, uint8_t address);
 RFM69_RETURN rfm69_broadcast_address_set(Rfm69 *rfm, uint8_t address);
+
+RFM69_RETURN rfm69_sync_value_set(Rfm69 *rfm, uint8_t *value, uint8_t size);
 
 #endif // RFM69_DRIVER_H
