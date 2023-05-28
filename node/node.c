@@ -95,7 +95,6 @@ int main() {
         critical_error();
     }
 
-
     uint8_t buf;
     for(ever) { 
         // Print registers 0x01 -> 0x4F
