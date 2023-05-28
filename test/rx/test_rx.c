@@ -72,7 +72,7 @@ int main() {
     uint8_t sync[3] = {0x01, 0x01, 0x01};
     rfm69_sync_value_set(rfm, sync, 3);
 
-    rfm69_node_address_set(rfm, 0x01); 
+    rfm69_node_address_set(rfm, 0x02); 
     rfm69_broadcast_address_set(rfm, 0x86); 
 
     // Set to filter by node and broadcast address
@@ -84,8 +84,7 @@ int main() {
     // Recommended rssi thresh default setting
     rfm69_rssi_threshold_set(rfm, 0xE4);
 
-    // Change into standby mode to make sure all registers
-    // actually change.
+    // Set into RX mode
     rfm69_mode_set(rfm, RFM69_OP_MODE_RX);
 
     // Check if rfm69_init was successful (== 0)
@@ -96,12 +95,28 @@ int main() {
     }
 
     uint8_t buf[2];
+    bool state;
     for(ever) { 
 
+        state = false;
+        while (!state) {
+            rfm69_irq2_flag_state(rfm, RFM69_IRQ2_FLAG_PAYLOAD_READY, &state);
+        }
+        printf("Packet received!\n");
+
+        // Read contents in stdby
+        rfm69_mode_set(rfm, RFM69_OP_MODE_STDBY);
         
+        rfm69_read(
+                rfm,
+                RFM69_REG_FIFO,
+                buf,
+                2
+        );
+        printf("Data: %02X\n", buf[1]);
 
-
-
+        // Return to rx mode
+        rfm69_mode_set(rfm, RFM69_OP_MODE_RX);
 
 
         // Print registers 0x01 -> 0x4F

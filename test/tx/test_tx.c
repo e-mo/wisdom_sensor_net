@@ -84,7 +84,8 @@ int main() {
     // Recommended rssi thresh default setting
     rfm69_rssi_threshold_set(rfm, 0xE4);
 
-    rfm69_mode_set(rfm, RFM69_OP_MODE_TX);
+    // Set into transmit mode
+    rfm69_mode_set(rfm, RFM69_OP_MODE_STDBY);
 
     // Check if rfm69_init was successful (== 0)
     // Set last error and halt process if not.
@@ -93,14 +94,33 @@ int main() {
         critical_error();
     }
 
-    uint8_t buf[2];
+    uint8_t buf[2] = { 0x02, 0x45 };
+    bool state;
     for(ever) { 
 
-        
+        // Fill fifo in standby
+        rfm69_write(
+                rfm,
+                RFM69_REG_FIFO,
+                buf,
+                2
+        );
 
+        // Set into TX mode
+        rfm69_mode_set(rfm, RFM69_OP_MODE_TX);
 
+        // Wait for packet sent flag
+        state = false;
+        while (!state) {
+            rfm69_irq2_flag_state(rfm, RFM69_IRQ2_FLAG_PACKET_SENT, &state);
+        }
+        printf("Packet sent!\n");
 
+        // Set back to standby
+        rfm69_mode_set(rfm, RFM69_OP_MODE_STDBY);
 
+        // Wait 3 secs
+        sleep_ms(3000);
 
         // Print registers 0x01 -> 0x4F
         //for (int i = 1; i < 0x50; i++) {
