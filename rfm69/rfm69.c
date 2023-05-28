@@ -227,10 +227,11 @@ RFM69_RETURN rfm69_fdev_set(Rfm69 *rfm, uint32_t fdev) {
     fdev = (fdev / RFM69_FSTEP) + 0.5;
 
     uint8_t buf[2] = {
-        (fdev >> 8) & 0x3F, // MSB only uses
+        (fdev >> 8) & 0x3F, 
         fdev & 0xFF 
     };
-    return rfm69_write(rfm, RFM69_REG_BITRATE_MSB, buf, 2);
+
+    return rfm69_write(rfm, RFM69_REG_FDEV_MSB, buf, 2);
 }
 
 RFM69_RETURN rfm69_rxbw_set(Rfm69 *rfm, RFM69_RXBW_MANTISSA mantissa, uint8_t exponent) {
@@ -443,12 +444,12 @@ RFM69_RETURN rfm69_power_level_set(Rfm69 *rfm, int8_t pa_level) {
             pa_level = RFM69_PA_HIGH_MAX;
 
         // PA1 on only
-        if (pa_level < 13) {
+        if (pa_level <= 13) {
             pa_mode = RFM69_PA_MODE_PA1;
             pout = pa_level + 18; 
         }
         // PA1 + PA2
-        else if (pa_level < 17) {
+        else if (pa_level < 18) {
             pa_mode = RFM69_PA_MODE_PA1_PA2;
             pout = pa_level + 14; 
         }
@@ -491,7 +492,7 @@ RFM69_RETURN rfm69_power_level_set(Rfm69 *rfm, int8_t pa_level) {
 
 static RFM69_RETURN _power_mode_set(Rfm69 *rfm, RFM69_PA_MODE pa_mode) {
     RFM69_RETURN rval;
-    uint8_t buf[2];
+    uint8_t buf[2] = { 0x00 };
     
     // Skip if we are already in this mode
     if (rfm->pa_mode == pa_mode)
@@ -562,12 +563,20 @@ static RFM69_RETURN _hp_set(Rfm69 *rfm, RFM69_HP_CONFIG config) {
         ocp_trim = rfm->ocp_trim;
     }
 
-    rval = rfm69_write(
+    if ((rval = rfm69_write(
             rfm,
             RFM69_REG_TEST_PA1,
-            buf,
-            2
-    );
+            &buf[0],
+            1
+    )) == RFM69_OK) {
+        rval = rfm69_write(
+                rfm,
+                RFM69_REG_TEST_PA2,
+                &buf[1],
+                1
+        );
+    }
+
     if (rval == RFM69_OK) {
 
         if ((rval = _ocp_set(rfm, ocp)) == RFM69_OK) {
@@ -647,4 +656,22 @@ RFM69_RETURN rfm69_sync_value_set(Rfm69 *rfm, uint8_t *value, uint8_t size) {
     }
 
     return rval;
+}
+
+RFM69_RETURN rfm69_crc_autoclear_set(Rfm69 *rfm, bool set) {
+    return rfm69_write_masked(
+            rfm,
+            RFM69_REG_PACKET_CONFIG_1,
+            0x08,
+            0x08
+    );
+}
+
+RFM69_RETURN rfm69_dcfree_set(Rfm69 *rfm, RFM69_DCFREE_SETTING setting) {
+    return rfm69_write_masked(
+            rfm,
+            RFM69_REG_PACKET_CONFIG_1,
+            setting,
+            _DCFREE_SETTING_MASK
+    );
 }

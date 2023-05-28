@@ -252,7 +252,7 @@ enum _PA_LEVEL {
     RFM69_PA0_ON           = 0X01 << 7,
     RFM69_PA1_ON           = 0x01 << 6,
     RFM69_PA2_ON           = 0x01 << 5,
-    RFM69_PA_PINS_MASK     = 0x03 << 5,
+    RFM69_PA_PINS_MASK     = 0x07 << 5,
     RFM69_PA_OUTPUT_MASK   = 0x1F
 };
 
@@ -261,7 +261,7 @@ typedef enum _HP_CONFIG {
     RFM69_HP_DISABLE,
     RFM69_HP_PA1_HIGH = 0x5D,
     RFM69_HP_PA1_LOW  = 0x55,
-    RFM69_HP_PA2_HIGH = 0x5C,
+    RFM69_HP_PA2_HIGH = 0x7C,
     RFM69_HP_PA2_LOW  = 0x70,
 } RFM69_HP_CONFIG;
 
@@ -301,11 +301,13 @@ typedef enum _ADDRESS_FILTER {
 } RFM69_ADDRESS_FILTER;
 #define _ADDRESS_FILTER_MASK 0x06
 
-typedef enum _DC_FREE_SETTING {
-    RFM69_DC_FREE_OFF,
-    RFM69_DC_FREE_MANCHESTER,
-    RFM69_DC_FREE_WHITENING
-} RFM69_DC_FREE_SETTING;
+#define _DCFREE_SETTING_OFFSET 5
+typedef enum _DCFREE_SETTING {
+    RFM69_DCFREE_OFF         = 0x00,
+    RFM69_DCFREE_MANCHESTER  = 0x01 << _DCFREE_SETTING_OFFSET,
+    RFM69_DCFREE_WHITENING   = 0x02 << _DCFREE_SETTING_OFFSET
+} RFM69_DCFREE_SETTING;
+#define _DCFREE_SETTING_MASK 0x60
 
 // Initializes passed in Rfm69 pointer and sets pins to proper
 // mode for spi communication. Passed pins must match the passed in
@@ -478,5 +480,9 @@ RFM69_RETURN rfm69_node_address_set(Rfm69 *rfm, uint8_t address);
 RFM69_RETURN rfm69_broadcast_address_set(Rfm69 *rfm, uint8_t address);
 
 RFM69_RETURN rfm69_sync_value_set(Rfm69 *rfm, uint8_t *value, uint8_t size);
+
+RFM69_RETURN rfm69_crc_autoclear_set(Rfm69 *rfm, bool set);
+
+RFM69_RETURN rfm69_dcfree_set(Rfm69 *rfm, RFM69_DCFREE_SETTING setting);
 
 #endif // RFM69_DRIVER_H

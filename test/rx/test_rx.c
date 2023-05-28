@@ -65,6 +65,7 @@ int main() {
     rfm69_frequency_set(rfm, 915);
     // RXBW >= fdev + br/2
     rfm69_rxbw_set(rfm, RFM69_RXBW_MANTISSA_20, 0);
+    rfm69_dcfree_set(rfm, RFM69_DCFREE_WHITENING);
     // Transmit starts with any data in the FIFO
     rfm69_tx_start_condition_set(rfm, RFM69_TX_FIFO_NOT_EMPTY);
 
@@ -84,6 +85,8 @@ int main() {
     // Recommended rssi thresh default setting
     rfm69_rssi_threshold_set(rfm, 0xE4);
 
+    rfm69_crc_autoclear_set(rfm, false);
+
     // Set into RX mode
     rfm69_mode_set(rfm, RFM69_OP_MODE_RX);
 
@@ -93,6 +96,8 @@ int main() {
         set_last_error(rval); // Can use return value from rfm69_init directly
         critical_error();
     }
+
+    
 
     uint8_t buf[2];
     bool state;
