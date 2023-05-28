@@ -21,8 +21,8 @@
 #define PIN_IRQ_1  21
 
 void set_bi() {
-    bi_decl(bi_program_name("Leaf Node"));
-    bi_decl(bi_program_description("WISDOM sensor network node communications routine."))
+    bi_decl(bi_program_name("Test Transmitter"));
+    bi_decl(bi_program_description("WISDOM sensor network basic range test tx."))
     bi_decl(bi_1pin_with_name(PIN_MISO, "MISO"));
     bi_decl(bi_1pin_with_name(PIN_CS, "CS"));
     bi_decl(bi_1pin_with_name(PIN_SCK, "SCK"));

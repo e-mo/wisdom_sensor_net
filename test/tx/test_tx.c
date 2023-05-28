@@ -21,8 +21,8 @@
 #define PIN_IRQ_1  21
 
 void set_bi() {
-    bi_decl(bi_program_name("Leaf Node"));
-    bi_decl(bi_program_description("WISDOM sensor network node communications routine."))
+    bi_decl(bi_program_name("Test Transmitter"));
+    bi_decl(bi_program_description("WISDOM sensor network basic range test tx."))
     bi_decl(bi_1pin_with_name(PIN_MISO, "MISO"));
     bi_decl(bi_1pin_with_name(PIN_CS, "CS"));
     bi_decl(bi_1pin_with_name(PIN_SCK, "SCK"));
@@ -84,9 +84,7 @@ int main() {
     // Recommended rssi thresh default setting
     rfm69_rssi_threshold_set(rfm, 0xE4);
 
-    // Change into standby mode to make sure all registers
-    // actually change.
-    rfm69_mode_set(rfm, RFM69_OP_MODE_STDBY);
+    rfm69_mode_set(rfm, RFM69_OP_MODE_TX);
 
     // Check if rfm69_init was successful (== 0)
     // Set last error and halt process if not.
