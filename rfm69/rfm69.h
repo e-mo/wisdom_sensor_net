@@ -203,6 +203,12 @@ typedef enum _MODEM_BITRATE {
     RFM69_MODEM_BITRATE_WATCH_XTAL = 0x03D1, // 32.768 kbps
 } RFM69_MODEM_BITRATE;
 
+<<<<<<< HEAD
+typdef enum _IRQ_FLAG {
+    RFM69_IRQ_FLAG_SYNC_ADDRESS_MATCH,
+    RFM69_IRQ_FLAG_,
+} RFM69_IRQ_FLAG;
+=======
 typedef enum _IRQ1_FLAG {
     RFM69_IRQ1_FLAG_SYNC_ADDRESS_MATCH = 0x01,
     RFM69_IRQ1_FLAG_AUTO_MODE          = 0x02,
@@ -223,6 +229,7 @@ typedef enum _IRQ_2_FLAG {
     RFM69_IRQ2_FLAG_FIFO_NOT_EMPTY = 0x40,
     RFM69_IRQ2_FLAG_FIFO_FULL      = 0x80
 } RFM69_IRQ2_FLAG;
+>>>>>>> base_function_set
 
 typedef enum _RSSI_CONFIG {
     RFM69_RSSI_MEASURMENT_START = 0x01,
