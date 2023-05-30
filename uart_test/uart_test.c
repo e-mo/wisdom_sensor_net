@@ -8,7 +8,10 @@
 #define UART_TX_PIN 0
 #define UART_RX_PIN 1
 
+uint8_t ch;
 char rx_buffer[32];
+int i;
+
 /*
 void uart0_irq_handler() {
 	int i = 0;
@@ -38,6 +41,11 @@ int main() {
     sleep_ms(100);
 */
 	while(1) {
-	}
-	
+		i = 0;
+		while(uart_is_readable(UART_ID)) {
+			ch = uart_getc(UART_ID);
+			printf("%c", ch);
+		}
+
+	}	
 }
