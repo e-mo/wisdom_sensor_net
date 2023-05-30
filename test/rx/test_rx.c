@@ -51,6 +51,9 @@ int main() {
         PIN_IRQ_0,
         PIN_IRQ_1
     );
+
+    gpio_init(PICO_DEFAULT_LED_PIN);
+    gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
     
     rfm69_reset(rfm);
     rfm69_mode_set(rfm, RFM69_OP_MODE_SLEEP);
@@ -58,13 +61,14 @@ int main() {
     // Packet mode 
     rfm69_data_mode_set(rfm, RFM69_DATA_MODE_PACKET);
     // 250kb/s baud rate
-    rfm69_bitrate_set(rfm, RFM69_MODEM_BITRATE_250);
+    rfm69_bitrate_set(rfm, RFM69_MODEM_BITRATE_2_4);
     // ~2 beta 
-    rfm69_fdev_set(rfm, 250000);
+    rfm69_fdev_set(rfm, 2400);
     // 915MHz 
     rfm69_frequency_set(rfm, 915);
+    // rfm69_modulation_shaping_set(rfm, RFM69_FSK_GAUSSIAN_0_3);
     // RXBW >= fdev + br/2
-    rfm69_rxbw_set(rfm, RFM69_RXBW_MANTISSA_20, 0);
+    rfm69_rxbw_set(rfm, RFM69_RXBW_MANTISSA_24, 6);
     rfm69_dcfree_set(rfm, RFM69_DCFREE_WHITENING);
     // Transmit starts with any data in the FIFO
     rfm69_tx_start_condition_set(rfm, RFM69_TX_FIFO_NOT_EMPTY);
@@ -122,7 +126,14 @@ int main() {
 
         // Return to rx mode
         rfm69_mode_set(rfm, RFM69_OP_MODE_RX);
-
+	gpio_put(PICO_DEFAULT_LED_PIN, 1);
+	sleep_ms(50);
+	gpio_put(PICO_DEFAULT_LED_PIN, 0);
+	sleep_ms(50);
+	gpio_put(PICO_DEFAULT_LED_PIN, 1);
+	sleep_ms(50);
+	gpio_put(PICO_DEFAULT_LED_PIN, 0);
+	sleep_ms(50);
 
         // Print registers 0x01 -> 0x4F
         //for (int i = 1; i < 0x50; i++) {

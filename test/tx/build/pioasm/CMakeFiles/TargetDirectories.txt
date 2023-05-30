@@ -1,0 +1,3 @@
+/home/amelia/Documents/WISDOM/wisdom_sensor_net/test/tx/build/pioasm/CMakeFiles/pioasm.dir
+/home/amelia/Documents/WISDOM/wisdom_sensor_net/test/tx/build/pioasm/CMakeFiles/edit_cache.dir
+/home/amelia/Documents/WISDOM/wisdom_sensor_net/test/tx/build/pioasm/CMakeFiles/rebuild_cache.dir
