@@ -21,8 +21,8 @@
 #define PIN_IRQ_1  21
 
 void set_bi() {
-    bi_decl(bi_program_name("Leaf Node"));
-    bi_decl(bi_program_description("WISDOM sensor network node communications routine."))
+    bi_decl(bi_program_name("Test Transmitter"));
+    bi_decl(bi_program_description("WISDOM sensor network basic range test rx."))
     bi_decl(bi_1pin_with_name(PIN_MISO, "MISO"));
     bi_decl(bi_1pin_with_name(PIN_CS, "CS"));
     bi_decl(bi_1pin_with_name(PIN_SCK, "SCK"));
@@ -65,6 +65,7 @@ int main() {
     rfm69_frequency_set(rfm, 915);
     // RXBW >= fdev + br/2
     rfm69_rxbw_set(rfm, RFM69_RXBW_MANTISSA_20, 0);
+    rfm69_dcfree_set(rfm, RFM69_DCFREE_WHITENING);
     // Transmit starts with any data in the FIFO
     rfm69_tx_start_condition_set(rfm, RFM69_TX_FIFO_NOT_EMPTY);
 
@@ -72,7 +73,7 @@ int main() {
     uint8_t sync[3] = {0x01, 0x01, 0x01};
     rfm69_sync_value_set(rfm, sync, 3);
 
-    rfm69_node_address_set(rfm, 0x01); 
+    rfm69_node_address_set(rfm, 0x02); 
     rfm69_broadcast_address_set(rfm, 0x86); 
 
     // Set to filter by node and broadcast address
@@ -84,9 +85,10 @@ int main() {
     // Recommended rssi thresh default setting
     rfm69_rssi_threshold_set(rfm, 0xE4);
 
-    // Change into standby mode to make sure all registers
-    // actually change.
-    rfm69_mode_set(rfm, RFM69_OP_MODE_STDBY);
+    rfm69_crc_autoclear_set(rfm, false);
+
+    // Set into RX mode
+    rfm69_mode_set(rfm, RFM69_OP_MODE_RX);
 
     // Check if rfm69_init was successful (== 0)
     // Set last error and halt process if not.
@@ -95,13 +97,31 @@ int main() {
         critical_error();
     }
 
+    
+
     uint8_t buf[2];
+    bool state;
     for(ever) { 
 
+        state = false;
+        while (!state) {
+            rfm69_irq2_flag_state(rfm, RFM69_IRQ2_FLAG_PAYLOAD_READY, &state);
+        }
+        printf("Packet received!\n");
+
+        // Read contents in stdby
+        rfm69_mode_set(rfm, RFM69_OP_MODE_STDBY);
         
+        rfm69_read(
+                rfm,
+                RFM69_REG_FIFO,
+                buf,
+                2
+        );
+        printf("Data: %02X\n", buf[1]);
 
-
-
+        // Return to rx mode
+        rfm69_mode_set(rfm, RFM69_OP_MODE_RX);
 
 
         // Print registers 0x01 -> 0x4F

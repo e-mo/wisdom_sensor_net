@@ -46,8 +46,8 @@
 
 #define RFM69_REG_LNA             0x18 // LNA settings
 
-#define RFM69_REG_RX_BW           0x19 // Channel Filter BW Control
-#define RFM69_REG_AFC_BW          0x1A // Channel Filter BW control during the AFC routine
+#define RFM69_REG_RXBW            0x19 // Channel Filter BW Control
+#define RFM69_REG_AFCBW           0x1A // Channel Filter BW control during the AFC routine
 
 #define RFM69_REG_OOK_PEAK        0x1B // OOK demodulator selection and control in peak mode
 #define RFM69_REG_OOK_AVG         0x1C // Average threshold control of the OOK demodulator
@@ -120,8 +120,8 @@
 #define RFM69_REG_TEMP_2          0x4F // Temperature readout
 
 #define RFM69_REG_TEST_LNA        0x58 // Sensitivity boost
-#define RFM69_REG_TEST_PA_1       0x5A // High Power PA settings
-#define RFM69_REG_TEST_PA_2       0x5C // High Power PA settings
+#define RFM69_REG_TEST_PA1        0x5A // High Power PA settings
+#define RFM69_REG_TEST_PA2        0x5C // High Power PA settings
 #define RFM69_REG_TEST_DAGC       0x6F // Fading Margin Improvement
 #define RFM69_REG_TEST_AFC        0x71 // AFC offset for low modulation index AFC
 
@@ -131,20 +131,24 @@
 // Incomplete type representing Rfm69 radio module.
 typedef struct Rfm69 Rfm69;
 
-typedef enum _ERR_CODE {
-    RFM69_NO_ERROR,
-    RFM69_INIT_MALLOC,
-    RFM69_INIT_TEST,
-} RFM69_ERR_CODE;
+typedef enum _RETURN {
+    RFM69_OK                      =  0,
+    RFM69_INIT_MALLOC             = -1,
+    RFM69_INIT_TEST               = -2,
+    RFM69_SPI_UNEXPECTED_RETURN   = -3,
+    RFM69_REG_ALREADY_SET         = -4,
+    RFM69_RSSI_BUSY               = -5,
+} RFM69_RETURN;
 
 #define _OP_MODE_OFFSET 2
 typedef enum _OP_MODE {
-    RFM69_OP_MODE_SLEEP,
-    RFM69_OP_MODE_STDBY = 0x01 << _OP_MODE_OFFSET,
-    RFM69_OP_MODE_FS    = 0x02 << _OP_MODE_OFFSET,
-    RFM69_OP_MODE_TX    = 0x03 << _OP_MODE_OFFSET,
-    RFM69_OP_MODE_RX    = 0x04 << _OP_MODE_OFFSET,
-    RFM69_OP_MODE_MASK  = 0x07 << _OP_MODE_OFFSET
+    RFM69_OP_MODE_DEFAULT = 0x01,
+    RFM69_OP_MODE_SLEEP   = 0x00,
+    RFM69_OP_MODE_STDBY   = 0x01 << _OP_MODE_OFFSET,
+    RFM69_OP_MODE_FS      = 0x02 << _OP_MODE_OFFSET,
+    RFM69_OP_MODE_TX      = 0x03 << _OP_MODE_OFFSET,
+    RFM69_OP_MODE_RX      = 0x04 << _OP_MODE_OFFSET,
+    RFM69_OP_MODE_MASK    = 0x07 << _OP_MODE_OFFSET
 } RFM69_OP_MODE;
 
 #define _DATA_MODE_OFFSET 5
@@ -165,36 +169,36 @@ typedef enum _MODULATION_TYPE {
 #define _MODULATION_SHAPING_OFFSET 0
 typedef enum _MODULATION_SHAPING {
     RFM69_NO_SHAPING,
-    RFM69_FSK_GAUSSIAN_1_0 = 0x01, RFM69_OOK_FCUTOFF_BR   = 0x01,
-    RFM69_FSK_GAUSSIAN_0_5 = 0x02, RFM69_OOK_FCUTOFF_2XBR = 0x02,
-    RFM69_FSK_GAUSSIAN_0_3 = 0x03,
+    RFM69_FSK_GAUSSIAN_1_0        = 0x01, RFM69_OOK_FCUTOFF_BR   = 0x01,
+    RFM69_FSK_GAUSSIAN_0_5        = 0x02, RFM69_OOK_FCUTOFF_2XBR = 0x02,
+    RFM69_FSK_GAUSSIAN_0_3        = 0x03,
     RFM69_MODULATION_SHAPING_MASK = 0x03
 } RFM69_MODULATION_SHAPING;
 
 typedef enum _MODEM_BITRATE {
 // Classic modem baud rates (multiples of 1.2 kbps)
-    RFM69_MODEM_BITRATE_1_2   = 0x682B, // 1.2 kbps
-    RFM69_MODEM_BITRATE_2_4   = 0x3415, // 2.4 kbps
-    RFM69_MODEM_BITRATE_4_8   = 0x1A0B, // 4.8 kbps
-    RFM69_MODEM_BITRATE_9_6   = 0x0D05, // 9.6 kbps
-    RFM69_MODEM_BITRATE_19_2  = 0x0683, // 19.2 kbps
-    RFM69_MODEM_BITRATE_38_4  = 0x0341, // 38.4 kbps
-    RFM69_MODEM_BITRATE_76_8  = 0x01A1, // 76.8 kbps
-    RFM69_MODEM_BITRATE_153_6 = 0x00D0, // 153.6 kbps
+    RFM69_MODEM_BITRATE_1_2        = 0x682B, // 1.2 kbps
+    RFM69_MODEM_BITRATE_2_4        = 0x3415, // 2.4 kbps
+    RFM69_MODEM_BITRATE_4_8        = 0x1A0B, // 4.8 kbps
+    RFM69_MODEM_BITRATE_9_6        = 0x0D05, // 9.6 kbps
+    RFM69_MODEM_BITRATE_19_2       = 0x0683, // 19.2 kbps
+    RFM69_MODEM_BITRATE_38_4       = 0x0341, // 38.4 kbps
+    RFM69_MODEM_BITRATE_76_8       = 0x01A1, // 76.8 kbps
+    RFM69_MODEM_BITRATE_153_6      = 0x00D0, // 153.6 kbps
 
 // Classic modem baud rates (multiples of 0.9 kbps)
-    RFM69_MODEM_BITRATE_57_6  = 0x022C, // 57.6 kbps
-    RFM69_MODEM_BITRATE_115_2 = 0x0116, // 115.2 kbps
+    RFM69_MODEM_BITRATE_57_6       = 0x022C, // 57.6 kbps
+    RFM69_MODEM_BITRATE_115_2      = 0x0116, // 115.2 kbps
 
 // Round bit rates (multiples of 12.5, 25, and 50 kbps)
-    RFM69_MODEM_BITRATE_12_5  = 0x0A00, // 12.5 kbps
-    RFM69_MODEM_BITRATE_25    = 0x0500, // 25 kbps
-    RFM69_MODEM_BITRATE_50    = 0x0280, // 50 kbps
-    RFM69_MODEM_BITRATE_100   = 0x0140, // 100 kbps
-    RFM69_MODEM_BITRATE_150   = 0x00D5, // 150 kbps
-    RFM69_MODEM_BITRATE_200   = 0x00A0, // 200 kbps
-    RFM69_MODEM_BITRATE_250   = 0x0080, // 250 kbps
-    RFM69_MODEM_BITRATE_300   = 0x006B, // 300 kbps
+    RFM69_MODEM_BITRATE_12_5       = 0x0A00, // 12.5 kbps
+    RFM69_MODEM_BITRATE_25         = 0x0500, // 25 kbps
+    RFM69_MODEM_BITRATE_50         = 0x0280, // 50 kbps
+    RFM69_MODEM_BITRATE_100        = 0x0140, // 100 kbps
+    RFM69_MODEM_BITRATE_150        = 0x00D5, // 150 kbps
+    RFM69_MODEM_BITRATE_200        = 0x00A0, // 200 kbps
+    RFM69_MODEM_BITRATE_250        = 0x0080, // 250 kbps
+    RFM69_MODEM_BITRATE_300        = 0x006B, // 300 kbps
 
     RFM69_MODEM_BITRATE_WATCH_XTAL = 0x03D1, // 32.768 kbps
 } RFM69_MODEM_BITRATE;
@@ -206,38 +210,121 @@ typdef enum _IRQ_FLAG {
 } RFM69_IRQ_FLAG;
 =======
 typedef enum _IRQ1_FLAG {
-    RFM69_IRQ1_FLAG_SYNC_ADDRESS_MATCH  = 0x01,
-    RFM69_IRQ1_FLAG_AUTO_MODE           = 0x02,
-    RFM69_IRQ1_FLAG_TIMEOUT             = 0x04,
-    RFM69_IRQ1_FLAG_RSSI                = 0x08,
-    RFM69_IRQ1_FLAG_PLL_LOCK            = 0x10,
-    RFM69_IRQ1_FLAG_TX_READY            = 0x20,
-    RFM69_IRQ1_FLAG_RX_READY            = 0x40,
-    RFM69_IRQ1_FLAG_MODE_READY          = 0x80
+    RFM69_IRQ1_FLAG_SYNC_ADDRESS_MATCH = 0x01,
+    RFM69_IRQ1_FLAG_AUTO_MODE          = 0x02,
+    RFM69_IRQ1_FLAG_TIMEOUT            = 0x04,
+    RFM69_IRQ1_FLAG_RSSI               = 0x08,
+    RFM69_IRQ1_FLAG_PLL_LOCK           = 0x10,
+    RFM69_IRQ1_FLAG_TX_READY           = 0x20,
+    RFM69_IRQ1_FLAG_RX_READY           = 0x40,
+    RFM69_IRQ1_FLAG_MODE_READY         = 0x80
 } RFM69_IRQ1_FLAG;
 
 typedef enum _IRQ_2_FLAG {
-    RFM69_IRQ2_FLAG_CRC_OK              = 0x02,
-    RFM69_IRQ2_FLAG_PAYLOAD_READY       = 0x04,
-    RFM69_IRQ2_FLAG_PACKET_SENT         = 0x08,
-    RFM69_IRQ2_FLAG_FIFO_OVERRUN        = 0x10,
-    RFM69_IRQ2_FLAG_FIFO_LEVEL          = 0x20,
-    RFM69_IRQ2_FLAG_FIFO_NOT_EMPTY      = 0x40,
-    RFM69_IRQ2_FLAG_FIFO_FULL           = 0x80
+    RFM69_IRQ2_FLAG_CRC_OK         = 0x02,
+    RFM69_IRQ2_FLAG_PAYLOAD_READY  = 0x04,
+    RFM69_IRQ2_FLAG_PACKET_SENT    = 0x08,
+    RFM69_IRQ2_FLAG_FIFO_OVERRUN   = 0x10,
+    RFM69_IRQ2_FLAG_FIFO_LEVEL     = 0x20,
+    RFM69_IRQ2_FLAG_FIFO_NOT_EMPTY = 0x40,
+    RFM69_IRQ2_FLAG_FIFO_FULL      = 0x80
 } RFM69_IRQ2_FLAG;
 >>>>>>> base_function_set
+
+typedef enum _RSSI_CONFIG {
+    RFM69_RSSI_MEASURMENT_START = 0x01,
+    RFM69_RSSI_MEASURMENT_DONE  = 0x02
+} RFM69_RSSI_CONFIG;
+
+typedef enum _PA_MODE {
+    RFM69_PA_MODE_UNKNOWN,
+    RFM69_PA_MODE_PA0,
+    RFM69_PA_MODE_PA1,
+    RFM69_PA_MODE_PA1_PA2,
+    RFM69_PA_MODE_HIGH
+} RFM69_PA_MODE;
+
+#define _SYNC_SIZE_OFFSET 3
+#define _SYNC_SIZE_MASK 0x38
+
+enum _PA_LEVEL {
+    RFM69_PA_LEVEL_DEFAULT = 0x1F,
+
+    RFM69_PA_HIGH_MIN      = -2,
+    RFM69_PA_HIGH_MAX      =  20,
+
+    RFM69_PA_LOW_MIN       = -18,
+    RFM69_PA_LOW_MAX       =  13,
+
+    RFM69_PA0_ON           = 0X01 << 7,
+    RFM69_PA1_ON           = 0x01 << 6,
+    RFM69_PA2_ON           = 0x01 << 5,
+    RFM69_PA_PINS_MASK     = 0x07 << 5,
+    RFM69_PA_OUTPUT_MASK   = 0x1F
+};
+
+typedef enum _HP_CONFIG {
+    RFM69_HP_ENABLE,
+    RFM69_HP_DISABLE,
+    RFM69_HP_PA1_HIGH = 0x5D,
+    RFM69_HP_PA1_LOW  = 0x55,
+    RFM69_HP_PA2_HIGH = 0x7C,
+    RFM69_HP_PA2_LOW  = 0x70,
+} RFM69_HP_CONFIG;
+
+#define _OCP_OFFSET 4
+typedef enum _OCP {
+    RFM69_OCP_DISABLED     = 0x00,
+    RFM69_OCP_ENABLED      = 0x01 << _OCP_OFFSET
+} RFM69_OCP;
+
+typedef enum _OCP_TRIM {
+    RFM69_OCP_TRIM_HIGH    = 0x0F, 
+    RFM69_OCP_TRIM_DEFAULT = 0x0A
+} RFM69_OCP_TRIM;
+#define _OCP_TRIM_MASK 0x0F
+
+#define _RXBW_MANTISSA_OFFSET 3
+typedef enum _RXBW_MANTISSA {
+    RFM69_RXBW_MANTISSA_16   = 0x0 << _RXBW_MANTISSA_OFFSET, 
+    RFM69_RXBW_MANTISSA_20   = 0x1 << _RXBW_MANTISSA_OFFSET, 
+    RFM69_RXBW_MANTISSA_24   = 0x2 << _RXBW_MANTISSA_OFFSET, 
+} RFM69_RXBW_MANTISSA ;
+#define RFM69_RXBW_EXPONENT_MASK 0x07
+#define RFM69_RXBW_MANTISSA_MASK 0x18
+
+#define _TX_START_CONDITION_OFFSET 7
+typedef enum _TX_START_CONDITION {
+    RFM69_TX_FIFO_LEVEL     = 0x00,
+    RFM69_TX_FIFO_NOT_EMPTY = 0x01 << _TX_START_CONDITION_OFFSET,
+} RFM69_TX_START_CONDITION;
+#define _TX_START_CONDITION_MASK 0x80
+
+#define _ADDRESS_FILTER_OFFSET 1
+typedef enum _ADDRESS_FILTER {
+    RFM69_FILTER_NONE           = 0x00,
+    RFM69_FILTER_NODE           = 0x01 << _ADDRESS_FILTER_OFFSET,
+    RFM69_FILTER_NODE_BROADCAST = 0x02 << _ADDRESS_FILTER_OFFSET
+} RFM69_ADDRESS_FILTER;
+#define _ADDRESS_FILTER_MASK 0x06
+
+#define _DCFREE_SETTING_OFFSET 5
+typedef enum _DCFREE_SETTING {
+    RFM69_DCFREE_OFF         = 0x00,
+    RFM69_DCFREE_MANCHESTER  = 0x01 << _DCFREE_SETTING_OFFSET,
+    RFM69_DCFREE_WHITENING   = 0x02 << _DCFREE_SETTING_OFFSET
+} RFM69_DCFREE_SETTING;
+#define _DCFREE_SETTING_MASK 0x60
 
 // Initializes passed in Rfm69 pointer and sets pins to proper
 // mode for spi communication. Passed pins must match the passed in
 // spi instane (e.g. spi0 pins for spi0 instance).
 //
-// This function assumes spi_inst_t *spi has already been inistialized. 
+// This function assumes spi_inst_t *spi has already been initialized. 
 // This function returns heap allocated memory. Since this kind of
 // module typically stays active for the lifetime of the process, I
 // see no reason to provide an rfm69 specific free function.
-// If freeing the memory is necessary, a simple call to standard free
-// will suffice.
-RFM69_ERR_CODE rfm69_init(
+RFM69_RETURN rfm69_init(
     Rfm69 **rfm,
     spi_inst_t *spi,
     uint pin_miso,
@@ -261,16 +348,23 @@ void rfm69_reset(Rfm69 *rfm);
 // If src len > 1, address will be incremented between each byte (burst write).
 //
 // rfm     - initialized Rfm69 *
-// address - uint8_t buffer/FIFO address.
+// address - uint8_t register/FIFO address.
 // src     - an array of uint8_t to be written.
 // len     - src array length.
 // Returns number of bytes written (not including address byte).
-int rfm69_write(Rfm69 *rfm, 
-                uint8_t address, 
-                const uint8_t *src, 
-                size_t len);
+RFM69_RETURN rfm69_write(
+        Rfm69 *rfm, 
+        uint8_t address, 
+        const uint8_t *src, 
+        size_t len);
 
-int rfm69_write_masked(
+// For writing to a specific bit field within a register.
+// Only writes one byte of data.
+//
+// address - register address
+// src     - properly aligned value to be written
+// mask    - mask for clearing bit field
+RFM69_RETURN rfm69_write_masked(
         Rfm69 *rfm, 
         uint8_t address, 
         const uint8_t src,
@@ -281,16 +375,22 @@ int rfm69_write_masked(
 // If src len > 1, address will be incremented between each byte (burst write).
 //
 // rfm     - initialized Rfm69 *
-// address - uint8_t buffer/FIFO address.
+// address - uint8_t register/FIFO address.
 // dst     - an array of uint8_t to be read into.
 // len     - dst array length.
 // Returns number of bytes written (not including address byte).
-int rfm69_read(Rfm69 *rfm, 
-               uint8_t address, 
-               uint8_t *dst, 
-               size_t len);
+RFM69_RETURN rfm69_read(Rfm69 *rfm, 
+        uint8_t address, 
+        uint8_t *dst, 
+        size_t len);
 
-int rfm69_read_masked(
+// For writing to a specific bit field within a register.
+// Only writes one byte of data.
+//
+// address - register address
+// src     - buffer to read field into
+// mask    - mask for isolating bit field
+RFM69_RETURN rfm69_read_masked(
         Rfm69 *rfm,
         uint8_t address,
         uint8_t *dst,
@@ -302,53 +402,94 @@ int rfm69_read_masked(
 // state   - stores flag state.
 //
 // Returns number of bytes written. 
-int rfm69_irq1_flag_state(Rfm69 *rfm, RFM69_IRQ1_FLAG flag, bool *state);
-int rfm69_irq2_flag_state(Rfm69 *rfm, RFM69_IRQ2_FLAG flag, bool *state);
+RFM69_RETURN rfm69_irq1_flag_state(Rfm69 *rfm, RFM69_IRQ1_FLAG flag, bool *state);
+RFM69_RETURN rfm69_irq2_flag_state(Rfm69 *rfm, RFM69_IRQ2_FLAG flag, bool *state);
 
 // Sets the opterating frequency of the module.
 // frequency - desired frequency in MHz.
 //
 // Returns number of bytes written. 
-int rfm69_frequency_set(Rfm69 *rfm,
-                        uint frequency);
+RFM69_RETURN rfm69_frequency_set(Rfm69 *rfm, uint32_t frequency);
 
 // Reads operating frequency from module.
 // Note - might not reflect set freqency until a mode change.
 // frequency - stores frequency in Hz.
 //
 // Returns number of bytes written. 
-int rfm69_frequency_get(Rfm69 *rfm, uint32_t *frequency);
+RFM69_RETURN rfm69_frequency_get(Rfm69 *rfm, uint32_t *frequency);
+
+// Sets frequency deviation. 
+// Note: 0.5 <= 2* Fdev/Bitrate <= 10
+// Beta value should stay within this range per specification.
+RFM69_RETURN rfm69_fdev_set(Rfm69 *rfm, uint32_t fdev);
+
+RFM69_RETURN rfm69_rxbw_set(Rfm69 *rfm, RFM69_RXBW_MANTISSA mantissa, uint8_t exponent);
 
 // Sets modem bitrate.
-int rfm69_bitrate_set(Rfm69 *rfm,
+RFM69_RETURN rfm69_bitrate_set(Rfm69 *rfm,
                       RFM69_MODEM_BITRATE bit_rate);
 
 // Reads modem bitrate.
-int rfm69_bitrate_get(Rfm69 *rfm, uint16_t *bit_rate);
+RFM69_RETURN rfm69_bitrate_get(Rfm69 *rfm, uint16_t *bit_rate);
 
 // Sets module into a new mode.
 // Blocks until mode is ready.
-int rfm69_mode_set(Rfm69 *rfm, RFM69_OP_MODE mode);
+RFM69_RETURN rfm69_mode_set(Rfm69 *rfm, RFM69_OP_MODE mode);
 
 // Gets current mode.
-int rfm69_mode_get(Rfm69 *rfm, uint8_t *mode);
+void rfm69_mode_get(Rfm69 *rfm, uint8_t *mode);
 
 // Checks if current mode is ready.
-int rfm69_mode_ready(Rfm69 *rfm, bool *ready);
+static RFM69_RETURN _mode_ready(Rfm69 *rfm, bool *ready);
 
 // Blocks until mode ready IRQ flag is set. 
-int rfm69_mode_wait_until_ready(Rfm69 *rfm);
+static RFM69_RETURN _mode_wait_until_ready(Rfm69 *rfm);
 
-int rfm69_data_mode_set(Rfm69 *rfm, RFM69_DATA_MODE mode);
-int rfm69_data_mode_get(Rfm69 *rfm, uint8_t *mode);
+// Sets module into packet or continuous mode. 
+RFM69_RETURN rfm69_data_mode_set(Rfm69 *rfm, RFM69_DATA_MODE mode);
+// Read data mode register. For testing. 
+RFM69_RETURN rfm69_data_mode_get(Rfm69 *rfm, uint8_t *mode);
 
-int rfm69_modulation_type_set(Rfm69 *rfm, RFM69_MODULATION_TYPE type);
-int rfm69_modulation_type_get(Rfm69 *rfm, uint8_t *type);
+// Sets modulation scheme (FSK or OOK)
+RFM69_RETURN rfm69_modulation_type_set(Rfm69 *rfm, RFM69_MODULATION_TYPE type);
+RFM69_RETURN rfm69_modulation_type_get(Rfm69 *rfm, uint8_t *type);
 
-int rfm69_modulation_shaping_set(Rfm69 *rfm, RFM69_MODULATION_SHAPING shaping);
-int rfm69_modulation_shaping_get(Rfm69 *rfm, uint8_t *shaping);
+RFM69_RETURN rfm69_modulation_shaping_set(Rfm69 *rfm, RFM69_MODULATION_SHAPING shaping);
+RFM69_RETURN rfm69_modulation_shaping_get(Rfm69 *rfm, uint8_t *shaping);
 
-int rfm69_rssi_get(Rfm69 *rfm, int8_t *rssi);
-int rfm69_rssi_trig(Rfm69 *rfm);
+// Read value of last RSSI measurment
+RFM69_RETURN rfm69_rssi_measurment_get(Rfm69 *rfm, int8_t *rssi);
+// Trigger a new RSSI reading
+RFM69_RETURN rfm69_rssi_measurment_start(Rfm69 *rfm);
+RFM69_RETURN rfm69_rssi_threshold_set(Rfm69 *rfm, uint8_t threshold);
+
+// Sets power level of module.
+// Low power modules accept power levels -18 -> 13 
+// High power modules accept power levels -2 -> 20
+//
+// Define RFM69_HIGH_POWER for high power modules. 
+// Also sets appropriate PA* and power flags based
+// on desired power level. 
+RFM69_RETURN rfm69_power_level_set(Rfm69 *rfm, int8_t pa_level);
+static RFM69_RETURN _power_mode_set(Rfm69 *rfm, RFM69_PA_MODE mode);
+
+// Enable or disable overcurent protection
+static RFM69_RETURN _ocp_set(Rfm69 *rfm, RFM69_OCP state);
+// Enable or disable high power settings
+static RFM69_RETURN _hp_set(Rfm69 *rfm, RFM69_HP_CONFIG enable);
+
+RFM69_RETURN rfm69_tx_start_condition_set(Rfm69 *rfm, RFM69_TX_START_CONDITION condition);
+
+RFM69_RETURN rfm69_payload_length_set(Rfm69 *rfm, uint8_t length);
+
+RFM69_RETURN rfm69_address_filter_set(Rfm69 *rfm, RFM69_ADDRESS_FILTER filter);
+RFM69_RETURN rfm69_node_address_set(Rfm69 *rfm, uint8_t address);
+RFM69_RETURN rfm69_broadcast_address_set(Rfm69 *rfm, uint8_t address);
+
+RFM69_RETURN rfm69_sync_value_set(Rfm69 *rfm, uint8_t *value, uint8_t size);
+
+RFM69_RETURN rfm69_crc_autoclear_set(Rfm69 *rfm, bool set);
+
+RFM69_RETURN rfm69_dcfree_set(Rfm69 *rfm, RFM69_DCFREE_SETTING setting);
 
 #endif // RFM69_DRIVER_H

@@ -21,8 +21,8 @@
 #define PIN_IRQ_1  21
 
 void set_bi() {
-    bi_decl(bi_program_name("Leaf Node"));
-    bi_decl(bi_program_description("WISDOM sensor network node communications routine."))
+    bi_decl(bi_program_name("Test Transmitter"));
+    bi_decl(bi_program_description("WISDOM sensor network basic range test tx."))
     bi_decl(bi_1pin_with_name(PIN_MISO, "MISO"));
     bi_decl(bi_1pin_with_name(PIN_CS, "CS"));
     bi_decl(bi_1pin_with_name(PIN_SCK, "SCK"));
@@ -65,8 +65,11 @@ int main() {
     rfm69_frequency_set(rfm, 915);
     // RXBW >= fdev + br/2
     rfm69_rxbw_set(rfm, RFM69_RXBW_MANTISSA_20, 0);
+    rfm69_dcfree_set(rfm, RFM69_DCFREE_WHITENING);
     // Transmit starts with any data in the FIFO
     rfm69_tx_start_condition_set(rfm, RFM69_TX_FIFO_NOT_EMPTY);
+
+    rfm69_power_level_set(rfm, 2);
 
     // Set sync value (essentially functions as subnet)
     uint8_t sync[3] = {0x01, 0x01, 0x01};
@@ -84,8 +87,7 @@ int main() {
     // Recommended rssi thresh default setting
     rfm69_rssi_threshold_set(rfm, 0xE4);
 
-    // Change into standby mode to make sure all registers
-    // actually change.
+    // Set into transmit mode
     rfm69_mode_set(rfm, RFM69_OP_MODE_STDBY);
 
     // Check if rfm69_init was successful (== 0)
@@ -95,27 +97,76 @@ int main() {
         critical_error();
     }
 
-    uint8_t buf[2];
+    uint8_t dagc = 0x30;
+    rfm69_write(
+            rfm,
+            RFM69_REG_TEST_DAGC,
+            &dagc,
+            1 
+    );
+
+    uint8_t buf[2] = { 0x02, 0x45 };
+    bool state;
     for(ever) { 
 
-        
+        // Fill fifo in standby
+        rfm69_write(
+                rfm,
+                RFM69_REG_FIFO,
+                buf,
+                2
+        );
 
+        // Set into TX mode
+        rfm69_mode_set(rfm, RFM69_OP_MODE_TX);
+        //uint8_t fdev_msb = 0x01;
+        //rfm69_write(
+        //        rfm,
+        //        RFM69_REG_FDEV_MSB,
+        //        &fdev_msb,
+        //        1
+        //);
 
-
+        // Wait for packet sent flag
+        state = false;
+        while (!state) {
+            rfm69_irq2_flag_state(rfm, RFM69_IRQ2_FLAG_PACKET_SENT, &state);
+        }
+        printf("Packet sent!\n");
 
 
         // Print registers 0x01 -> 0x4F
-        //for (int i = 1; i < 0x50; i++) {
-        //    rfm69_read(
-        //            rfm,
-        //            i,
-        //            &buf,
-        //            1
-        //    );
-        //    printf("0x%02X: %02X\n", i, buf);
-        //}
-        //sleep_ms(5000);
-        //printf("\n");
+        uint8_t reg;
+        for (int i = 1; i < 0x50; i++) {
+            rfm69_read(
+                    rfm,
+                    i,
+                    &reg,
+                    1
+            );
+            printf("0x%02X: %02X\n", i, reg);
+        }
+        rfm69_read(
+                rfm,
+                0x5A,
+                &reg,
+                1
+        );
+        printf("0x5A: %02X\n", reg);
+        rfm69_read(
+                rfm,
+                0x5C,
+                &reg,
+                1
+        );
+        printf("0x5C: %02X\n", reg);
+        printf("\n");
+
+        // Set back to standby
+        rfm69_mode_set(rfm, RFM69_OP_MODE_STDBY);
+
+        // Wait 3 secs
+        sleep_ms(3000);
     }
     
     return 0;
