@@ -4,20 +4,28 @@
  * amelia vlahogiannis
  */
 
+#include "teros_11.h"
 
-int teros_init(
-		teros *teros,
-		uart_inst_t serial,
+teros_return teros_init(
+		teros **teros, //makes a pointer to a pointer to a teros struct?
+		uart_inst_t *serial, 
 		teros_model model,
 		int uart_tx_pin,
 		int uart_rx_pin,
 		int pwr_pin,
 		teros_substrate substrate_type
 		) {
-	
-	*teros->serial = serial;
-	*teros
-	uart_init(*serial, 1200);
+	*teros = malloc(sizeof(teros)); //need to include a malloc library somewhere
+
+	(*teros)->serial = serial;
+	(*teros)->model = model;
+	(*teros)->uart_tx_pin = uart_tx_pin;
+	(*teros)->uart_rx_pin = uart_rx_pin;
+	(*teros)->pwr_pin = pwr_pin;
+	(*teros)->substrate_type = substrate_type;
+
+	uart_init(serial, 1200);
+
 	gpio_set_function(uart_tx_pin, GPIO_FUNC_UART);
 	gpio_set_function(uart_tx_pin, GPIO_FUNC_UART);
 	gpio_init(pwr_pin);

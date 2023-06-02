@@ -5,6 +5,7 @@
  *
  * 2023-05-29
  * amelia vlahogiannis
+ * amelia@ag2v.com
  */
 
 //serial port is 1200baud
@@ -12,32 +13,42 @@
 #ifndef TEROS_11_H
 #define TEROS_11_H
 
+#include <stdlib.h>
 #include "pico/stdlib.h"
+#include "pico/malloc.h"
 
-typedef enum teros_return {
+typedef enum _return {
 	ok			=  0,
-	uart_already_enabled	= -1;
-}
+	uart_already_enabled	= -1,
+} teros_return;
 
-typedef enum teros_model {
+typedef enum _model {
 	teros_11,
-	teros_12;
-}
+	teros_12,
+} teros_model;
 
-typedef enum teros_substrate {
+typedef enum _substrate {
 	mineral,
-	soilless;
-}
+	soilless,
+} teros_substrate;
 
-typedef struct teros {
-	uart_inst_t serial;
+typedef struct Teros {
+	uart_inst_t *serial;
 	teros_model model;
 	int uart_tx_pin;
 	int uart_rx_pin;
 	int pwr_pin;
-	teros_substrate_type substrate_type;
-}
+	teros_substrate substrate_type;
+} teros;
 
+teros_return teros_init(
+		teros **teros,
+		uart_inst_t *serial,
+		teros_model model,
+		int uart_tx_pin,
+		int uart_rx_pin,
+		int pwr_pin,
+		teros_substrate substrate_type);
 teros_return teros_get_checksum(teros *teros, uint8_t *checksum);
 teros_return teros_get_crc(teros *teros, uint8_t *crc);
 teros_return teros_get_sensor_type(teros *teros, uint8_t *type);
