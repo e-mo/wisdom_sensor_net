@@ -1,7 +1,7 @@
 Basic Packet Structure:
  
 	MSB
-	|A|S|T|F|N|P|
+	|A|S|T|F|N|P|*...
 
 	A - Rx address 														 1 byte
 
@@ -15,34 +15,35 @@ Basic Packet Structure:
 
 	P - A variable sized payload of size       (S - 3) bytes
 
+	*Appended CRC data is irrelevant to packet structure. 
+
 
 Packet Information Flags
 
 	 7 6 5 4 3 2 1 0
-	|b|r|d|s| | | | |
-
-	b - Begin Transmission Packet
-			
-			Marks the first packet in a series of reliable datagram
-			packets. The payload contains the series number of the final
-			packet, effectively telling the recipient how many packets it
-			should expect to receive. 
-
-			Always packet number 0 
+	|r|b|d|s|m| | | |
 
 	r - Request Transmission Packet
 
 			Signals to the recipient that the sender is prepared to 
-			accept a transmission. This may contain metadata useful to the 
-			recipient like a clock sync time or... (TBD). 
+			begin transmission. This happens before the BTP.
 
-	d - Data Packet
+	b - Begin Transmission Flag
+			
+			Marks the first packet in a series of reliable datagram
+			packets. The payload contains the series number of the final
+			packet along with the first slice of data, effectively telling the 
+			recipient how many packets it should expect to receive.
 
-			A standard data packet following a begin transmission packet.
+			Always packet number 0 
+
+	d - Data Flag
+
+			Indicates a standard data packet following a begin transmission packet.
 
 			Packet number >= 1
 
-	a - Reverse Ack Packet
+	a - Reverse Ack Flag 
 
 			Notifies the transmission sender either:
 			1. It never recieved the BTP so please resend.
@@ -50,6 +51,10 @@ Packet Information Flags
 			2. BTP was received, but not all DPs were recieved. 
 				 Payload contains one byte each with a missing packet number. 
 			
-	s - Success Packet
+	s - Success Flag
 
 			Notifies sender that transmission was receieved correctly. 
+
+	m - Metadata Flag
+
+			Notifies receiver that the packet contains metadata.

@@ -2,8 +2,10 @@
 #include "pico/stdlib.h"
 #include "pico/binary_info.h"
 #include "hardware/spi.h"
+#include "hardware/i2c.h"
+#include "ssd1306.h"
 
-#include "rfm69.h"
+#include "rfm69.h" 
 #include "error_report.h"
 
 #define ever ;; 
