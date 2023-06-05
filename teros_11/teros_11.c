@@ -7,7 +7,7 @@
 #include "teros_11.h"
 
 teros_return teros_init(
-		teros **teros, //makes a pointer to a pointer to a teros struct?
+		teros **teros, 
 		uart_inst_t *serial, 
 		teros_model model,
 		int uart_tx_pin,
@@ -15,8 +15,10 @@ teros_return teros_init(
 		int pwr_pin,
 		teros_substrate substrate_type
 		) {
-	*teros = malloc(sizeof(teros)); //need to include a malloc library somewhere
 
+	*teros = malloc(sizeof(teros));
+
+	//save some struct elements to reference in other functions
 	(*teros)->serial = serial;
 	(*teros)->model = model;
 	(*teros)->uart_tx_pin = uart_tx_pin;
@@ -24,17 +26,57 @@ teros_return teros_init(
 	(*teros)->pwr_pin = pwr_pin;
 	(*teros)->substrate_type = substrate_type;
 
-	uart_init(serial, 1200);
+	uart_init(serial, TEROS_BAUD_RATE);
 
 	gpio_set_function(uart_tx_pin, GPIO_FUNC_UART);
-	gpio_set_function(uart_tx_pin, GPIO_FUNC_UART);
+	//gpio_set_function(uart_tx_pin, GPIO_FUNC_UART);
 	gpio_init(pwr_pin);
 	gpio_set_dir(pwr_pin, GPIO_OUT);
 }
 
+//grab and return all of the data
+teros_return teros_get_data(teros *teros, teros_data *data) {
+	teros_return status;
+	unsigned char ch;
+	unsigned char str[16];
+	int i = 0;
+
+	printf("get data function start \n");
+	
+	gpio_put(teros->pwr_pin, 1);
+
+	printf("gpio on\n");
+	
+	if(!uart_is_enabled(teros->serial)) return uart_not_enabled;
+
+	sleep_ms(125);
+
+	printf("uart is enabled\n");
+
+	if(uart_is_readable_within_us(teros->serial, 150000)) {
+		i = 0;
+		while(uart_is_readable(uart0)) {
+				str[i] = uart_getc(uart0);
+				i++;
+				}
+		str[i] = '\0';
+		printf("%s\n", str);
+		printf("reading complete\n");
+		}
+	
+	else printf("could not read within 150ms\n");
+	
+	gpio_put(teros->pwr_pin, 0);
+
+	sleep_ms(3000);
+
+	return 0;
+}
+
 //get checksum
 teros_return teros_get_checksum(teros *teros, uint8_t *checksum) {
-	gpio_put(teros->pwr_pin, 1);
+	gpio_put(teros->pwr_pin, 1); //sensor will automatically spit out data over uart when powered on
+				     //the pico's digital pins can supply the necessary 3.6mA
 }
 
 //get crc

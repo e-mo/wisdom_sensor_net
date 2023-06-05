@@ -1,6 +1,6 @@
 /*
  * pi pico library for the Teros 11 soil moisture sensor
- * uses "DDI Serial" (aka uart but they refuse to just call it that)
+ * uses "DDI Serial" (aka uart but they dont call it that)
  * because the other option is some weird standard that appears to just be rs232?
  *
  * 2023-05-29
@@ -13,13 +13,16 @@
 #ifndef TEROS_11_H
 #define TEROS_11_H
 
+#include <stdio.h>
 #include <stdlib.h>
 #include "pico/stdlib.h"
 #include "pico/malloc.h"
+#define TEROS_BAUD_RATE 1200
 
 typedef enum _return {
 	ok			=  0,
-	uart_already_enabled	= -1,
+	invalid_check_crc	= -1,
+	uart_not_enabled	= -2,
 } teros_return;
 
 typedef enum _model {
@@ -32,7 +35,7 @@ typedef enum _substrate {
 	soilless,
 } teros_substrate;
 
-typedef struct Teros {
+typedef struct _teros {
 	uart_inst_t *serial;
 	teros_model model;
 	int uart_tx_pin;
@@ -40,6 +43,16 @@ typedef struct Teros {
 	int pwr_pin;
 	teros_substrate substrate_type;
 } teros;
+
+//<TAB><calibratedCountsVWC> <temperature> <electricalConductivity><CR><sensorType><Checksum><CRC>
+typedef struct _data {
+	float vwc;
+	float temperature;
+	float conductivity;
+	uint8_t sensor_type;
+	uint8_t checksum;
+	uint8_t crc;
+} teros_data;
 
 teros_return teros_init(
 		teros **teros,
@@ -49,6 +62,7 @@ teros_return teros_init(
 		int uart_rx_pin,
 		int pwr_pin,
 		teros_substrate substrate_type);
+teros_return teros_get_data(teros *teros, teros_data *data);
 teros_return teros_get_checksum(teros *teros, uint8_t *checksum);
 teros_return teros_get_crc(teros *teros, uint8_t *crc);
 teros_return teros_get_sensor_type(teros *teros, uint8_t *type);
@@ -59,5 +73,7 @@ teros_return teros_get_tempc(teros *teros, float *temp);
 
 float raw_to_m3m3_mineral(float raw);
 float raw_to_m3m3_soilless(float raw);
+
+static float text_to_float(char *text);
 
 #endif 
