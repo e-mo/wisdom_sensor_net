@@ -35,7 +35,11 @@ pico_enable_stdio_usb(turbidity 0)
 
 # Add the standard library to the build
 target_link_libraries(turbidity
-        pico_stdlib)
+        pico_stdlib
+	hardware_i2c
+	hardware_gpio
+	hardware_adc
+)
 
 # Add the standard include files to the build
 target_include_directories(turbidity PRIVATE
@@ -47,6 +51,8 @@ target_include_directories(turbidity PRIVATE
 # Add any user requested libraries
 target_link_libraries(turbidity 
         hardware_i2c
+	hardware_gpio
+	hardware_adc
         )
 
 pico_add_extra_outputs(turbidity)
