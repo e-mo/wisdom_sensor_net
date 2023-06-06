@@ -25,7 +25,7 @@ pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
 
-add_executable(turbidity turbidity.c )
+add_executable(turbidity turbidity.c ../pico-ssd1306/ssd1306.c)
 
 pico_set_program_name(turbidity "turbidity")
 pico_set_program_version(turbidity "0.1")
@@ -41,6 +41,7 @@ target_link_libraries(turbidity
 target_include_directories(turbidity PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}
   ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts or any other standard includes, if required
+  ../pico-ssd1306/
 )
 
 # Add any user requested libraries

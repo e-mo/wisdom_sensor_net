@@ -207,6 +207,30 @@ cyw43_driver_picow_cyw43_bus_pio_spi_pio_h/fast:
 	$(MAKE) $(MAKESILENT) -f pico-sdk/src/rp2_common/pico_cyw43_driver/CMakeFiles/cyw43_driver_picow_cyw43_bus_pio_spi_pio_h.dir/build.make pico-sdk/src/rp2_common/pico_cyw43_driver/CMakeFiles/cyw43_driver_picow_cyw43_bus_pio_spi_pio_h.dir/build
 .PHONY : cyw43_driver_picow_cyw43_bus_pio_spi_pio_h/fast
 
+home/amelia/WISDOM/wisdom_sensor_net/pico-ssd1306/ssd1306.obj: home/amelia/WISDOM/wisdom_sensor_net/pico-ssd1306/ssd1306.c.obj
+.PHONY : home/amelia/WISDOM/wisdom_sensor_net/pico-ssd1306/ssd1306.obj
+
+# target to build an object file
+home/amelia/WISDOM/wisdom_sensor_net/pico-ssd1306/ssd1306.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turbidity.dir/build.make CMakeFiles/turbidity.dir/home/amelia/WISDOM/wisdom_sensor_net/pico-ssd1306/ssd1306.c.obj
+.PHONY : home/amelia/WISDOM/wisdom_sensor_net/pico-ssd1306/ssd1306.c.obj
+
+home/amelia/WISDOM/wisdom_sensor_net/pico-ssd1306/ssd1306.i: home/amelia/WISDOM/wisdom_sensor_net/pico-ssd1306/ssd1306.c.i
+.PHONY : home/amelia/WISDOM/wisdom_sensor_net/pico-ssd1306/ssd1306.i
+
+# target to preprocess a source file
+home/amelia/WISDOM/wisdom_sensor_net/pico-ssd1306/ssd1306.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turbidity.dir/build.make CMakeFiles/turbidity.dir/home/amelia/WISDOM/wisdom_sensor_net/pico-ssd1306/ssd1306.c.i
+.PHONY : home/amelia/WISDOM/wisdom_sensor_net/pico-ssd1306/ssd1306.c.i
+
+home/amelia/WISDOM/wisdom_sensor_net/pico-ssd1306/ssd1306.s: home/amelia/WISDOM/wisdom_sensor_net/pico-ssd1306/ssd1306.c.s
+.PHONY : home/amelia/WISDOM/wisdom_sensor_net/pico-ssd1306/ssd1306.s
+
+# target to generate assembly for a file
+home/amelia/WISDOM/wisdom_sensor_net/pico-ssd1306/ssd1306.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/turbidity.dir/build.make CMakeFiles/turbidity.dir/home/amelia/WISDOM/wisdom_sensor_net/pico-ssd1306/ssd1306.c.s
+.PHONY : home/amelia/WISDOM/wisdom_sensor_net/pico-ssd1306/ssd1306.c.s
+
 home/amelia/pico/pico-sdk/src/common/pico_sync/critical_section.obj: home/amelia/pico/pico-sdk/src/common/pico_sync/critical_section.c.obj
 .PHONY : home/amelia/pico/pico-sdk/src/common/pico_sync/critical_section.obj
 
@@ -1174,6 +1198,9 @@ help:
 	@echo "... cyw43_driver_picow_cyw43_bus_pio_spi_pio_h"
 	@echo "... bs2_default"
 	@echo "... turbidity"
+	@echo "... home/amelia/WISDOM/wisdom_sensor_net/pico-ssd1306/ssd1306.obj"
+	@echo "... home/amelia/WISDOM/wisdom_sensor_net/pico-ssd1306/ssd1306.i"
+	@echo "... home/amelia/WISDOM/wisdom_sensor_net/pico-ssd1306/ssd1306.s"
 	@echo "... home/amelia/pico/pico-sdk/src/common/pico_sync/critical_section.obj"
 	@echo "... home/amelia/pico/pico-sdk/src/common/pico_sync/critical_section.i"
 	@echo "... home/amelia/pico/pico-sdk/src/common/pico_sync/critical_section.s"

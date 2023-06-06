@@ -69,6 +69,7 @@ set(CMAKE_TARGET_DEFINITIONS_ASM
 set(CMAKE_ASM_TARGET_INCLUDE_PATH
   "/home/amelia/WISDOM/wisdom_sensor_net/turbidity"
   "/home/amelia/WISDOM/wisdom_sensor_net/turbidity/.."
+  "/home/amelia/WISDOM/wisdom_sensor_net/turbidity/../pico-ssd1306"
   "/home/amelia/pico/pico-sdk/src/common/pico_stdlib/include"
   "/home/amelia/pico/pico-sdk/src/rp2_common/hardware_gpio/include"
   "/home/amelia/pico/pico-sdk/src/common/pico_base/include"
@@ -112,6 +113,7 @@ set(CMAKE_ASM_TARGET_INCLUDE_PATH
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
+  "/home/amelia/WISDOM/wisdom_sensor_net/pico-ssd1306/ssd1306.c" "CMakeFiles/turbidity.dir/home/amelia/WISDOM/wisdom_sensor_net/pico-ssd1306/ssd1306.c.obj" "gcc" "CMakeFiles/turbidity.dir/home/amelia/WISDOM/wisdom_sensor_net/pico-ssd1306/ssd1306.c.obj.d"
   "/home/amelia/pico/pico-sdk/src/common/pico_sync/critical_section.c" "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/common/pico_sync/critical_section.c.obj" "gcc" "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/common/pico_sync/critical_section.c.obj.d"
   "/home/amelia/pico/pico-sdk/src/common/pico_sync/lock_core.c" "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/common/pico_sync/lock_core.c.obj" "gcc" "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/common/pico_sync/lock_core.c.obj.d"
   "/home/amelia/pico/pico-sdk/src/common/pico_sync/mutex.c" "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/common/pico_sync/mutex.c.obj" "gcc" "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/common/pico_sync/mutex.c.obj.d"

@@ -1,4 +1,6 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/turbidity.dir/home/amelia/WISDOM/wisdom_sensor_net/pico-ssd1306/ssd1306.c.obj"
+  "CMakeFiles/turbidity.dir/home/amelia/WISDOM/wisdom_sensor_net/pico-ssd1306/ssd1306.c.obj.d"
   "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/common/pico_sync/critical_section.c.obj"
   "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/common/pico_sync/critical_section.c.obj.d"
   "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/common/pico_sync/lock_core.c.obj"
