@@ -1,5 +1,3 @@
-node_build_dir = ./node/build
-
 meow:
 	echo " __   __  _______  _______  _     _  ______  ";
 	echo "|  |_|  ||       ||       || | _ | ||      | ";
@@ -10,6 +8,7 @@ meow:
 	echo "|_|   |_||_______||_______||__| |__|  |__|   ";
 	echo "(no build target)"
 
+node_build_dir = ./node/build
 node:
 	mkdir -p $(node_build_dir)
 	cd $(node_build_dir)
