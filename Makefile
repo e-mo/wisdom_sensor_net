@@ -1,5 +1,5 @@
 MAKEFLAGS += --no-print-directory
-.PHONY: meow node test_rx test_tx clean
+.PHONY: meow node test_rx test_tx turbidity clean
 
 meow:
 	@echo " __   __  _______  _______  _     _  ______  ";
@@ -15,6 +15,7 @@ clean:
 	rm -rf $(node_root)/build
 	rm -rf $(test_rx_root)/build
 	rm -rf $(test_tx_root)/build
+	rm -rf $(turbidity_root)/build
 	@echo " _______  ___      __   __  _______  __   __          "
 	@echo "|       ||   |    |  | |  ||       ||  | |  |         "
 	@echo "|    ___||   |    |  | |  ||  _____||  |_|  |         "
@@ -22,7 +23,7 @@ clean:
 	@echo "|    ___||   |___ |       ||_____  ||       |  /\_/\  "
 	@echo "|   |    |       ||       | _____| ||   _   | ( o.o ) "
 	@echo "|___|    |_______||_______||_______||__| |__|  > ^ <  "
-	@echo "(all build directories removed)"
+	@echo "(all target build directories removed)"
 
 node_root = ./node
 node:
@@ -41,3 +42,8 @@ test_tx_root = ./test/tx
 test_tx:
 	mkdir -p $(test_tx_root)/build
 	cd $(test_tx_root)/build; cmake ..; make
+
+turbidity_root = ./turbidity
+turbidity:
+	mkdir -p $(turbidity_root)/build
+	cd $(turbidity_root)/build; cmake ..; make
