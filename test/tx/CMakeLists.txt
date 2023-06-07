@@ -27,8 +27,8 @@ pico_sdk_init()
 
 add_executable( 
     test_tx
-	test_tx.c
-	../../rfm69/rfm69.c
+		test_tx.c
+		../../rfm69/rfm69.c
     ../../error/error_report.c
 )
 

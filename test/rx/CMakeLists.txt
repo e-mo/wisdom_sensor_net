@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD 17)
 # Initialise pico_sdk from installed location
 # (note this can come from environment, CMake cache etc)
 set(PICO_SDK_PATH "~/pico/pico-sdk")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(PICO_BOARD pico CACHE STRING "Board type")
 
@@ -27,9 +28,10 @@ pico_sdk_init()
 
 add_executable( 
     test_rx
-	test_rx.c
-	../../rfm69/rfm69.c
+		test_rx.c
+		../../rfm69/rfm69.c
     ../../error/error_report.c
+		../../pico-ssd1306/ssd1306.c
 )
 
 pico_enable_stdio_uart(test_rx 0)
@@ -39,6 +41,7 @@ pico_enable_stdio_usb(test_rx 1)
 target_link_libraries(
     test_rx
     pico_stdlib
+		hardware_i2c
 )
 
 # Print error messages to UART
@@ -56,6 +59,7 @@ target_include_directories(test_rx PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts or any other standard includes, if required
   ../../rfm69/
   ../../error/
+	../../pico-ssd1306/
 )
 
 # Add any user requested libraries

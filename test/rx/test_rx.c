@@ -2,8 +2,10 @@
 #include "pico/stdlib.h"
 #include "pico/binary_info.h"
 #include "hardware/spi.h"
+#include "hardware/i2c.h"
+#include "ssd1306.h"
 
-#include "rfm69.h"
+#include "rfm69.h" 
 #include "error_report.h"
 
 #define ever ;; 
@@ -101,7 +103,18 @@ int main() {
         critical_error();
     }
 
-    
+		// init i2c and OLED
+		i2c_init(i2c1, 400000);
+		gpio_set_function(26, GPIO_FUNC_I2C);
+		gpio_set_function(27, GPIO_FUNC_I2C);
+		gpio_pull_up(26);
+		gpio_pull_up(27);
+
+		ssd1306_t oled;
+		oled.external_vcc = false;
+		bool success = ssd1306_init(&oled, 128, 64, 0x3C, i2c1);
+		ssd1306_clear(&oled);
+		ssd1306_show(&oled);
 
     uint8_t buf[2];
     bool state;
@@ -126,14 +139,23 @@ int main() {
 
         // Return to rx mode
         rfm69_mode_set(rfm, RFM69_OP_MODE_RX);
-	gpio_put(PICO_DEFAULT_LED_PIN, 1);
-	sleep_ms(50);
-	gpio_put(PICO_DEFAULT_LED_PIN, 0);
-	sleep_ms(50);
-	gpio_put(PICO_DEFAULT_LED_PIN, 1);
-	sleep_ms(50);
-	gpio_put(PICO_DEFAULT_LED_PIN, 0);
-	sleep_ms(50);
+
+				gpio_put(PICO_DEFAULT_LED_PIN, 1);
+				sleep_ms(50);
+				gpio_put(PICO_DEFAULT_LED_PIN, 0);
+				sleep_ms(50);
+				gpio_put(PICO_DEFAULT_LED_PIN, 1);
+				sleep_ms(50);
+				gpio_put(PICO_DEFAULT_LED_PIN, 0);
+				sleep_ms(50);
+
+				// Display rssi here
+				uint8_t rssi;
+				rfm69_rssi_measurment_get(rfm, &rssi);
+				char rssi_str[50];
+				sprintf(rssi_str, "%u", (-rssi)/2);
+				ssd1306_draw_string(&oled, 0, 0, 1, rssi_str);	
+				ssd1306_show(&oled);
 
         // Print registers 0x01 -> 0x4F
         //for (int i = 1; i < 0x50; i++) {
