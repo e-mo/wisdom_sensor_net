@@ -2,4 +2,5 @@ test/*/build
 test/*/.cache
 */build
 */.cache
-turbidity/build
+*.swp
+*.swo
