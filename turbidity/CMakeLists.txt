@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 # Initialise pico_sdk from installed location
 # (note this can come from environment, CMake cache etc)
-set(PICO_SDK_PATH "/home/amelia/pico/pico-sdk")
+set(PICO_SDK_PATH "~/pico/pico-sdk")
 
 set(PICO_BOARD adafruit_kb2040 CACHE STRING "Board type")
 
