@@ -3,3 +3,5 @@ test/*/.cache
 */build
 */.cache
 turbidity/build
+**/build
+*.sw?
