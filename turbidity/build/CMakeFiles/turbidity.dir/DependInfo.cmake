@@ -53,7 +53,7 @@ set(CMAKE_TARGET_DEFINITIONS_ASM
   "LIB_PICO_UTIL=1"
   "PICO_BOARD=\"adafruit_kb2040\""
   "PICO_BUILD=1"
-  "PICO_CMAKE_BUILD_TYPE=\"Debug\""
+  "PICO_CMAKE_BUILD_TYPE=\"Release\""
   "PICO_COPY_TO_RAM=0"
   "PICO_CXX_ENABLE_EXCEPTIONS=0"
   "PICO_NO_FLASH=0"
@@ -109,6 +109,7 @@ set(CMAKE_ASM_TARGET_INCLUDE_PATH
   "/home/amelia/pico/pico-sdk/src/rp2_common/pico_mem_ops/include"
   "/home/amelia/pico/pico-sdk/src/rp2_common/boot_stage2/include"
   "/home/amelia/pico/pico-sdk/src/rp2_common/hardware_i2c/include"
+  "/home/amelia/pico/pico-sdk/src/rp2_common/hardware_adc/include"
   )
 
 # The set of dependency files which are needed:
@@ -123,6 +124,7 @@ set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/home/amelia/pico/pico-sdk/src/common/pico_util/datetime.c" "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/common/pico_util/datetime.c.obj" "gcc" "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/common/pico_util/datetime.c.obj.d"
   "/home/amelia/pico/pico-sdk/src/common/pico_util/pheap.c" "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/common/pico_util/pheap.c.obj" "gcc" "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/common/pico_util/pheap.c.obj.d"
   "/home/amelia/pico/pico-sdk/src/common/pico_util/queue.c" "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/common/pico_util/queue.c.obj" "gcc" "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/common/pico_util/queue.c.obj.d"
+  "/home/amelia/pico/pico-sdk/src/rp2_common/hardware_adc/adc.c" "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_adc/adc.c.obj" "gcc" "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_adc/adc.c.obj.d"
   "/home/amelia/pico/pico-sdk/src/rp2_common/hardware_claim/claim.c" "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_claim/claim.c.obj" "gcc" "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_claim/claim.c.obj.d"
   "/home/amelia/pico/pico-sdk/src/rp2_common/hardware_clocks/clocks.c" "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_clocks/clocks.c.obj" "gcc" "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_clocks/clocks.c.obj.d"
   "/home/amelia/pico/pico-sdk/src/rp2_common/hardware_gpio/gpio.c" "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_gpio/gpio.c.obj" "gcc" "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_gpio/gpio.c.obj.d"

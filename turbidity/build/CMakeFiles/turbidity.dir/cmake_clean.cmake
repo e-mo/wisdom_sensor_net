@@ -19,6 +19,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/common/pico_util/pheap.c.obj.d"
   "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/common/pico_util/queue.c.obj"
   "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/common/pico_util/queue.c.obj.d"
+  "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_adc/adc.c.obj"
+  "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_adc/adc.c.obj.d"
   "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_claim/claim.c.obj"
   "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_claim/claim.c.obj.d"
   "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_clocks/clocks.c.obj"

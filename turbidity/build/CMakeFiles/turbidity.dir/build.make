@@ -730,6 +730,20 @@ CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_i2c/i
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_i2c/i2c.c.s"
 	/usr/bin/arm-none-eabi-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/amelia/pico/pico-sdk/src/rp2_common/hardware_i2c/i2c.c -o CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_i2c/i2c.c.s
 
+CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_adc/adc.c.obj: CMakeFiles/turbidity.dir/flags.make
+CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_adc/adc.c.obj: /home/amelia/pico/pico-sdk/src/rp2_common/hardware_adc/adc.c
+CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_adc/adc.c.obj: CMakeFiles/turbidity.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/amelia/WISDOM/wisdom_sensor_net/turbidity/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_49) "Building C object CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_adc/adc.c.obj"
+	/usr/bin/arm-none-eabi-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_adc/adc.c.obj -MF CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_adc/adc.c.obj.d -o CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_adc/adc.c.obj -c /home/amelia/pico/pico-sdk/src/rp2_common/hardware_adc/adc.c
+
+CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_adc/adc.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_adc/adc.c.i"
+	/usr/bin/arm-none-eabi-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/amelia/pico/pico-sdk/src/rp2_common/hardware_adc/adc.c > CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_adc/adc.c.i
+
+CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_adc/adc.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_adc/adc.c.s"
+	/usr/bin/arm-none-eabi-gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/amelia/pico/pico-sdk/src/rp2_common/hardware_adc/adc.c -o CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_adc/adc.c.s
+
 # Object files for target turbidity
 turbidity_OBJECTS = \
 "CMakeFiles/turbidity.dir/turbidity.c.obj" \
@@ -779,7 +793,8 @@ turbidity_OBJECTS = \
 "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/pico_standard_link/binary_info.c.obj" \
 "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/pico_stdio/stdio.c.obj" \
 "CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/pico_stdio_uart/stdio_uart.c.obj" \
-"CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_i2c/i2c.c.obj"
+"CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_i2c/i2c.c.obj" \
+"CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_adc/adc.c.obj"
 
 # External object files for target turbidity
 turbidity_EXTERNAL_OBJECTS =
@@ -832,10 +847,11 @@ turbidity.elf: CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common
 turbidity.elf: CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/pico_stdio/stdio.c.obj
 turbidity.elf: CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/pico_stdio_uart/stdio_uart.c.obj
 turbidity.elf: CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_i2c/i2c.c.obj
+turbidity.elf: CMakeFiles/turbidity.dir/home/amelia/pico/pico-sdk/src/rp2_common/hardware_adc/adc.c.obj
 turbidity.elf: CMakeFiles/turbidity.dir/build.make
 turbidity.elf: pico-sdk/src/rp2_common/boot_stage2/bs2_default_padded_checksummed.S
 turbidity.elf: CMakeFiles/turbidity.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/amelia/WISDOM/wisdom_sensor_net/turbidity/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_49) "Linking CXX executable turbidity.elf"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/amelia/WISDOM/wisdom_sensor_net/turbidity/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_50) "Linking CXX executable turbidity.elf"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/turbidity.dir/link.txt --verbose=$(VERBOSE)
 	/usr/bin/arm-none-eabi-objcopy -Oihex /home/amelia/WISDOM/wisdom_sensor_net/turbidity/build/turbidity.elf turbidity.hex
 	/usr/bin/arm-none-eabi-objcopy -Obinary /home/amelia/WISDOM/wisdom_sensor_net/turbidity/build/turbidity.elf turbidity.bin
