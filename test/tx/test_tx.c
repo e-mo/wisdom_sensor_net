@@ -89,7 +89,7 @@ int main() {
     rfm69_address_filter_set(rfm, RFM69_FILTER_NODE_BROADCAST);
 
     // Two byte payload for testing. One address byte, one byte of data.
-    rfm69_payload_length_set(rfm, 2);
+    rfm69_payload_length_set(rfm, 66);
 
     // Recommended rssi thresh default setting
     rfm69_rssi_threshold_set(rfm, 0xE4);
@@ -133,7 +133,7 @@ int main() {
 
         // Set into TX mode
         rfm69_mode_set(rfm, RFM69_OP_MODE_TX);
-	gpio_put(PICO_DEFAULT_LED_PIN, 1);
+		gpio_put(PICO_DEFAULT_LED_PIN, 1);
         //uint8_t fdev_msb = 0x01;
         //rfm69_write(
         //        rfm,

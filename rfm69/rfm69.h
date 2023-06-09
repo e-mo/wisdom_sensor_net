@@ -309,6 +309,11 @@ typedef enum _DCFREE_SETTING {
 } RFM69_DCFREE_SETTING;
 #define _DCFREE_SETTING_MASK 0x60
 
+typedef enum _PACKET_FORMAT {
+	RFM69_PACKET_FIXED    = 0x00,
+	RFM69_PACKET_VARIABLE = 0x80
+} RFM69_PACKET_FORMAT;
+
 // Initializes passed in Rfm69 pointer and sets pins to proper
 // mode for spi communication. Passed pins must match the passed in
 // spi instane (e.g. spi0 pins for spi0 instance).
@@ -474,6 +479,7 @@ static RFM69_RETURN _hp_set(Rfm69 *rfm, RFM69_HP_CONFIG enable);
 RFM69_RETURN rfm69_tx_start_condition_set(Rfm69 *rfm, RFM69_TX_START_CONDITION condition);
 
 RFM69_RETURN rfm69_payload_length_set(Rfm69 *rfm, uint8_t length);
+RFM69_RETURN rfm69_packet_format_set(Rfm69 *rfm, RFM69_PACKET_FORMAT format);
 
 RFM69_RETURN rfm69_address_filter_set(Rfm69 *rfm, RFM69_ADDRESS_FILTER filter);
 RFM69_RETURN rfm69_node_address_set(Rfm69 *rfm, uint8_t address);

@@ -610,6 +610,15 @@ RFM69_RETURN rfm69_payload_length_set(Rfm69 *rfm, uint8_t length) {
     );
 }
 
+RFM69_RETURN rfm69_packet_format_set(Rfm69 *rfm, RFM69_PACKET_FORMAT format) {
+	return rfm69_write_masked(
+			rfm,
+			RFM69_REG_PACKET_CONFIG_1,
+			format,
+			0x80
+	);
+}
+
 RFM69_RETURN rfm69_address_filter_set(Rfm69 *rfm, RFM69_ADDRESS_FILTER filter) {
     return rfm69_write_masked(
             rfm,

@@ -10,9 +10,6 @@ typedef enum _RUDP_RETURN {
 // address - receiver node address
 // payload - data payload to be sent
 // length  - length of data payload in bytes
-//
-// If payload length > 253 bytes (255 - 1(address byte) - 1(length byte)),
-// payload will be sent in multiple packets. 
 RUDP_RETURN rfm69_rudp_transmit(
         Rfm69 *rfm, 
         uint8_t address,
