@@ -4,13 +4,15 @@
 #define UART_RX_PIN 1
 #define TEROS_PWR_PIN 3
 
+#define ever ;;
+
 
 int main()
 {
 
 	stdio_init_all(); //for debugging purposes
 	teros *teros; //name our teros sensor struct
-	teros_data t11_data; //struct to hold our sensor readings
+	teros_data t11; //struct to hold our sensor readings
 
 	sleep_ms(2000);
 
@@ -21,14 +23,23 @@ int main()
 		    UART_TX_PIN,
 		    UART_RX_PIN,
 		    TEROS_PWR_PIN,
-		    soilless //soilless or mineral
+		    mineral //soilless or mineral
 		);
 
 	sleep_ms(3000);
 
-	while(1) {
-		printf("\nline\n");
-		if(teros_get_data(teros, &t11_data)) printf("ERROR\n");
+	for(ever) {
+		if(teros_get_data(teros, &t11)) {
+			printf("ERROR\n");
+		}
+
+		printf("Soil moisture:  %.6f m3/m3\n", t11.vwc);
+		printf("Temperature:    %.1f C\n", t11.temperature);
+		printf("Sensor type:    %c\n", t11.sensor_type);
+		printf("Checksum:       %c\n", t11.checksum);
+		printf("CRC:            %c\n", t11.crc);
+		printf("\n");
+
 		sleep_ms(1000);
 	}
     return 0;
