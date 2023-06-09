@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD 17)
 # (note this can come from environment, CMake cache etc)
 set(PICO_SDK_PATH "/home/amelia/pico/pico-sdk")
 
-set(PICO_BOARD adafruit_kb2040 CACHE STRING "Board type")
+set(PICO_BOARD pico CACHE STRING "Board type")
 
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
@@ -30,8 +30,8 @@ add_executable(ds18b20 ds18b20.c )
 pico_set_program_name(ds18b20 "ds18b20")
 pico_set_program_version(ds18b20 "0.1")
 
-pico_enable_stdio_uart(ds18b20 1)
-pico_enable_stdio_usb(ds18b20 0)
+pico_enable_stdio_uart(ds18b20 0)
+pico_enable_stdio_usb(ds18b20 1)
 
 # Add the standard library to the build
 target_link_libraries(ds18b20
@@ -46,6 +46,7 @@ target_include_directories(ds18b20 PRIVATE
 # Add any user requested libraries
 target_link_libraries(ds18b20 
         hardware_i2c
+        hardware_pio
         )
 
 pico_add_extra_outputs(ds18b20)
