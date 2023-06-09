@@ -28,7 +28,7 @@ teros_return teros_init(
 
 	uart_init(serial, TEROS_BAUD_RATE);
 
-	gpio_set_function(uart_tx_pin, GPIO_FUNC_UART);
+	gpio_set_function(uart_rx_pin, GPIO_FUNC_UART);
 	//gpio_set_function(uart_tx_pin, GPIO_FUNC_UART);
 	gpio_init(pwr_pin);
 	gpio_set_dir(pwr_pin, GPIO_OUT);
@@ -41,34 +41,29 @@ teros_return teros_get_data(teros *teros, teros_data *data) {
 	unsigned char str[16];
 	int i = 0;
 
-	printf("get data function start \n");
-	
+	str[0] = '\0';	
 	gpio_put(teros->pwr_pin, 1);
 
-	printf("gpio on\n");
-	
-	if(!uart_is_enabled(teros->serial)) return uart_not_enabled;
+	for(i = 0; !uart_is_readable(teros->serial) && i < 150; i += 10) sleep_ms(10);
 
-	sleep_ms(125);
-
-	printf("uart is enabled\n");
-
-	if(uart_is_readable_within_us(teros->serial, 150000)) {
-		i = 0;
-		while(uart_is_readable(uart0)) {
-				str[i] = uart_getc(uart0);
-				i++;
-				}
-		str[i] = '\0';
-		printf("%s\n", str);
-		printf("reading complete\n");
+	for(i = 0; uart_is_readable_within_us(teros->serial, 30000);) {
+		ch = uart_getc(teros->serial);
+		printf("%c", ch);
+		if(isprint(ch) || ch == '\t') {
+			str[i] = ch;
+			i++;
 		}
-	
-	else printf("could not read within 150ms\n");
+		else if(ch == '\r') {
+			str[i] = ' ';
+			i++;
+		}
+	}
+
+	str[i] = '\0';
+	if(str[0] == '\0') printf("meow");
+	printf("\n%s\n", str);
 	
 	gpio_put(teros->pwr_pin, 0);
-
-	sleep_ms(3000);
 
 	return 0;
 }

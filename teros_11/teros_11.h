@@ -15,6 +15,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
 #include "pico/stdlib.h"
 #include "pico/malloc.h"
 #define TEROS_BAUD_RATE 1200
