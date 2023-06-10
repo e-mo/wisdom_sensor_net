@@ -29,6 +29,7 @@ typedef enum _return {
 	uart_not_enabled	= -2,
 	timed_out		= -3,
 	read_unsuccessful	= -4,
+	malloc_null		= -5,
 } teros_return;
 
 typedef enum _model {

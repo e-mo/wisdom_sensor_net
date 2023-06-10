@@ -19,6 +19,7 @@ teros_return teros_init(
 
 	*teros = malloc(sizeof(teros));
 
+	if(teros == NULL) return malloc_null;
 	//save some struct elements to reference in other functions
 	(*teros)->serial = serial;
 	(*teros)->model = model;
@@ -33,6 +34,8 @@ teros_return teros_init(
 	//gpio_set_function(uart_tx_pin, GPIO_FUNC_UART);
 	gpio_init(pwr_pin);
 	gpio_set_dir(pwr_pin, GPIO_OUT);
+	
+	return ok;
 }
 
 //grab and return all of the data
