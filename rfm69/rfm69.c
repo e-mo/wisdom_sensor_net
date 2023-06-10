@@ -378,7 +378,7 @@ RFM69_RETURN rfm69_modulation_shaping_get(Rfm69 *rfm, uint8_t *shaping) {
 }
 
 //reads rssi - see p.68 of rfm69 datasheet
-RFM69_RETURN rfm69_rssi_measurment_get(Rfm69 *rfm, int8_t *rssi) {
+RFM69_RETURN rfm69_rssi_measurment_get(Rfm69 *rfm, int16_t *rssi) {
 	uint8_t reg;
 
 	RFM69_RETURN rval = rfm69_read(rfm, RFM69_REG_RSSI_CONFIG, &reg, 1);
@@ -388,7 +388,9 @@ RFM69_RETURN rfm69_rssi_measurment_get(Rfm69 *rfm, int8_t *rssi) {
 
 	rval = rfm69_read(rfm, RFM69_REG_RSSI_VALUE, &reg, 1);
 
-	*rssi = 0 - (reg / 2);
+    printf("%i\n", rval);
+    printf("%X\n", reg);
+	*rssi = -((int16_t)(reg >> 1));
 
 	return rval;
 }

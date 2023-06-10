@@ -456,7 +456,7 @@ RFM69_RETURN rfm69_modulation_shaping_set(Rfm69 *rfm, RFM69_MODULATION_SHAPING s
 RFM69_RETURN rfm69_modulation_shaping_get(Rfm69 *rfm, uint8_t *shaping);
 
 // Read value of last RSSI measurment
-RFM69_RETURN rfm69_rssi_measurment_get(Rfm69 *rfm, int8_t *rssi);
+RFM69_RETURN rfm69_rssi_measurment_get(Rfm69 *rfm, int16_t *rssi);
 // Trigger a new RSSI reading
 RFM69_RETURN rfm69_rssi_measurment_start(Rfm69 *rfm);
 RFM69_RETURN rfm69_rssi_threshold_set(Rfm69 *rfm, uint8_t threshold);
