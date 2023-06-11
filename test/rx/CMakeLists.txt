@@ -28,10 +28,10 @@ pico_sdk_init()
 
 add_executable( 
     test_rx
-		test_rx.c
-		../../rfm69/rfm69.c
+    test_rx.c
+    ../../rfm69/rfm69.c
     ../../error/error_report.c
-		../../pico-ssd1306/ssd1306.c
+    ../../pico-ssd1306/ssd1306.c
 )
 
 pico_enable_stdio_uart(test_rx 0)

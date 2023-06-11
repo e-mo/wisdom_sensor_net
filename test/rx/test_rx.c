@@ -126,6 +126,11 @@ int main() {
         }
         printf("Packet received!\n");
 
+        int16_t rssi = 0xFF;
+        sleep_ms(2);
+        rfm69_rssi_measurment_get(rfm, &rssi);
+        printf("%i\n", rssi);
+
         // Read contents in stdby
         rfm69_mode_set(rfm, RFM69_OP_MODE_STDBY);
         
@@ -140,22 +145,21 @@ int main() {
         // Return to rx mode
         rfm69_mode_set(rfm, RFM69_OP_MODE_RX);
 
-				gpio_put(PICO_DEFAULT_LED_PIN, 1);
-				sleep_ms(50);
-				gpio_put(PICO_DEFAULT_LED_PIN, 0);
-				sleep_ms(50);
-				gpio_put(PICO_DEFAULT_LED_PIN, 1);
-				sleep_ms(50);
-				gpio_put(PICO_DEFAULT_LED_PIN, 0);
-				sleep_ms(50);
+        gpio_put(PICO_DEFAULT_LED_PIN, 1);
+        sleep_ms(50);
+        gpio_put(PICO_DEFAULT_LED_PIN, 0);
+        sleep_ms(50);
+        gpio_put(PICO_DEFAULT_LED_PIN, 1);
+        sleep_ms(50);
+        gpio_put(PICO_DEFAULT_LED_PIN, 0);
+        sleep_ms(50);
 
-				// Display rssi here
-				uint8_t rssi;
-				rfm69_rssi_measurment_get(rfm, &rssi);
-				char rssi_str[50];
-				sprintf(rssi_str, "%u", (-rssi)/2);
-				ssd1306_draw_string(&oled, 0, 0, 1, rssi_str);	
-				ssd1306_show(&oled);
+        // Display rssi here
+        //char rssi_str[50];
+        //sprintf(rssi_str, "%f", rssi_actual);
+        //printf("%s\n", rssi_str);
+        //ssd1306_draw_string(&oled, 0, 0, 1, rssi_str);	
+        //ssd1306_show(&oled);
 
         // Print registers 0x01 -> 0x4F
         //for (int i = 1; i < 0x50; i++) {
