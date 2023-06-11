@@ -11,6 +11,7 @@ struct Rfm69 {
     int8_t pa_level;
     RFM69_PA_MODE pa_mode;
     uint8_t ocp_trim;
+	uint8_t address;
 };
 
 RFM69_RETURN rfm69_init(
@@ -40,6 +41,7 @@ RFM69_RETURN rfm69_init(
     (*rfm)->pa_level = RFM69_PA_LEVEL_DEFAULT - 18; // 13
     (*rfm)->pa_mode = RFM69_PA_MODE_PA0;
     (*rfm)->ocp_trim = RFM69_OCP_TRIM_DEFAULT;
+	(*rfm)->address = 0; // All nodes default to address 0
 
     gpio_set_function(pin_miso, GPIO_FUNC_SPI);
     gpio_set_function(pin_sck,  GPIO_FUNC_SPI);
@@ -629,12 +631,15 @@ RFM69_RETURN rfm69_address_filter_set(Rfm69 *rfm, RFM69_ADDRESS_FILTER filter) {
 }
 
 RFM69_RETURN rfm69_node_address_set(Rfm69 *rfm, uint8_t address) {
-    return rfm69_write(
+    RFM69_RETURN rval = rfm69_write(
             rfm,
             RFM69_REG_NODE_ADRS,
             &address,
             1
     );
+
+	if (rval == RFM69_OK) rfm->address = address;
+	return rval;
 }
 
 RFM69_RETURN rfm69_broadcast_address_set(Rfm69 *rfm, uint8_t address) {

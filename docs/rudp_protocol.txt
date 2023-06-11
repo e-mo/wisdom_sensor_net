@@ -5,8 +5,10 @@ Basic Packet Structure:
 
 	A - Rx address 							   1 byte
 
-	S - Packet size in bytes (<= 66) 		   1 byte // Limited to 66 (FIFO size) until I come up
-													  // with a good large packet routine
+	// Limited to 66 bytes to avoid complex large packet operations
+	// This may change in the future
+	S - Packet size in bytes (<= 66) 		   1 byte 
+													 
 	T - Tx address                             1 byte
 
 	F - Packet information flags 	 		   1 byte
@@ -28,8 +30,6 @@ Packet Information Flags
 			Signals to the recipient that the sender is prepared to 
 			begin transmission. Includes the number of packets to be 
 			sent along with the total size of payload in bytes. 
-
-			Packet sequence number 0
 
 	d - Data Flag
 
