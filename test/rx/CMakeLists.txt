@@ -32,6 +32,7 @@ add_executable(
     ../../rfm69/rfm69.c
     ../../error/error_report.c
     ../../pico-ssd1306/ssd1306.c
+    ../../rudp/rudp.c
 )
 
 pico_enable_stdio_uart(test_rx 0)
@@ -41,7 +42,6 @@ pico_enable_stdio_usb(test_rx 1)
 target_link_libraries(
     test_rx
     pico_stdlib
-		hardware_i2c
 )
 
 # Print error messages to UART
@@ -55,18 +55,20 @@ target_compile_definitions(test_rx PUBLIC RFM69_HIGH_POWER)
 
 # Add the standard include files to the build
 target_include_directories(test_rx PRIVATE
-  ${CMAKE_CURRENT_LIST_DIR}
-  ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts or any other standard includes, if required
-  ../../rfm69/
-  ../../error/
-	../../pico-ssd1306/
+    ${CMAKE_CURRENT_LIST_DIR}
+    ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts or any other standard includes, if required
+    ../../rfm69/
+    ../../error/
+    ../../rudp/
+    ../../pico-ssd1306/
 )
 
 # Add any user requested libraries
 target_link_libraries(
     test_rx
     hardware_spi
+    hardware_i2c
+    pico_rand
 )
 
 pico_add_extra_outputs(test_rx)
-

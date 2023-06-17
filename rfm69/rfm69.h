@@ -469,6 +469,7 @@ RFM69_RETURN rfm69_rssi_threshold_set(Rfm69 *rfm, uint8_t threshold);
 // Also sets appropriate PA* and power flags based
 // on desired power level. 
 RFM69_RETURN rfm69_power_level_set(Rfm69 *rfm, int8_t pa_level);
+void rfm69_power_level_get(Rfm69 *rfm, uint8_t *pa_level);
 static RFM69_RETURN _power_mode_set(Rfm69 *rfm, RFM69_PA_MODE mode);
 
 // Enable or disable overcurent protection
@@ -483,6 +484,7 @@ RFM69_RETURN rfm69_packet_format_set(Rfm69 *rfm, RFM69_PACKET_FORMAT format);
 
 RFM69_RETURN rfm69_address_filter_set(Rfm69 *rfm, RFM69_ADDRESS_FILTER filter);
 RFM69_RETURN rfm69_node_address_set(Rfm69 *rfm, uint8_t address);
+void rfm69_node_address_get(Rfm69 *rfm, uint8_t *address);
 RFM69_RETURN rfm69_broadcast_address_set(Rfm69 *rfm, uint8_t address);
 
 RFM69_RETURN rfm69_sync_value_set(Rfm69 *rfm, uint8_t *value, uint8_t size);

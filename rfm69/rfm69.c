@@ -38,7 +38,7 @@ RFM69_RETURN rfm69_init(
     // These are the default values for every version
     // of the RFM69 I can find.
     (*rfm)->op_mode = RFM69_OP_MODE_STDBY;
-    (*rfm)->pa_level = RFM69_PA_LEVEL_DEFAULT - 18; // 13
+    (*rfm)->pa_level = 0xFF;
     (*rfm)->pa_mode = RFM69_PA_MODE_PA0;
     (*rfm)->ocp_trim = RFM69_OCP_TRIM_DEFAULT;
 	(*rfm)->address = 0; // All nodes default to address 0
@@ -70,7 +70,7 @@ RFM69_RETURN rfm69_init(
         if (buf == 0x00 || buf == 0xFF) { rval = RFM69_INIT_TEST; }
     }
 
-    return rval;
+    return rfm69_power_level_set(*rfm, 13);
 }
 
 // Have you tried turning it off and on again?
@@ -434,6 +434,7 @@ RFM69_RETURN rfm69_power_level_set(Rfm69 *rfm, int8_t pa_level) {
     bool high_power = false;
 #endif
 
+    printf("High power: %b\n", high_power);
     // High power modules have to follow slightly different bounds
     // regarding PA_LEVEL. -2 -> 20 Dbm. 
     // TODO: Make the levels constant
@@ -447,8 +448,11 @@ RFM69_RETURN rfm69_power_level_set(Rfm69 *rfm, int8_t pa_level) {
         else if (pa_level > RFM69_PA_HIGH_MAX)
             pa_level = RFM69_PA_HIGH_MAX;
 
+        printf("PA level: %d\n", pa_level);
+
         // PA1 on only
         if (pa_level <= 13) {
+            printf("<= 13\n");
             pa_mode = RFM69_PA_MODE_PA1;
             pout = pa_level + 18; 
         }
@@ -494,26 +498,31 @@ RFM69_RETURN rfm69_power_level_set(Rfm69 *rfm, int8_t pa_level) {
     return rval;
 }
 
+void rfm69_power_level_get(Rfm69 *rfm, uint8_t *pa_level) {
+    *pa_level = rfm->pa_level;
+};
+
 static RFM69_RETURN _power_mode_set(Rfm69 *rfm, RFM69_PA_MODE pa_mode) {
     RFM69_RETURN rval;
-    uint8_t buf[2] = { 0x00 };
+    uint8_t buf = 0;
+    printf("pa_mode: %d\n", pa_mode);
     
     // Skip if we are already in this mode
-    if (rfm->pa_mode == pa_mode)
+    if (rfm->pa_mode == pa_mode)//pa_mode)
         rval = RFM69_REG_ALREADY_SET;
     else {
         switch (pa_mode) {
             case RFM69_PA_MODE_PA0:
-                buf[0] |= RFM69_PA0_ON;
+                buf |= RFM69_PA0_ON;
                 break;
             case RFM69_PA_MODE_PA1:
-                buf[0] |= RFM69_PA1_ON;
+                buf |= RFM69_PA1_ON;
                 break;
             case RFM69_PA_MODE_PA1_PA2:
-                buf[0] |= RFM69_PA1_ON | RFM69_PA2_ON;
+                buf |= RFM69_PA1_ON | RFM69_PA2_ON;
                 break;
             case RFM69_PA_MODE_HIGH:
-                buf[0] |= RFM69_PA1_ON | RFM69_PA2_ON;
+                buf |= RFM69_PA1_ON | RFM69_PA2_ON;
                 break;
         } 
 
@@ -521,7 +530,7 @@ static RFM69_RETURN _power_mode_set(Rfm69 *rfm, RFM69_PA_MODE pa_mode) {
         rval = rfm69_write_masked(
             rfm,
             RFM69_REG_PA_LEVEL,
-            buf[0],
+            buf,
             RFM69_PA_PINS_MASK
         );
 
@@ -644,6 +653,10 @@ RFM69_RETURN rfm69_node_address_set(Rfm69 *rfm, uint8_t address) {
 	return rval;
 }
 
+void rfm69_node_address_get(Rfm69 *rfm, uint8_t *address) {
+    *address = rfm->address;
+}
+
 RFM69_RETURN rfm69_broadcast_address_set(Rfm69 *rfm, uint8_t address) {
     return rfm69_write(
             rfm,
@@ -678,7 +691,7 @@ RFM69_RETURN rfm69_crc_autoclear_set(Rfm69 *rfm, bool set) {
     return rfm69_write_masked(
             rfm,
             RFM69_REG_PACKET_CONFIG_1,
-            0x08,
+            !set << 7,
             0x08
     );
 }
