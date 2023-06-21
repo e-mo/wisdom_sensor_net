@@ -136,15 +136,16 @@ RUDP_RETURN rfm69_rudp_transmit(
     }
 
     uint8_t message_size = num_packets;
-    uint rack_timeout;
     uint8_t packet_num;
     uint8_t is_ok;
+    bool rack_timeout;
     for (;;) {
         printf("Waiting for RACK\n");
 
 
         retries = TX_REQ_RACK_RETRIES;
         is_ok = false;
+        rack_timeout = true;
         while (retries) {
             retries--;
             if (_rudp_rx_rack(rfm, seq_num_max, TX_RACK_TIMEOUT, ack_packet) == RUDP_TIMEOUT) {
@@ -166,12 +167,12 @@ RUDP_RETURN rfm69_rudp_transmit(
                 _rudp_block_until_packet_sent(rfm);
                 printf("Rack timout: Requesting new RACK\n");
                 continue;
-
             }
             is_ok = ack_packet[HEADER_FLAGS] & HEADER_FLAG_OK;
+            rack_timeout = false;
             break;
         }
-        if (is_ok) break;
+        if (is_ok || rack_timeout) break;
         
         message_size = ack_packet[HEADER_PACKET_SIZE] - HEADER_EFFECTIVE_SIZE; 
         for (int i = 0; i < message_size; i++) {
@@ -486,7 +487,7 @@ RESTART_RBT_LOOP: // This is to return to the RBT loop in case of a false
     uint8_t packet_num;
     uint8_t is_req_rack;
 
-    absolute_time_t rack_timeout = make_timeout_time_ms(RX_DATA_TIMEOUT * num_packets_missing + RX_DATA_LOOP_TIME);
+    absolute_time_t rack_timeout = make_timeout_time_us(RX_DATA_TIMEOUT * num_packets_missing + RX_DATA_LOOP_TIME);
     absolute_time_t now;
     while (num_packets_missing) {
         now = get_absolute_time();
@@ -539,7 +540,7 @@ RESTART_RBT_LOOP: // This is to return to the RBT loop in case of a false
 
             rfm69_mode_set(rfm, RFM69_OP_MODE_TX);
 
-            rack_timeout = make_timeout_time_ms(RX_DATA_TIMEOUT * num_packets_missing + RX_DATA_LOOP_TIME);
+            rack_timeout = make_timeout_time_us(RX_DATA_TIMEOUT * num_packets_missing + RX_DATA_LOOP_TIME);
             _rudp_block_until_packet_sent(rfm);
         }
 

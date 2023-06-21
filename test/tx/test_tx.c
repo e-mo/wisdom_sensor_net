@@ -136,6 +136,7 @@ int main() {
 
         //uint buf_size = get_rand_32() % 6000;
         uint buf_size = TX_PACKETS_MAX * PAYLOAD_MAX;
+        //uint buf_size = 2 * PAYLOAD_MAX;
         printf("buf_size: %u\n", buf_size);
         uint8_t buf[buf_size];
         for (int i = 0; i < buf_size; i++) {
