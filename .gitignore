@@ -2,4 +2,7 @@ test/*/build
 test/*/.cache
 */build
 */.cache
-turbidity/build
+*.swp
+*.swo
+pico
+.vscode

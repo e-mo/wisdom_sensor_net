@@ -27,9 +27,10 @@ pico_sdk_init()
 
 add_executable( 
     test_tx
-		test_tx.c
-		../../rfm69/rfm69.c
+	test_tx.c
+	../../rfm69/rfm69.c
     ../../error/error_report.c
+    ../../rudp/rudp.c
 )
 
 pico_enable_stdio_uart(test_tx 0)
@@ -56,12 +57,14 @@ target_include_directories(test_tx PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts or any other standard includes, if required
   ../../rfm69/
   ../../error/
+  ../../rudp/
 )
 
 # Add any user requested libraries
 target_link_libraries(
     test_tx
     hardware_spi
+    pico_rand
 )
 
 pico_add_extra_outputs(test_tx)

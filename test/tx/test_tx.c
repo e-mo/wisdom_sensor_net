@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "pico/binary_info.h"
+#include "pico/rand.h"
 #include "hardware/spi.h"
 
 #include "rfm69.h"
+#include "rudp.h"
 #include "error_report.h"
 
 #define ever ;; 
@@ -29,7 +31,7 @@ void set_bi() {
     bi_decl(bi_1pin_with_name(PIN_MOSI, "MOSI"));
     bi_decl(bi_1pin_with_name(PIN_RST, "RST"));
     bi_decl(bi_1pin_with_name(PIN_IRQ_0, "IRQ 0"));
-    bi_decl(bi_1pin_with_name(PIN_IRQ_1, "IRQ 0"));
+    bi_decl(bi_1pin_with_name(PIN_IRQ_1, "IRQ 1"));
 }
 
 int main() {
@@ -54,29 +56,23 @@ int main() {
 
     gpio_init(PICO_DEFAULT_LED_PIN);
     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
-    gpio_init(22);
-    gpio_set_dir(22, GPIO_IN);
-    gpio_pull_up(22);
     
-    rfm69_reset(rfm);
-    rfm69_mode_set(rfm, RFM69_OP_MODE_SLEEP);
+    //rfm69_mode_set(rfm, RFM69_OP_MODE_SLEEP);
 
     // Packet mode 
     rfm69_data_mode_set(rfm, RFM69_DATA_MODE_PACKET);
     // 250kb/s baud rate
-    rfm69_bitrate_set(rfm, RFM69_MODEM_BITRATE_2_4);
+    rfm69_bitrate_set(rfm, RFM69_MODEM_BITRATE_57_6);
     // ~2 beta 
-    rfm69_fdev_set(rfm, 2400);
+    rfm69_fdev_set(rfm, 70000);
     // 915MHz 
     rfm69_frequency_set(rfm, 915);
     //rfm69_modulation_shaping_set(rfm, RFM69_FSK_GAUSSIAN_0_3);
     // RXBW >= fdev + br/2
-    rfm69_rxbw_set(rfm, RFM69_RXBW_MANTISSA_24, 6);
+    rfm69_rxbw_set(rfm, RFM69_RXBW_MANTISSA_20, 2);
     rfm69_dcfree_set(rfm, RFM69_DCFREE_WHITENING);
     // Transmit starts with any data in the FIFO
     rfm69_tx_start_condition_set(rfm, RFM69_TX_FIFO_NOT_EMPTY);
-
-    rfm69_power_level_set(rfm, 2);
 
     // Set sync value (essentially functions as subnet)
     uint8_t sync[3] = {0x01, 0x01, 0x01};
@@ -88,14 +84,21 @@ int main() {
     // Set to filter by node and broadcast address
     rfm69_address_filter_set(rfm, RFM69_FILTER_NODE_BROADCAST);
 
-    // Two byte payload for testing. One address byte, one byte of data.
-    rfm69_payload_length_set(rfm, 2);
-
     // Recommended rssi thresh default setting
     rfm69_rssi_threshold_set(rfm, 0xE4);
 
-    // Set into transmit mode
-    rfm69_mode_set(rfm, RFM69_OP_MODE_STDBY);
+    //rfm69_write_masked(
+    //        rfm,
+    //        RFM69_REG_AFC_FEI,
+    //        0x08,
+    //        0x08
+    //);
+    //rfm69_write_masked(
+    //        rfm,
+    //        RFM69_REG_AFC_FEI,
+    //        0x04,
+    //        0x04
+    //);
 
 
     // Check if rfm69_init was successful (== 0)
@@ -105,89 +108,54 @@ int main() {
         critical_error();
     }
 
-    uint8_t dagc = 0x30;
-    rfm69_write(
+    //uint8_t dagc = 0x30;
+    //rfm69_write(
+    //        rfm,
+    //        RFM69_REG_TEST_DAGC,
+    //        &dagc,
+    //        1 
+    //);
+    
+    //rfm69_write_masked(
+    //        rfm,
+    //        RFM69_REG_AFCBW,
+    //        0x03,
+    //        0x07
+    //);
+
+    //// LNA input impedance 200 ohms
+    rfm69_write_masked(
             rfm,
-            RFM69_REG_TEST_DAGC,
-            &dagc,
-            1 
+            RFM69_REG_LNA,
+            0x80,
+            0x80
     );
 
-    uint8_t buf[2] = { 0x02, 0x45 };
-    bool state;
+    rfm69_power_level_set(rfm, 0);
     for(ever) { 
 
-	bool high = gpio_get(22);	
-	if (high)
-		rfm69_power_level_set(rfm, 20);
-	else
-		rfm69_power_level_set(rfm, 0);
-
-        // Fill fifo in standby
-        rfm69_write(
+        //uint buf_size = get_rand_32() % 6000;
+        uint buf_size = TX_PACKETS_MAX * PAYLOAD_MAX;
+        printf("buf_size: %u\n", buf_size);
+        uint8_t buf[buf_size];
+        for (int i = 0; i < buf_size; i++) {
+            buf[i] = get_rand_32() % 256;
+        }
+        
+        RUDP_RETURN rval = rfm69_rudp_transmit(
                 rfm,
-                RFM69_REG_FIFO,
+                0x02,
                 buf,
-                2
+                buf_size,
+                100,
+                5
         );
 
-        // Set into TX mode
-        rfm69_mode_set(rfm, RFM69_OP_MODE_TX);
-	gpio_put(PICO_DEFAULT_LED_PIN, 1);
-        //uint8_t fdev_msb = 0x01;
-        //rfm69_write(
-        //        rfm,
-        //        RFM69_REG_FDEV_MSB,
-        //        &fdev_msb,
-        //        1
-        //);
+    
+        if (rval == RUDP_OK) printf("RUDP_OK\n\n");
+        else printf("RUDP_TIMOUT\n\n");
 
-        // Wait for packet sent flag
-        state = false;
-        while (!state) {
-            rfm69_irq2_flag_state(rfm, RFM69_IRQ2_FLAG_PACKET_SENT, &state);
-        }
-        printf("Packet sent!\n");
-
-
-        // Print registers 0x01 -> 0x4F
-        uint8_t reg;
-        for (int i = 1; i < 0x50; i++) {
-            rfm69_read(
-                    rfm,
-                    i,
-                    &reg,
-                    1
-            );
-            printf("0x%02X: %02X\n", i, reg);
-        }
-        rfm69_read(
-                rfm,
-                0x5A,
-                &reg,
-                1
-        );
-        printf("0x5A: %02X\n", reg);
-        rfm69_read(
-                rfm,
-                0x5C,
-                &reg,
-                1
-        );
-        printf("0x5C: %02X\n", reg);
-        printf("\n");
-
-        // Set back to standby
-        rfm69_mode_set(rfm, RFM69_OP_MODE_STDBY);
-	sleep_ms(50);
-	gpio_put(PICO_DEFAULT_LED_PIN, 0);
-	sleep_ms(50);
-	gpio_put(PICO_DEFAULT_LED_PIN, 1);
-	sleep_ms(50);
-	gpio_put(PICO_DEFAULT_LED_PIN, 0);
-
-        // Wait 3 secs
-        sleep_ms(3000);
+        sleep_ms(1000);
     }
     
     return 0;

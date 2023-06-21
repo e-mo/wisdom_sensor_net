@@ -6,6 +6,7 @@
 #include "ssd1306.h"
 
 #include "rfm69.h" 
+#include "rudp.h"
 #include "error_report.h"
 
 #define ever ;; 
@@ -57,20 +58,17 @@ int main() {
     gpio_init(PICO_DEFAULT_LED_PIN);
     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
     
-    rfm69_reset(rfm);
-    rfm69_mode_set(rfm, RFM69_OP_MODE_SLEEP);
-
     // Packet mode 
     rfm69_data_mode_set(rfm, RFM69_DATA_MODE_PACKET);
     // 250kb/s baud rate
-    rfm69_bitrate_set(rfm, RFM69_MODEM_BITRATE_2_4);
+    rfm69_bitrate_set(rfm, RFM69_MODEM_BITRATE_57_6);
     // ~2 beta 
-    rfm69_fdev_set(rfm, 2400);
+    rfm69_fdev_set(rfm, 70000);
     // 915MHz 
     rfm69_frequency_set(rfm, 915);
     // rfm69_modulation_shaping_set(rfm, RFM69_FSK_GAUSSIAN_0_3);
     // RXBW >= fdev + br/2
-    rfm69_rxbw_set(rfm, RFM69_RXBW_MANTISSA_24, 6);
+    rfm69_rxbw_set(rfm, RFM69_RXBW_MANTISSA_20, 2);
     rfm69_dcfree_set(rfm, RFM69_DCFREE_WHITENING);
     // Transmit starts with any data in the FIFO
     rfm69_tx_start_condition_set(rfm, RFM69_TX_FIFO_NOT_EMPTY);
@@ -85,16 +83,21 @@ int main() {
     // Set to filter by node and broadcast address
     rfm69_address_filter_set(rfm, RFM69_FILTER_NODE_BROADCAST);
 
-    // Two byte payload for testing. One address byte, one byte of data.
-    rfm69_payload_length_set(rfm, 2);
-
     // Recommended rssi thresh default setting
     rfm69_rssi_threshold_set(rfm, 0xE4);
 
-    rfm69_crc_autoclear_set(rfm, false);
-
-    // Set into RX mode
-    rfm69_mode_set(rfm, RFM69_OP_MODE_RX);
+    //rfm69_write_masked(
+    //        rfm,
+    //        RFM69_REG_AFC_FEI,
+    //        0x08,
+    //        0x08
+    //);
+    //rfm69_write_masked(
+    //        rfm,
+    //        RFM69_REG_AFC_FEI,
+    //        0x04,
+    //        0x04
+    //);
 
     // Check if rfm69_init was successful (== 0)
     // Set last error and halt process if not.
@@ -103,72 +106,56 @@ int main() {
         critical_error();
     }
 
-		// init i2c and OLED
-		i2c_init(i2c1, 400000);
-		gpio_set_function(26, GPIO_FUNC_I2C);
-		gpio_set_function(27, GPIO_FUNC_I2C);
-		gpio_pull_up(26);
-		gpio_pull_up(27);
+    //uint8_t dagc = 0x30;
+    //rfm69_write(
+    //        rfm,
+    //        RFM69_REG_TEST_DAGC,
+    //        &dagc,
+    //        1 
+    //);
+    //
 
-		ssd1306_t oled;
-		oled.external_vcc = false;
-		bool success = ssd1306_init(&oled, 128, 64, 0x3C, i2c1);
-		ssd1306_clear(&oled);
-		ssd1306_show(&oled);
+    //rfm69_write_masked(
+    //        rfm,
+    //        RFM69_REG_AFCBW,
+    //        0x03,
+    //        0x07
+    //);
+    //
+    //rfm69_write_masked(
+    //        rfm,
+    //        RFM69_REG_AFCBW,
+    //        0x03,
+    //        0x07
+    //);
+    //
+    // LNA input impedance 200 ohms
+    rfm69_write_masked(
+            rfm,
+            RFM69_REG_LNA,
+            0x80,
+            0x80
+    );
 
-    uint8_t buf[2];
-    bool state;
+    uint8_t registers[0x5C] = {0xFF};
+    rfm69_power_level_set(rfm, 0);
     for(ever) { 
 
-        state = false;
-        while (!state) {
-            rfm69_irq2_flag_state(rfm, RFM69_IRQ2_FLAG_PAYLOAD_READY, &state);
-        }
-        printf("Packet received!\n");
+        uint8_t address;
+        uint size = 100000;
+        uint8_t payload[size];
 
-        // Read contents in stdby
-        rfm69_mode_set(rfm, RFM69_OP_MODE_STDBY);
-        
-        rfm69_read(
+        rval = rfm69_rudp_receive(
                 rfm,
-                RFM69_REG_FIFO,
-                buf,
-                2
+                &address,
+                payload,
+                &size,
+                60000
         );
-        printf("Data: %02X\n", buf[1]);
 
-        // Return to rx mode
-        rfm69_mode_set(rfm, RFM69_OP_MODE_RX);
+        if (rval == RUDP_OK) printf("RUDP_OK\n\n");
+        else printf("RUDP_TIMOUT\n\n");
 
-				gpio_put(PICO_DEFAULT_LED_PIN, 1);
-				sleep_ms(50);
-				gpio_put(PICO_DEFAULT_LED_PIN, 0);
-				sleep_ms(50);
-				gpio_put(PICO_DEFAULT_LED_PIN, 1);
-				sleep_ms(50);
-				gpio_put(PICO_DEFAULT_LED_PIN, 0);
-				sleep_ms(50);
-
-				// Display rssi here
-				uint8_t rssi;
-				rfm69_rssi_measurment_get(rfm, &rssi);
-				char rssi_str[50];
-				sprintf(rssi_str, "%u", (-rssi)/2);
-				ssd1306_draw_string(&oled, 0, 0, 1, rssi_str);	
-				ssd1306_show(&oled);
-
-        // Print registers 0x01 -> 0x4F
-        //for (int i = 1; i < 0x50; i++) {
-        //    rfm69_read(
-        //            rfm,
-        //            i,
-        //            &buf,
-        //            1
-        //    );
-        //    printf("0x%02X: %02X\n", i, buf);
-        //}
-        //sleep_ms(5000);
-        //printf("\n");
     }
     
     return 0;
