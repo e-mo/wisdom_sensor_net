@@ -10,11 +10,16 @@ typedef enum _RUDP_RETURN {
     RUDP_PAYLOAD_OVERFLOW
 } RUDP_RETURN;
 
-#define TX_RTP_TIMEOUT 100 // 100ms ack timout
+#define TX_RTP_TIMEOUT 1000 // 100ms ack timout
 #define TX_RTP_RETRIES 5
+#define TX_REQ_RACK_RETRIES 5
 
-#define RX_DATA_TIMEOUT 80
-#define TX_RACK_TIMEOUT 250
+#define TX_INTER_PACKET_DELAY 0
+
+#define RX_DATA_LOOP_TIME 110
+#define _RX_DATA_TIMEOUT 11 
+#define RX_DATA_TIMEOUT (TX_INTER_PACKET_DELAY + _RX_DATA_TIMEOUT)
+#define TX_RACK_TIMEOUT 1000
 
 enum HEADER {
     HEADER_PACKET_SIZE,
@@ -28,15 +33,16 @@ enum HEADER {
 
 #define HEADER_EFFECTIVE_SIZE (HEADER_SIZE - 1) // HEADER_SIZE - length byte (it isn't part of its own count)
 #define PAYLOAD_MAX (65 - HEADER_EFFECTIVE_SIZE)
-#define SEQ_NUM_RAND_LIMIT 50 
-#define TX_PACKETS_MAX (256 - SEQ_NUM_RAND_LIMIT)
+#define SEQ_NUM_RAND_LIMIT 25 
+// 256 (byte packet num max) - potential range for starting seq num - 1 ack packet
+#define TX_PACKETS_MAX (256 - SEQ_NUM_RAND_LIMIT - 1) 
 
 enum FLAG {
     HEADER_FLAG_RBT  = 0x80,
     HEADER_FLAG_DATA = 0x40,
     HEADER_FLAG_ACK  = 0x20,
     HEADER_FLAG_RACK = 0x10,
-    HEADER_FLAG_OK   = 0x08
+    HEADER_FLAG_OK   = 0x08,
 };
 
 

@@ -61,14 +61,14 @@ int main() {
     // Packet mode 
     rfm69_data_mode_set(rfm, RFM69_DATA_MODE_PACKET);
     // 250kb/s baud rate
-    rfm69_bitrate_set(rfm, RFM69_MODEM_BITRATE_300);
+    rfm69_bitrate_set(rfm, RFM69_MODEM_BITRATE_57_6);
     // ~2 beta 
-    rfm69_fdev_set(rfm, 300000);
+    rfm69_fdev_set(rfm, 70000);
     // 915MHz 
     rfm69_frequency_set(rfm, 915);
     // rfm69_modulation_shaping_set(rfm, RFM69_FSK_GAUSSIAN_0_3);
     // RXBW >= fdev + br/2
-    rfm69_rxbw_set(rfm, RFM69_RXBW_MANTISSA_20, 0);
+    rfm69_rxbw_set(rfm, RFM69_RXBW_MANTISSA_20, 2);
     rfm69_dcfree_set(rfm, RFM69_DCFREE_WHITENING);
     // Transmit starts with any data in the FIFO
     rfm69_tx_start_condition_set(rfm, RFM69_TX_FIFO_NOT_EMPTY);
@@ -141,43 +141,8 @@ int main() {
     rfm69_power_level_set(rfm, 0);
     for(ever) { 
 
-        //uint8_t buf;
-        //for (int i = 1; i < 0x50; i++) {
-        //    rfm69_read(
-        //            rfm,
-        //            i,
-        //            &buf,
-        //            1
-        //    );
-        //    if (registers[i] != buf) {
-        //        registers[i] = buf;
-        //        printf("0x%2X: 0x%2X\n", i, buf);
-        //    }
-        //}
-        //rfm69_read(
-        //         rfm,
-        //         0x5A,
-        //         &buf,
-        //         1
-        //);
-        //if (registers[0x5A] != buf) {
-        //    registers[0x5A] = buf;
-        //    printf("0x5A: 0x%2X\n", buf);
-        //}
-        //rfm69_read(
-        //         rfm,
-        //         0x5C,
-        //         &buf,
-        //         1
-        //);
-        //if (registers[0x5C] != buf) {
-        //    registers[0x5C] = buf;
-        //    printf("0x5C: 0x%2X\n", buf);
-        //}
-        //printf("\n");
-
         uint8_t address;
-        uint size = 10000;
+        uint size = 100000;
         uint8_t payload[size];
 
         rval = rfm69_rudp_receive(
@@ -185,35 +150,12 @@ int main() {
                 &address,
                 payload,
                 &size,
-                10000
+                60000
         );
 
         if (rval == RUDP_OK) printf("RUDP_OK\n\n");
         else printf("RUDP_TIMOUT\n\n");
 
-        //if (rval == RUDP_OK) {
-        //    gpio_put(PICO_DEFAULT_LED_PIN, 1);
-        //    sleep_ms(50);
-        //    gpio_put(PICO_DEFAULT_LED_PIN, 0);
-        //    sleep_ms(50);
-        //    gpio_put(PICO_DEFAULT_LED_PIN, 1);
-        //    sleep_ms(50);
-        //    gpio_put(PICO_DEFAULT_LED_PIN, 0);
-        //    sleep_ms(50);
-        //    printf("RUDP_OK\n");
-        //}
-        //else printf("RUDP_TIMEOUT\n");
-
-        // Display rssi here
-        //char rssi_str[50];
-        //sprintf(rssi_str, "%f", rssi_actual);
-        //printf("%s\n", rssi_str);
-        //ssd1306_draw_string(&oled, 0, 0, 1, rssi_str);	
-        //ssd1306_show(&oled);
-
-        // Print registers 0x01 -> 0x4F
-
-        //sleep_ms(3000);
     }
     
     return 0;
