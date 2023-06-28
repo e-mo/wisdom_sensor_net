@@ -2,8 +2,9 @@
 #include "pico/rand.h"
 #include "string.h"
 
-RUDP_RETURN rfm69_rudp_transmit(
+bool rfm69_rudp_transmit(
         Rfm69 *rfm, 
+        tx_report_t *report,
         uint8_t address,
         uint8_t *payload, 
         uint payload_size,
@@ -48,11 +49,22 @@ RUDP_RETURN rfm69_rudp_transmit(
     uint8_t ack_packet[HEADER_SIZE + num_packets];
 
     bool rbt_success = false;
-    // Dirt goes here
-    RUDP_RETURN rval = RUDP_TIMEOUT;
+
+    report->payload_size = payload_size;
+    report->num_packets = num_packets;
+    report->rbt_retries = 0;
+    report->packets_sent = 0;
+    report->retransmissions = 0;
+    report->racks_received = 0;
+    report->rack_requests = 0;
+    report->return_status = RUDP_TIMEOUT;
+
+    bool success = false;
     for (uint retry = 0; retry <= retries; retry++) {
         
         rfm69_mode_set(rfm, RFM69_OP_MODE_STDBY);
+
+        if (retry) report->rbt_retries++;
 
         // Write header to fifo
         rfm69_write(
@@ -69,14 +81,9 @@ RUDP_RETURN rfm69_rudp_transmit(
                 size_bytes,	
                 sizeof(payload_size)
         );
-
-        
-        if (retry) printf("Retrying RBT\n");
-        else printf("Sending RBT\n");
         
         rfm69_mode_set(rfm, RFM69_OP_MODE_TX);
         _rudp_block_until_packet_sent(rfm);
-        printf("RBT sent to (%u): %u\n", address, seq_num);
 
         // I emply "backoff" where the timout increases with each retry plus "jitter"
         // This allows you to have a quick retry followed by successively slower retries
@@ -130,9 +137,9 @@ RUDP_RETURN rfm69_rudp_transmit(
 
         sleep_ms(TX_INTER_PACKET_DELAY);
         rfm69_mode_set(rfm, RFM69_OP_MODE_TX);
-
         _rudp_block_until_packet_sent(rfm);
-        printf("Sending data packet: %u\n", seq_num + i);
+
+        report->packets_sent++;
     }
 
     uint8_t message_size = num_packets;
@@ -140,15 +147,12 @@ RUDP_RETURN rfm69_rudp_transmit(
     uint8_t is_ok;
     bool rack_timeout;
     for (;;) {
-        printf("Waiting for RACK\n");
 
-
-        retries = TX_REQ_RACK_RETRIES;
         is_ok = false;
         rack_timeout = true;
         while (retries) {
             retries--;
-            if (_rudp_rx_rack(rfm, seq_num_max, TX_RACK_TIMEOUT, ack_packet) == RUDP_TIMEOUT) {
+            if (_rudp_rx_rack(rfm, seq_num_max, timeout, ack_packet) == RUDP_TIMEOUT) {
                 rfm69_mode_set(rfm, RFM69_OP_MODE_STDBY);
                 
                 header[HEADER_PACKET_SIZE] = HEADER_EFFECTIVE_SIZE; 
@@ -165,7 +169,9 @@ RUDP_RETURN rfm69_rudp_transmit(
                 sleep_ms(TX_INTER_PACKET_DELAY);
                 rfm69_mode_set(rfm, RFM69_OP_MODE_TX);
                 _rudp_block_until_packet_sent(rfm);
-                printf("Rack timout: Requesting new RACK\n");
+
+                report->rack_requests++;
+
                 continue;
             }
             is_ok = ack_packet[HEADER_FLAGS] & HEADER_FLAG_OK;
@@ -174,6 +180,8 @@ RUDP_RETURN rfm69_rudp_transmit(
         }
         if (is_ok || rack_timeout) break;
         
+        report->racks_received;
+
         message_size = ack_packet[HEADER_PACKET_SIZE] - HEADER_EFFECTIVE_SIZE; 
         for (int i = 0; i < message_size; i++) {
             rfm69_mode_set(rfm, RFM69_OP_MODE_STDBY);
@@ -211,15 +219,17 @@ RUDP_RETURN rfm69_rudp_transmit(
             rfm69_mode_set(rfm, RFM69_OP_MODE_TX);
 
             _rudp_block_until_packet_sent(rfm);
-            printf("Sending data packet: %u\n", packet_num);
 
+            report->retransmissions++;
         }
     }
 
-    rval = RUDP_OK;
+    if (is_ok) report->return_status = RUDP_OK;
+    else report->return_status = RUDP_OK_UNCONFIRMED;
+    success = true;
 CLEANUP:
     rfm69_mode_set(rfm, previous_mode);
-    return rval;
+    return success;
 }
 
 static void _rudp_init(Rfm69 *rfm) {
@@ -274,20 +284,9 @@ static RUDP_RETURN _rudp_rx_rack(
         is_rack = (packet[HEADER_FLAGS] & HEADER_FLAG_RACK);
         // is it the correct sequence num?
         is_seq = packet[HEADER_SEQ_NUMBER] == seq_num;
-        printf("is_rack:\t%u\nis_seq:\t%u\nis_ok:\t%u\n", is_rack, is_seq, is_ok);
-        printf("size:\t%u\n", packet[HEADER_PACKET_SIZE]);
-        printf("rx:\t%u\n", packet[HEADER_RX_ADDRESS]);
-        printf("tx:\t%u\n", packet[HEADER_TX_ADDRESS]);
-        printf("flags:\t%u\n", packet[HEADER_FLAGS]);
-        printf("seq #:\t%u\n", packet[HEADER_SEQ_NUMBER]);
-        printf("expected:%u\n", seq_num);
-        printf("first:%u\n", packet[PAYLOAD_BEGIN]);
 
         if (!is_rack || !is_seq) continue;
-        // An ok flag says we are good to stop transmitting
-        printf("Received RACK\n");
 
-        // RACK RECEIVED
         rval = RUDP_OK; 
         break;
     }
@@ -329,8 +328,6 @@ static RUDP_RETURN _rudp_rx_ack(
         // is it the correct sequence num?
         is_seq = packet[HEADER_SEQ_NUMBER] == seq_num;
         if (!is_ack || !is_seq) continue;
-
-        printf("Ack received: %u\n", packet[HEADER_SEQ_NUMBER]);
 
         // ACK RECEIVED
         rval = RUDP_OK; 
@@ -615,7 +612,6 @@ RESTART_RBT_LOOP: // This is to return to the RBT loop in case of a false
     header[HEADER_SEQ_NUMBER] = seq_num_max;
 
     // Send a non-guaranteed success packet
-    printf("Sending OK\n");
     rfm69_write(
             rfm,
             RFM69_REG_FIFO,
@@ -623,19 +619,13 @@ RESTART_RBT_LOOP: // This is to return to the RBT loop in case of a false
             HEADER_SIZE
     );
 
-    printf("Success:\n-RX BYTES:\t%u\n-NUM PACKETS:\t%u\n-PAYLOAD:", payload_bytes_received, num_packets_expected);
-    //for (int i = 0; i < *payload_size; i++) {
-    //    if (i % 8 == 0) printf("\n\t");
-    //    printf("0x%02X ", payload[i]);
-    //}
-    printf("\n\n");
-
-    sleep_ms(15);
+    sleep_ms(TX_INTER_PACKET_DELAY);
     rfm69_mode_set(rfm, RFM69_OP_MODE_TX);
     _rudp_block_until_packet_sent(rfm);
 
     rval = RUDP_OK;
 CLEANUP:
+    *payload_size = payload_bytes_received;
     rfm69_mode_set(rfm, previous_mode);
     return rval;
 }

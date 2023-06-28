@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include "pico/stdlib.h"
 #include "pico/binary_info.h"
 #include "pico/rand.h"
@@ -108,13 +109,13 @@ int main() {
         critical_error();
     }
 
-    //uint8_t dagc = 0x30;
-    //rfm69_write(
-    //        rfm,
-    //        RFM69_REG_TEST_DAGC,
-    //        &dagc,
-    //        1 
-    //);
+    uint8_t dagc = 0x30;
+    rfm69_write(
+            rfm,
+            RFM69_REG_TEST_DAGC,
+            &dagc,
+            1 
+    );
     
     //rfm69_write_masked(
     //        rfm,
@@ -123,38 +124,57 @@ int main() {
     //        0x07
     //);
 
-    //// LNA input impedance 200 ohms
-    rfm69_write_masked(
-            rfm,
-            RFM69_REG_LNA,
-            0x80,
-            0x80
-    );
+    // LNA input impedance 200 ohms
+    //rfm69_write_masked(
+    //        rfm,
+    //        RFM69_REG_LNA,
+    //        0x80,
+    //        0x80
+    //);
 
-    rfm69_power_level_set(rfm, 0);
+    rfm69_power_level_set(rfm, -2);
+    bool success;
+    tx_report_t report;
     for(ever) { 
 
-        uint buf_size = get_rand_32() % 10000;
+        char *message = "Hello, world!";
+        uint buf_size = strlen(message) + 1;
+        //uint buf_size = get_rand_32() % 10000;
         //uint buf_size = TX_PACKETS_MAX * PAYLOAD_MAX;
         //uint buf_size = PAYLOAD_MAX;
+        printf("Sending transmission...\n");
         printf("buf_size: %u\n", buf_size);
-        uint8_t buf[buf_size];
-        for (int i = 0; i < buf_size; i++) {
-            buf[i] = get_rand_32() % 256;
-        }
-        
-        RUDP_RETURN rval = rfm69_rudp_transmit(
+
+        success = rfm69_rudp_transmit(
                 rfm,
+                &report,
                 0x02,
-                buf,
+                message,
                 buf_size,
-                100,
-                5
+                300,
+                5 
         );
 
-    
-        if (rval == RUDP_OK) printf("RUDP_OK\n\n");
-        else printf("RUDP_TIMOUT\n\n");
+        printf("tx_report:\n");
+        printf("payload_size:\t%u\n", report.payload_size);
+        printf("num_packets:\t%u\n", report.num_packets);
+        printf("packets_sent:\t%u\n", report.packets_sent);
+        printf("rbt_retries:\t%u\n", report.rbt_retries);
+        printf("retransmissions:%u\n", report.retransmissions);
+        printf("racks_received:\t%u\n", report.racks_received);
+        printf("rack_requests:\t%u\n", report.rack_requests);
+        switch(report.return_status) {
+            case RUDP_OK:
+                printf("return_status:\tRUDP_OK\n");
+                break;
+            case RUDP_OK_UNCONFIRMED:
+                printf("return_status:\tRUDP_OK_UNCONFIRMED\n");
+                break;
+            case RUDP_TIMEOUT:
+                printf("return_status:\tRUDP_TIMEOUT\n");
+                break;
+        }
+        printf("\n");
 
         sleep_ms(1000);
     }

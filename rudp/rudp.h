@@ -3,8 +3,20 @@
 
 #include "rfm69.h"
 
+typedef struct _tx_report {
+    uint payload_size;
+    uint num_packets;
+    uint packets_sent;
+    uint rbt_retries;
+    uint retransmissions; 
+    uint racks_received;
+    uint rack_requests;
+    uint return_status;
+} tx_report_t;
+
 typedef enum _RUDP_RETURN {
     RUDP_OK,
+    RUDP_OK_UNCONFIRMED,
     RUDP_TIMEOUT,
     RUDP_RX_BUFFER_OVERFLOW,
     RUDP_PAYLOAD_OVERFLOW
@@ -14,12 +26,12 @@ typedef enum _RUDP_RETURN {
 #define TX_RTP_RETRIES 5
 #define TX_REQ_RACK_RETRIES 5
 
-#define TX_INTER_PACKET_DELAY 0
+#define TX_INTER_PACKET_DELAY 0 
 
-#define RX_DATA_LOOP_TIME 108000
-#define _RX_DATA_TIMEOUT 11800
+#define RX_DATA_LOOP_TIME 108500
+#define _RX_DATA_TIMEOUT 12000
 #define RX_DATA_TIMEOUT (TX_INTER_PACKET_DELAY + _RX_DATA_TIMEOUT)
-#define TX_RACK_TIMEOUT 200
+#define TX_RACK_TIMEOUT 300
 
 enum HEADER {
     HEADER_PACKET_SIZE,
@@ -50,8 +62,9 @@ enum FLAG {
 // address - receiver node address
 // payload - data payload to be sent
 // length  - length of data payload in bytes
-RUDP_RETURN rfm69_rudp_transmit(
+bool rfm69_rudp_transmit(
         Rfm69 *rfm, 
+        tx_report_t *report,
         uint8_t address,
         uint8_t *payload, 
         uint payload_size, 

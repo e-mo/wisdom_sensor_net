@@ -106,14 +106,14 @@ int main() {
         critical_error();
     }
 
-    //uint8_t dagc = 0x30;
-    //rfm69_write(
-    //        rfm,
-    //        RFM69_REG_TEST_DAGC,
-    //        &dagc,
-    //        1 
-    //);
-    //
+    uint8_t dagc = 0x30;
+    rfm69_write(
+            rfm,
+            RFM69_REG_TEST_DAGC,
+            &dagc,
+            1 
+    );
+    
 
     //rfm69_write_masked(
     //        rfm,
@@ -130,15 +130,14 @@ int main() {
     //);
     //
     // LNA input impedance 200 ohms
-    rfm69_write_masked(
-            rfm,
-            RFM69_REG_LNA,
-            0x80,
-            0x80
-    );
+    //rfm69_write_masked(
+    //        rfm,
+    //        RFM69_REG_LNA,
+    //        0x80,
+    //        0x80
+    //);
 
-    uint8_t registers[0x5C] = {0xFF};
-    rfm69_power_level_set(rfm, 0);
+    rfm69_power_level_set(rfm, -2);
     for(ever) { 
 
         uint8_t address;
@@ -153,8 +152,10 @@ int main() {
                 60000
         );
 
-        if (rval == RUDP_OK) printf("RUDP_OK\n\n");
-        else printf("RUDP_TIMOUT\n\n");
+        if (rval == RUDP_OK) printf("RUDP_OK\n");
+        else printf("RUDP_TIMOUT\n");
+
+        printf("message: %s\n\n", payload);
 
     }
     
