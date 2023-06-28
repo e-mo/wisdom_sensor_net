@@ -25,14 +25,14 @@
 
 void set_bi() {
     bi_decl(bi_program_name("Test Transmitter"));
-    bi_decl(bi_program_description("WISDOM sensor network basic range test tx."))
+    bi_decl(bi_program_description("WISDOM sensor network tx test."))
     bi_decl(bi_1pin_with_name(PIN_MISO, "MISO"));
     bi_decl(bi_1pin_with_name(PIN_CS, "CS"));
     bi_decl(bi_1pin_with_name(PIN_SCK, "SCK"));
     bi_decl(bi_1pin_with_name(PIN_MOSI, "MOSI"));
     bi_decl(bi_1pin_with_name(PIN_RST, "RST"));
-    bi_decl(bi_1pin_with_name(PIN_IRQ_0, "IRQ 0"));
-    bi_decl(bi_1pin_with_name(PIN_IRQ_1, "IRQ 1"));
+    //bi_decl(bi_1pin_with_name(PIN_IRQ_0, "IRQ 0"));
+    //bi_decl(bi_1pin_with_name(PIN_IRQ_1, "IRQ 1"));
 }
 
 int main() {
@@ -78,21 +78,6 @@ int main() {
         set_last_error(rval); // Can use return value from rfm69_init directly
         critical_error();
     }
-
-    //rfm69_write_masked(
-    //        rfm,
-    //        RFM69_REG_AFCBW,
-    //        0x03,
-    //        0x07
-    //);
-
-    // LNA input impedance 200 ohms
-    //rfm69_write_masked(
-    //        rfm,
-    //        RFM69_REG_LNA,
-    //        0x80,
-    //        0x80
-    //);
 
     rfm69_power_level_set(rfm, -2);
     bool success;

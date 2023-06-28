@@ -24,15 +24,15 @@
 #define PIN_IRQ_1  21
 
 void set_bi() {
-    bi_decl(bi_program_name("Test Transmitter"));
-    bi_decl(bi_program_description("WISDOM sensor network basic range test rx."))
+    bi_decl(bi_program_name("Test Receiver"));
+    bi_decl(bi_program_description("WISDOM sensor network rx test."))
     bi_decl(bi_1pin_with_name(PIN_MISO, "MISO"));
     bi_decl(bi_1pin_with_name(PIN_CS, "CS"));
     bi_decl(bi_1pin_with_name(PIN_SCK, "SCK"));
     bi_decl(bi_1pin_with_name(PIN_MOSI, "MOSI"));
     bi_decl(bi_1pin_with_name(PIN_RST, "RST"));
-    bi_decl(bi_1pin_with_name(PIN_IRQ_0, "IRQ 0"));
-    bi_decl(bi_1pin_with_name(PIN_IRQ_1, "IRQ 0"));
+    //bi_decl(bi_1pin_with_name(PIN_IRQ_0, "IRQ 0"));
+    //bi_decl(bi_1pin_with_name(PIN_IRQ_1, "IRQ 1"));
 }
 
 int main() {
