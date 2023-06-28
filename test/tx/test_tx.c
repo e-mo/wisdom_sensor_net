@@ -58,10 +58,6 @@ int main() {
     gpio_init(PICO_DEFAULT_LED_PIN);
     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
     
-    //rfm69_mode_set(rfm, RFM69_OP_MODE_SLEEP);
-
-    // Packet mode 
-    rfm69_data_mode_set(rfm, RFM69_DATA_MODE_PACKET);
     // 250kb/s baud rate
     rfm69_bitrate_set(rfm, RFM69_MODEM_BITRATE_57_6);
     // ~2 beta 
@@ -73,34 +69,8 @@ int main() {
     rfm69_rxbw_set(rfm, RFM69_RXBW_MANTISSA_20, 2);
     rfm69_dcfree_set(rfm, RFM69_DCFREE_WHITENING);
     // Transmit starts with any data in the FIFO
-    rfm69_tx_start_condition_set(rfm, RFM69_TX_FIFO_NOT_EMPTY);
-
-    // Set sync value (essentially functions as subnet)
-    uint8_t sync[3] = {0x01, 0x01, 0x01};
-    rfm69_sync_value_set(rfm, sync, 3);
 
     rfm69_node_address_set(rfm, 0x01); 
-    rfm69_broadcast_address_set(rfm, 0x86); 
-
-    // Set to filter by node and broadcast address
-    rfm69_address_filter_set(rfm, RFM69_FILTER_NODE_BROADCAST);
-
-    // Recommended rssi thresh default setting
-    rfm69_rssi_threshold_set(rfm, 0xE4);
-
-    //rfm69_write_masked(
-    //        rfm,
-    //        RFM69_REG_AFC_FEI,
-    //        0x08,
-    //        0x08
-    //);
-    //rfm69_write_masked(
-    //        rfm,
-    //        RFM69_REG_AFC_FEI,
-    //        0x04,
-    //        0x04
-    //);
-
 
     // Check if rfm69_init was successful (== 0)
     // Set last error and halt process if not.
@@ -109,14 +79,6 @@ int main() {
         critical_error();
     }
 
-    uint8_t dagc = 0x30;
-    rfm69_write(
-            rfm,
-            RFM69_REG_TEST_DAGC,
-            &dagc,
-            1 
-    );
-    
     //rfm69_write_masked(
     //        rfm,
     //        RFM69_REG_AFCBW,
