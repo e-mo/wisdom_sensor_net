@@ -460,7 +460,6 @@ RFM69_RETURN rfm69_power_level_set(Rfm69 *rfm, int8_t pa_level) {
     printf("High power: %b\n", high_power);
     // High power modules have to follow slightly different bounds
     // regarding PA_LEVEL. -2 -> 20 Dbm. 
-    // TODO: Make the levels constant
     //
     // HW and HCW modules use only the PA1 and PA2 pins
     // 

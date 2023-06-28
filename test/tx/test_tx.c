@@ -84,7 +84,7 @@ int main() {
     tx_report_t report;
     for(ever) { 
 
-        char *message = "Hello, world!";
+        char *message = "Hello, campers!";
         uint buf_size = strlen(message) + 1;
         //uint buf_size = get_rand_32() % 10000;
         //uint buf_size = TX_PACKETS_MAX * PAYLOAD_MAX;
