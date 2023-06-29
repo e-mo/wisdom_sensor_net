@@ -89,36 +89,48 @@ int main() {
         //uint buf_size = get_rand_32() % 10000;
         //uint buf_size = TX_PACKETS_MAX * PAYLOAD_MAX;
         //uint buf_size = PAYLOAD_MAX;
-        printf("Sending transmission...\n");
-        printf("buf_size: %u\n", buf_size);
+        printf("Sending message: %s\n", message);
+        printf("...\n");
+
+        uint8_t buf[buf_size];
+        for (int i = 0; i < buf_size; i++) {
+            buf[i] = get_rand_32() % 256;
+        }
 
         success = rfm69_rudp_transmit(
                 rfm,
                 &report,
                 0x02,
                 message,
+                //buf,
                 buf_size,
                 300,
                 5 
         );
 
-        printf("tx_report:\n");
-        printf("payload_size:\t%u\n", report.payload_size);
-        printf("num_packets:\t%u\n", report.num_packets);
-        printf("packets_sent:\t%u\n", report.packets_sent);
-        printf("rbt_retries:\t%u\n", report.rbt_retries);
-        printf("retransmissions:%u\n", report.retransmissions);
-        printf("racks_received:\t%u\n", report.racks_received);
-        printf("rack_requests:\t%u\n", report.rack_requests);
+        printf("Report\n");
+        printf("------\n");
+        printf("     tx_address: %u\n", report.tx_address);
+        printf("     rx_address: %u\n", report.rx_address);
+        printf("   payload_size: %u\n", report.payload_size);
+        printf("    num_packets: %u\n", report.num_packets);
+        printf("   packets_sent: %u\n", report.packets_sent);
+        printf("    rbt_retries: %u\n", report.rbt_retries);
+        printf("retransmissions: %u\n", report.retransmissions);
+        printf(" racks_received: %u\n", report.racks_received);
+        printf("  rack_requests: %u\n", report.rack_requests);
         switch(report.return_status) {
             case RUDP_OK:
-                printf("return_status:\tRUDP_OK\n");
+                printf("  return_status: RUDP_OK\n");
                 break;
             case RUDP_OK_UNCONFIRMED:
-                printf("return_status:\tRUDP_OK_UNCONFIRMED\n");
+                printf("  return_status: RUDP_OK_UNCONFIRMED\n");
                 break;
             case RUDP_TIMEOUT:
-                printf("return_status:\tRUDP_TIMEOUT\n");
+                printf("  return_status: RUDP_TIMEOUT\n");
+                break;
+            case RUDP_PAYLOAD_OVERFLOW:
+                printf("  return_status: RUDP_PAYLOAD_OVERFLOW\n");
                 break;
         }
         printf("\n");

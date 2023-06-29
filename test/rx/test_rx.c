@@ -81,25 +81,51 @@ int main() {
     }
 
     rfm69_power_level_set(rfm, -2);
+    rx_report_t report;
+    bool success;
     for(ever) { 
 
         uint8_t address;
         uint size = 100000;
         uint8_t payload[size];
 
-        rval = rfm69_rudp_receive(
+        printf("Waiting for message\n");
+        printf("...\n");
+
+        success = rfm69_rudp_receive(
                 rfm,
+                &report,
                 &address,
                 payload,
                 &size,
-                60000
+                12000,
+                30000
         );
 
-        if (rval == RUDP_OK) printf("RUDP_OK\n");
-        else printf("RUDP_TIMOUT\n");
+        printf("Report\n");
+        printf("------\n");
+        printf("      tx_address: %u\n", report.tx_address);
+        printf("      rx_address: %u\n", report.rx_address);
+        printf("  bytes_expected: %u\n", report.bytes_expected);
+        printf("  bytes_received: %u\n", report.bytes_received);
+        printf("packets_received: %u\n", report.packets_received);
+        printf("       acks_sent: %u\n", report.acks_sent);
+        printf("      racks_sent: %u\n", report.racks_sent);
+        printf("   rack_requests: %u\n", report.rack_requests);
 
-        printf("message: %s\n\n", payload);
-
+        switch(report.return_status) {
+            case RUDP_OK:
+                printf("   return_status: RUDP_OK\n");
+                break;
+            case RUDP_TIMEOUT:
+                printf("   return_status: RUDP_TIMEOUT\n");
+                break;
+            case RUDP_BUFFER_OVERFLOW:
+                printf("   return_status: RUDP_BUFFER_OVERFLOW\n");
+                break;
+        }
+        printf("         message: %s\n", payload);
+        printf("\n");
     }
     
     return 0;
