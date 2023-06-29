@@ -126,6 +126,16 @@ int main() {
         }
         printf("         message: %s\n", payload);
         printf("\n");
+
+        if (success) {
+            uint num_blinks = 3;
+            for(; num_blinks; num_blinks--) {
+                gpio_put(PICO_DEFAULT_LED_PIN, 1);
+                sleep_ms(100);
+                gpio_put(PICO_DEFAULT_LED_PIN, 0);
+                sleep_ms(50);
+            }
+        }
     }
     
     return 0;
