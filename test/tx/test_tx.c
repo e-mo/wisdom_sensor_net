@@ -84,7 +84,7 @@ int main() {
     tx_report_t report;
     for(ever) { 
 
-        char *message = "Hello, campers!";
+        char *message = "hi,campers";
         uint buf_size = strlen(message) + 1;
         //uint buf_size = get_rand_32() % 10000;
         //uint buf_size = TX_PACKETS_MAX * PAYLOAD_MAX;
@@ -92,10 +92,10 @@ int main() {
         printf("Sending message: %s\n", message);
         printf("...\n");
 
-        uint8_t buf[buf_size];
-        for (int i = 0; i < buf_size; i++) {
-            buf[i] = get_rand_32() % 256;
-        }
+        //uint8_t buf[buf_size];
+        //for (int i = 0; i < buf_size; i++) {
+        //    buf[i] = get_rand_32() % 256;
+        //}
 
         success = rfm69_rudp_transmit(
                 rfm,
