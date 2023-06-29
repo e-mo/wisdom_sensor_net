@@ -70,10 +70,13 @@ enum FLAG {
 };
 
 
-// rfm     - pointer to Rfm69 struct
-// address - receiver node address
-// payload - data payload to be sent
-// length  - length of data payload in bytes
+// rfm          - pointer to Rfm69 struct
+// report       - returns witn info in transmission. Can be NULL
+// address      - receiver node address
+// payload      - data payload to be sent
+// payload_size - length of data payload in bytes
+// timeout      - time in ms until retrying RBT or RACK request
+// retries      - number of retries until timeout
 bool rfm69_rudp_transmit(
         Rfm69 *rfm, 
         tx_report_t *report,
@@ -82,6 +85,25 @@ bool rfm69_rudp_transmit(
         uint payload_size, 
         uint timeout,
         uint8_t retries
+);
+
+static inline void _rudp_block_until_packet_sent(Rfm69 *rfm);
+
+// rfm                - pointer to Rfm69 struct
+// address            - returns with TX address
+// payload            - void buffer to recieve payload
+// payload_size       - should be passed containing length of payload buffer (to prevent overflow)
+//                      and returns containing number of bytes actually received
+// per_packet_timeout - time in us to delay for each expected packet in data loop
+// timeout            - total time in ms until receiver times out
+bool rfm69_rudp_receive(
+        Rfm69 *rfm, 
+        rx_report_t *report,
+		uint8_t *address,
+        uint8_t *payload, 
+        uint *payload_size,
+        uint per_packet_timeout,
+        uint timeout
 );
 
 static void _rudp_init(Rfm69 *rfm);
@@ -100,22 +122,5 @@ static RUDP_RETURN _rudp_rx_rack(
 );
 
 static inline bool _rudp_is_payload_ready(Rfm69 *rfm);
-
-static inline void _rudp_block_until_packet_sent(Rfm69 *rfm);
-
-// rfm     - pointer to Rfm69 struct
-// address - returns with TX address
-// payload - void buffer to recieve payload
-// length  - should be passed containing length of payload buffer (to prevent overflow)
-//           and returns containing number of bytes actually received
-bool rfm69_rudp_receive(
-        Rfm69 *rfm, 
-        rx_report_t *report,
-		uint8_t *address,
-        uint8_t *payload, 
-        uint *payload_size,
-        uint per_packet_timeout,
-        uint timeout
-);
 
 #endif // RFM60_RUDP_H

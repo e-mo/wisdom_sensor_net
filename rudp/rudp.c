@@ -245,124 +245,6 @@ CLEANUP:
     return success;
 }
 
-static void _rudp_init(Rfm69 *rfm) {
-    // Always start in stdby
-	rfm69_mode_set(rfm, RFM69_OP_MODE_STDBY);
-	// Set payload length max to FIFO max
-	// For variable length packets, this only matters when receiving
-    rfm69_payload_length_set(rfm, RFM69_FIFO_SIZE);
-
-	// Set packet format to variable
-	rfm69_packet_format_set(rfm, RFM69_PACKET_VARIABLE);	
-}
-
-static RUDP_RETURN _rudp_rx_rack(
-        Rfm69 *rfm,
-        uint8_t seq_num,
-        uint timeout,
-        uint8_t *packet
-)
-{
-    RUDP_RETURN rval = RUDP_TIMEOUT;
-    uint8_t is_rack;
-    bool is_seq;
-    uint8_t is_ok;
-
-    rfm69_mode_set(rfm, RFM69_OP_MODE_RX);
-
-    absolute_time_t timeout_time = make_timeout_time_ms(timeout);
-    for (;;) {
-        if (get_absolute_time() > timeout_time) break;
-
-        if (!_rudp_is_payload_ready(rfm)) {
-            continue;
-        }
-
-        rfm69_read(
-                rfm,
-                RFM69_REG_FIFO,
-                packet,
-                HEADER_SIZE
-        );
-
-        uint8_t message_size = packet[HEADER_PACKET_SIZE] - HEADER_EFFECTIVE_SIZE; 
-        rfm69_read(
-                rfm,
-                RFM69_REG_FIFO,
-                &packet[PAYLOAD_BEGIN],
-                message_size 
-        );
-
-        // This is a RACK packet, which is what we wanted
-        is_rack = (packet[HEADER_FLAGS] & HEADER_FLAG_RACK);
-        // is it the correct sequence num?
-        is_seq = packet[HEADER_SEQ_NUMBER] == seq_num;
-
-        if (!is_rack || !is_seq) continue;
-
-        rval = RUDP_OK; 
-        break;
-    }
-    return rval;
-}
-
-static RUDP_RETURN _rudp_rx_ack(
-        Rfm69 *rfm,
-        uint8_t seq_num,
-        uint timeout
-)
-{
-    RUDP_RETURN rval = RUDP_TIMEOUT;
-    uint8_t packet[HEADER_SIZE];
-    bool state;
-    bool is_ack;
-    bool is_seq;
-
-    rfm69_mode_set(rfm, RFM69_OP_MODE_RX);
-
-    absolute_time_t timeout_time = make_timeout_time_ms(timeout);
-    for (;;) {
-        if (get_absolute_time() > timeout_time) break;
-
-        if (!_rudp_is_payload_ready(rfm)) {
-            continue;
-        }
-        // No need to check length byte, an ack packet is only a header
-        // with some flags set
-        rfm69_read(
-                rfm,
-                RFM69_REG_FIFO,
-                packet,
-                HEADER_SIZE
-        );
-
-        // This is an RBT/ACK packet, which is what we wanted
-        is_ack = (packet[HEADER_FLAGS] & (HEADER_FLAG_ACK | HEADER_FLAG_RBT)) > 0;
-        // is it the correct sequence num?
-        is_seq = packet[HEADER_SEQ_NUMBER] == seq_num;
-        if (!is_ack || !is_seq) continue;
-
-        // ACK RECEIVED
-        rval = RUDP_OK; 
-        break;
-    }
-    return rval;
-}
-
-static inline bool _rudp_is_payload_ready(Rfm69 *rfm) {
-    bool state;
-    rfm69_irq2_flag_state(rfm, RFM69_IRQ2_FLAG_PAYLOAD_READY, &state);
-    return state;
-}
-
-static inline void _rudp_block_until_packet_sent(Rfm69 *rfm) {
-    bool state = false;
-    while (!state) {
-        rfm69_irq2_flag_state(rfm, RFM69_IRQ2_FLAG_PACKET_SENT, &state);
-        sleep_us(1);
-    }
-}
-
 
 bool rfm69_rudp_receive(
         Rfm69 *rfm, 
@@ -658,4 +540,122 @@ CLEANUP:
     *payload_size = payload_bytes_received;
     rfm69_mode_set(rfm, previous_mode);
     return success;
+}
+
+static void _rudp_init(Rfm69 *rfm) {
+    // Always start in stdby
+	rfm69_mode_set(rfm, RFM69_OP_MODE_STDBY);
+	// Set payload length max to FIFO max
+	// For variable length packets, this only matters when receiving
+    rfm69_payload_length_set(rfm, RFM69_FIFO_SIZE);
+
+	// Set packet format to variable
+	rfm69_packet_format_set(rfm, RFM69_PACKET_VARIABLE);	
+}
+
+static RUDP_RETURN _rudp_rx_rack(
+        Rfm69 *rfm,
+        uint8_t seq_num,
+        uint timeout,
+        uint8_t *packet
+)
+{
+    RUDP_RETURN rval = RUDP_TIMEOUT;
+    uint8_t is_rack;
+    bool is_seq;
+    uint8_t is_ok;
+
+    rfm69_mode_set(rfm, RFM69_OP_MODE_RX);
+
+    absolute_time_t timeout_time = make_timeout_time_ms(timeout);
+    for (;;) {
+        if (get_absolute_time() > timeout_time) break;
+
+        if (!_rudp_is_payload_ready(rfm)) {
+            continue;
+        }
+
+        rfm69_read(
+                rfm,
+                RFM69_REG_FIFO,
+                packet,
+                HEADER_SIZE
+        );
+
+        uint8_t message_size = packet[HEADER_PACKET_SIZE] - HEADER_EFFECTIVE_SIZE; 
+        rfm69_read(
+                rfm,
+                RFM69_REG_FIFO,
+                &packet[PAYLOAD_BEGIN],
+                message_size 
+        );
+
+        // This is a RACK packet, which is what we wanted
+        is_rack = (packet[HEADER_FLAGS] & HEADER_FLAG_RACK);
+        // is it the correct sequence num?
+        is_seq = packet[HEADER_SEQ_NUMBER] == seq_num;
+
+        if (!is_rack || !is_seq) continue;
+
+        rval = RUDP_OK; 
+        break;
+    }
+    return rval;
+}
+
+static RUDP_RETURN _rudp_rx_ack(
+        Rfm69 *rfm,
+        uint8_t seq_num,
+        uint timeout
+)
+{
+    RUDP_RETURN rval = RUDP_TIMEOUT;
+    uint8_t packet[HEADER_SIZE];
+    bool state;
+    bool is_ack;
+    bool is_seq;
+
+    rfm69_mode_set(rfm, RFM69_OP_MODE_RX);
+
+    absolute_time_t timeout_time = make_timeout_time_ms(timeout);
+    for (;;) {
+        if (get_absolute_time() > timeout_time) break;
+
+        if (!_rudp_is_payload_ready(rfm)) {
+            continue;
+        }
+        // No need to check length byte, an ack packet is only a header
+        // with some flags set
+        rfm69_read(
+                rfm,
+                RFM69_REG_FIFO,
+                packet,
+                HEADER_SIZE
+        );
+
+        // This is an RBT/ACK packet, which is what we wanted
+        is_ack = (packet[HEADER_FLAGS] & (HEADER_FLAG_ACK | HEADER_FLAG_RBT)) > 0;
+        // is it the correct sequence num?
+        is_seq = packet[HEADER_SEQ_NUMBER] == seq_num;
+        if (!is_ack || !is_seq) continue;
+
+        // ACK RECEIVED
+        rval = RUDP_OK; 
+        break;
+    }
+    return rval;
+}
+
+static inline bool _rudp_is_payload_ready(Rfm69 *rfm) {
+    bool state;
+    rfm69_irq2_flag_state(rfm, RFM69_IRQ2_FLAG_PAYLOAD_READY, &state);
+    return state;
+}
+
+static inline void _rudp_block_until_packet_sent(Rfm69 *rfm) {
+    bool state = false;
+    while (!state) {
+        rfm69_irq2_flag_state(rfm, RFM69_IRQ2_FLAG_PACKET_SENT, &state);
+        sleep_us(1);
+    }
 }
