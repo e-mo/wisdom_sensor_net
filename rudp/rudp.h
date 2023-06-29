@@ -3,32 +3,44 @@
 
 #include "rfm69.h"
 
+typedef enum _RUDP_RETURN {
+    RUDP_OK,
+    RUDP_OK_UNCONFIRMED,
+    RUDP_TIMEOUT,
+    RUDP_BUFFER_OVERFLOW,
+    RUDP_PAYLOAD_OVERFLOW
+} RUDP_RETURN;
+
 typedef struct _tx_report {
     uint payload_size;
-    uint num_packets;
     uint packets_sent;
     uint rbt_retries;
     uint retransmissions; 
     uint racks_received;
     uint rack_requests;
-    uint return_status;
+    RUDP_RETURN return_status;
+    uint8_t tx_address;
+    uint8_t rx_address;
+    uint8_t num_packets;
 } tx_report_t;
 
-typedef enum _RUDP_RETURN {
-    RUDP_OK,
-    RUDP_OK_UNCONFIRMED,
-    RUDP_TIMEOUT,
-    RUDP_RX_BUFFER_OVERFLOW,
-    RUDP_PAYLOAD_OVERFLOW
-} RUDP_RETURN;
+typedef struct _rx_report {
+    uint bytes_expected;
+    uint bytes_received;
+    uint packets_received;
+    uint acks_sent;
+    uint racks_sent;
+    uint rack_requests;
+    RUDP_RETURN return_status;
+    uint8_t rx_address;
+    uint8_t tx_address;
+} rx_report_t;
 
-#define TX_RTP_TIMEOUT 1000 // 100ms ack timout
-#define TX_RTP_RETRIES 5
-#define TX_REQ_RACK_RETRIES 5
-
+// I might eliminate this. I don't think it is really needed.
 #define TX_INTER_PACKET_DELAY 0 
 
-#define RX_DATA_LOOP_TIME 108500
+// The constant amount of time it takes to receive one data
+
 #define _RX_DATA_TIMEOUT 12000
 #define RX_DATA_TIMEOUT (TX_INTER_PACKET_DELAY + _RX_DATA_TIMEOUT)
 #define TX_RACK_TIMEOUT 300
@@ -58,10 +70,13 @@ enum FLAG {
 };
 
 
-// rfm     - pointer to Rfm69 struct
-// address - receiver node address
-// payload - data payload to be sent
-// length  - length of data payload in bytes
+// rfm          - pointer to Rfm69 struct
+// report       - returns witn info in transmission. Can be NULL
+// address      - receiver node address
+// payload      - data payload to be sent
+// payload_size - length of data payload in bytes
+// timeout      - time in ms until retrying RBT or RACK request
+// retries      - number of retries until timeout
 bool rfm69_rudp_transmit(
         Rfm69 *rfm, 
         tx_report_t *report,
@@ -70,6 +85,25 @@ bool rfm69_rudp_transmit(
         uint payload_size, 
         uint timeout,
         uint8_t retries
+);
+
+static inline void _rudp_block_until_packet_sent(Rfm69 *rfm);
+
+// rfm                - pointer to Rfm69 struct
+// address            - returns with TX address
+// payload            - void buffer to recieve payload
+// payload_size       - should be passed containing length of payload buffer (to prevent overflow)
+//                      and returns containing number of bytes actually received
+// per_packet_timeout - time in us to delay for each expected packet in data loop
+// timeout            - total time in ms until receiver times out
+bool rfm69_rudp_receive(
+        Rfm69 *rfm, 
+        rx_report_t *report,
+		uint8_t *address,
+        uint8_t *payload, 
+        uint *payload_size,
+        uint per_packet_timeout,
+        uint timeout
 );
 
 static void _rudp_init(Rfm69 *rfm);
@@ -88,20 +122,5 @@ static RUDP_RETURN _rudp_rx_rack(
 );
 
 static inline bool _rudp_is_payload_ready(Rfm69 *rfm);
-
-static inline void _rudp_block_until_packet_sent(Rfm69 *rfm);
-
-// rfm     - pointer to Rfm69 struct
-// address - returns with TX address
-// payload - void buffer to recieve payload
-// length  - should be passed containing length of payload buffer (to prevent overflow)
-//           and returns containing number of bytes actually received
-RUDP_RETURN rfm69_rudp_receive(
-        Rfm69 *rfm, 
-		uint8_t *address,
-        uint8_t *payload, 
-        uint *payload_size,
-        uint timeout
-);
 
 #endif // RFM60_RUDP_H

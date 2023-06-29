@@ -68,9 +68,32 @@ RFM69_RETURN rfm69_init(
     RFM69_RETURN rval = rfm69_read(*rfm, RFM69_REG_VERSION, &buf, 1);
     if (rval == RFM69_OK) {
         if (buf == 0x00 || buf == 0xFF) { rval = RFM69_INIT_TEST; }
+        // Everything is working great and we can safely
+        // set some registers to sane defaults.
+        else {
+            rfm69_data_mode_set(*rfm, RFM69_DATA_MODE_PACKET);
+
+            uint8_t dagc = 0x30;
+            rfm69_write(
+                    *rfm,
+                    RFM69_REG_TEST_DAGC,
+                    &dagc,
+                    1 
+            );
+
+            rfm69_power_level_set(*rfm, 13);
+            rfm69_rssi_threshold_set(*rfm, 0xE4);
+            rfm69_tx_start_condition_set(*rfm, RFM69_TX_FIFO_NOT_EMPTY);
+            rfm69_broadcast_address_set(*rfm, 0xFF); 
+            rfm69_address_filter_set(*rfm, RFM69_FILTER_NODE_BROADCAST);
+
+            // Set sync value (essentially functions as subnet)
+            uint8_t sync[3] = {0x01, 0x01, 0x01};
+            rfm69_sync_value_set(*rfm, sync, 3);
+        }
     }
 
-    return rfm69_power_level_set(*rfm, 13);
+    return rval;
 }
 
 // Have you tried turning it off and on again?
@@ -437,7 +460,6 @@ RFM69_RETURN rfm69_power_level_set(Rfm69 *rfm, int8_t pa_level) {
     printf("High power: %b\n", high_power);
     // High power modules have to follow slightly different bounds
     // regarding PA_LEVEL. -2 -> 20 Dbm. 
-    // TODO: Make the levels constant
     //
     // HW and HCW modules use only the PA1 and PA2 pins
     // 

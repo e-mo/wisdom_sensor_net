@@ -25,14 +25,14 @@
 
 void set_bi() {
     bi_decl(bi_program_name("Test Transmitter"));
-    bi_decl(bi_program_description("WISDOM sensor network basic range test tx."))
+    bi_decl(bi_program_description("WISDOM sensor network tx test."))
     bi_decl(bi_1pin_with_name(PIN_MISO, "MISO"));
     bi_decl(bi_1pin_with_name(PIN_CS, "CS"));
     bi_decl(bi_1pin_with_name(PIN_SCK, "SCK"));
     bi_decl(bi_1pin_with_name(PIN_MOSI, "MOSI"));
     bi_decl(bi_1pin_with_name(PIN_RST, "RST"));
-    bi_decl(bi_1pin_with_name(PIN_IRQ_0, "IRQ 0"));
-    bi_decl(bi_1pin_with_name(PIN_IRQ_1, "IRQ 1"));
+    //bi_decl(bi_1pin_with_name(PIN_IRQ_0, "IRQ 0"));
+    //bi_decl(bi_1pin_with_name(PIN_IRQ_1, "IRQ 1"));
 }
 
 int main() {
@@ -58,10 +58,6 @@ int main() {
     gpio_init(PICO_DEFAULT_LED_PIN);
     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
     
-    //rfm69_mode_set(rfm, RFM69_OP_MODE_SLEEP);
-
-    // Packet mode 
-    rfm69_data_mode_set(rfm, RFM69_DATA_MODE_PACKET);
     // 250kb/s baud rate
     rfm69_bitrate_set(rfm, RFM69_MODEM_BITRATE_57_6);
     // ~2 beta 
@@ -73,34 +69,8 @@ int main() {
     rfm69_rxbw_set(rfm, RFM69_RXBW_MANTISSA_20, 2);
     rfm69_dcfree_set(rfm, RFM69_DCFREE_WHITENING);
     // Transmit starts with any data in the FIFO
-    rfm69_tx_start_condition_set(rfm, RFM69_TX_FIFO_NOT_EMPTY);
-
-    // Set sync value (essentially functions as subnet)
-    uint8_t sync[3] = {0x01, 0x01, 0x01};
-    rfm69_sync_value_set(rfm, sync, 3);
 
     rfm69_node_address_set(rfm, 0x01); 
-    rfm69_broadcast_address_set(rfm, 0x86); 
-
-    // Set to filter by node and broadcast address
-    rfm69_address_filter_set(rfm, RFM69_FILTER_NODE_BROADCAST);
-
-    // Recommended rssi thresh default setting
-    rfm69_rssi_threshold_set(rfm, 0xE4);
-
-    //rfm69_write_masked(
-    //        rfm,
-    //        RFM69_REG_AFC_FEI,
-    //        0x08,
-    //        0x08
-    //);
-    //rfm69_write_masked(
-    //        rfm,
-    //        RFM69_REG_AFC_FEI,
-    //        0x04,
-    //        0x04
-    //);
-
 
     // Check if rfm69_init was successful (== 0)
     // Set last error and halt process if not.
@@ -109,69 +79,58 @@ int main() {
         critical_error();
     }
 
-    uint8_t dagc = 0x30;
-    rfm69_write(
-            rfm,
-            RFM69_REG_TEST_DAGC,
-            &dagc,
-            1 
-    );
-    
-    //rfm69_write_masked(
-    //        rfm,
-    //        RFM69_REG_AFCBW,
-    //        0x03,
-    //        0x07
-    //);
-
-    // LNA input impedance 200 ohms
-    //rfm69_write_masked(
-    //        rfm,
-    //        RFM69_REG_LNA,
-    //        0x80,
-    //        0x80
-    //);
-
     rfm69_power_level_set(rfm, -2);
     bool success;
     tx_report_t report;
     for(ever) { 
 
-        char *message = "Hello, world!";
+        char *message = "Hello, campers!";
         uint buf_size = strlen(message) + 1;
         //uint buf_size = get_rand_32() % 10000;
         //uint buf_size = TX_PACKETS_MAX * PAYLOAD_MAX;
         //uint buf_size = PAYLOAD_MAX;
-        printf("Sending transmission...\n");
-        printf("buf_size: %u\n", buf_size);
+        printf("Sending message: %s\n", message);
+        printf("...\n");
+
+        uint8_t buf[buf_size];
+        for (int i = 0; i < buf_size; i++) {
+            buf[i] = get_rand_32() % 256;
+        }
 
         success = rfm69_rudp_transmit(
                 rfm,
                 &report,
                 0x02,
                 message,
+                //buf,
                 buf_size,
                 300,
                 5 
         );
 
-        printf("tx_report:\n");
-        printf("payload_size:\t%u\n", report.payload_size);
-        printf("num_packets:\t%u\n", report.num_packets);
-        printf("packets_sent:\t%u\n", report.packets_sent);
-        printf("rbt_retries:\t%u\n", report.rbt_retries);
-        printf("retransmissions:%u\n", report.retransmissions);
-        printf("racks_received:\t%u\n", report.racks_received);
-        printf("rack_requests:\t%u\n", report.rack_requests);
+        printf("Report\n");
+        printf("------\n");
+        printf("     tx_address: %u\n", report.tx_address);
+        printf("     rx_address: %u\n", report.rx_address);
+        printf("   payload_size: %u\n", report.payload_size);
+        printf("    num_packets: %u\n", report.num_packets);
+        printf("   packets_sent: %u\n", report.packets_sent);
+        printf("    rbt_retries: %u\n", report.rbt_retries);
+        printf("retransmissions: %u\n", report.retransmissions);
+        printf(" racks_received: %u\n", report.racks_received);
+        printf("  rack_requests: %u\n", report.rack_requests);
         switch(report.return_status) {
             case RUDP_OK:
-                printf("return_status:\tRUDP_OK\n");
+                printf("  return_status: RUDP_OK\n");
                 break;
             case RUDP_OK_UNCONFIRMED:
-                printf("return_status:\tRUDP_OK_UNCONFIRMED\n");
+                printf("  return_status: RUDP_OK_UNCONFIRMED\n");
                 break;
             case RUDP_TIMEOUT:
-                printf("return_status:\tRUDP_TIMEOUT\n");
+                printf("  return_status: RUDP_TIMEOUT\n");
+                break;
+            case RUDP_PAYLOAD_OVERFLOW:
+                printf("  return_status: RUDP_PAYLOAD_OVERFLOW\n");
                 break;
         }
         printf("\n");
