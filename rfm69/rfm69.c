@@ -413,8 +413,6 @@ RFM69_RETURN rfm69_rssi_measurment_get(Rfm69 *rfm, int16_t *rssi) {
 
 	rval = rfm69_read(rfm, RFM69_REG_RSSI_VALUE, &reg, 1);
 
-    printf("%i\n", rval);
-    printf("%X\n", reg);
 	*rssi = -((int16_t)(reg >> 1));
 
 	return rval;
@@ -457,7 +455,6 @@ RFM69_RETURN rfm69_power_level_set(Rfm69 *rfm, int8_t pa_level) {
     bool high_power = false;
 #endif
 
-    printf("High power: %b\n", high_power);
     // High power modules have to follow slightly different bounds
     // regarding PA_LEVEL. -2 -> 20 Dbm. 
     //
@@ -470,11 +467,8 @@ RFM69_RETURN rfm69_power_level_set(Rfm69 *rfm, int8_t pa_level) {
         else if (pa_level > RFM69_PA_HIGH_MAX)
             pa_level = RFM69_PA_HIGH_MAX;
 
-        printf("PA level: %d\n", pa_level);
-
         // PA1 on only
         if (pa_level <= 13) {
-            printf("<= 13\n");
             pa_mode = RFM69_PA_MODE_PA1;
             pout = pa_level + 18; 
         }
@@ -527,7 +521,6 @@ void rfm69_power_level_get(Rfm69 *rfm, uint8_t *pa_level) {
 static RFM69_RETURN _power_mode_set(Rfm69 *rfm, RFM69_PA_MODE pa_mode) {
     RFM69_RETURN rval;
     uint8_t buf = 0;
-    printf("pa_mode: %d\n", pa_mode);
     
     // Skip if we are already in this mode
     if (rfm->pa_mode == pa_mode)//pa_mode)
