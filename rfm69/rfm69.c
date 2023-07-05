@@ -403,19 +403,20 @@ RFM69_RETURN rfm69_modulation_shaping_get(Rfm69 *rfm, uint8_t *shaping) {
 }
 
 //reads rssi - see p.68 of rfm69 datasheet
-RFM69_RETURN rfm69_rssi_measurment_get(Rfm69 *rfm, int16_t *rssi) {
+RFM69_RETURN rfm69_rssi_measurment_get(Rfm69 *rfm, int16_t *_rssi) {
+	printf("get rssi\n");
 	uint8_t reg;
 
 	RFM69_RETURN rval = rfm69_read(rfm, RFM69_REG_RSSI_CONFIG, &reg, 1);
     if (rval != RFM69_OK) return rval;
 
-	if(reg != RFM69_RSSI_MEASURMENT_DONE) return RFM69_RSSI_BUSY; //checks RssiDone flag - all other bits should be 0
+	if(!reg) return RFM69_RSSI_BUSY; //checks RssiDone flag - all other bits should be 0
 
 	rval = rfm69_read(rfm, RFM69_REG_RSSI_VALUE, &reg, 1);
 
-    printf("%i\n", rval);
-    printf("%X\n", reg);
-	*rssi = -((int16_t)(reg >> 1));
+    printf("RVAL: %i\n", rval);
+    printf("REG: %X\n", reg);
+	*_rssi = -((int16_t)(reg >> 1));
 
 	return rval;
 }

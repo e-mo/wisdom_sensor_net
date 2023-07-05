@@ -23,14 +23,20 @@
 #define PIN_IRQ_0  21
 #define PIN_IRQ_1  21
 
+#define PIN_I2C_SDA 2
+#define PIN_I2C_SCK 3
+
+
 void set_bi() {
-    bi_decl(bi_program_name("Test Receiver"));
-    bi_decl(bi_program_description("WISDOM sensor network rx test."))
+    bi_decl(bi_program_name("RSSI Measuring Receiver"));
+    bi_decl(bi_program_description("WISDOM sensor network."))
     bi_decl(bi_1pin_with_name(PIN_MISO, "MISO"));
     bi_decl(bi_1pin_with_name(PIN_CS, "CS"));
     bi_decl(bi_1pin_with_name(PIN_SCK, "SCK"));
     bi_decl(bi_1pin_with_name(PIN_MOSI, "MOSI"));
     bi_decl(bi_1pin_with_name(PIN_RST, "RST"));
+    bi_decl(bi_1pin_with_name(PIN_I2C_SDA, "I2C SDA"));
+    bi_decl(bi_1pin_with_name(PIN_I2C_SCK, "I2C SCK"));
     //bi_decl(bi_1pin_with_name(PIN_IRQ_0, "IRQ 0"));
     //bi_decl(bi_1pin_with_name(PIN_IRQ_1, "IRQ 1"));
 }
@@ -41,6 +47,17 @@ int main() {
     stdio_init_all(); // To be able to use printf
 
     spi_init(SPI_PORT, 1000*1000); // Defaults to master mode, which we want
+
+    i2c_init(i2c1, 400000);
+    gpio_set_function(2, GPIO_FUNC_I2C);
+    gpio_set_function(3, GPIO_FUNC_I2C);
+    gpio_pull_up(2);
+    gpio_pull_up(3);
+
+    ssd1306_t display;
+    display.external_vcc = false;
+    ssd1306_init(&display, 128, 32, 0x3C, i2c1);
+    ssd1306_clear(&display);
 
     Rfm69 *rfm;
     uint rval = rfm69_init(
@@ -83,6 +100,11 @@ int main() {
     rfm69_power_level_set(rfm, -2);
     rx_report_t report;
     bool success;
+
+    ssd1306_draw_string(&display, 0, 0, 1, "test");
+    //ssd1306_bmp_show_image(&display, cat_bmp, 128);
+    ssd1306_show(&display);
+
     for(ever) { 
 
         uint8_t address;
@@ -91,6 +113,9 @@ int main() {
 
         printf("Waiting for message\n");
         printf("...\n");
+	ssd1306_draw_string(&display, 0, 0, 1, "            ");
+	ssd1306_draw_string(&display, 0, 0, 1, "Waiting");
+	ssd1306_show(&display);
 
         success = rfm69_rudp_receive(
                 rfm,
@@ -113,6 +138,7 @@ int main() {
         printf("      racks_sent: %u\n", report.racks_sent);
         printf("   rack_requests: %u\n", report.rack_requests);
 
+
         switch(report.return_status) {
             case RUDP_OK:
                 printf("   return_status: RUDP_OK\n");
@@ -128,12 +154,31 @@ int main() {
         printf("\n");
 
         if (success) {
-            uint num_blinks = 3;
-            for(; num_blinks; num_blinks--) {
-                gpio_put(PICO_DEFAULT_LED_PIN, 1);
-                sleep_ms(100);
-                gpio_put(PICO_DEFAULT_LED_PIN, 0);
-                sleep_ms(50);
+		int16_t rssi = 0;
+		char rssi_string[8];
+
+		if(rfm69_rssi_measurment_get(rfm, &rssi)) {
+
+		sprintf(rssi_string, "%i", rssi);
+
+		ssd1306_clear(&display);
+		ssd1306_draw_string(&display, 0, 0, 1, "receiving");
+		ssd1306_draw_string(&display, 0, 16, 1, rssi_string);
+		ssd1306_show(&display);
+		}
+
+		else {
+			ssd1306_clear(&display);
+			ssd1306_draw_string(&display, 0, 16, 1, "error");
+			ssd1306_show(&display);
+		}
+
+		uint num_blinks = 3;
+		for(; num_blinks; num_blinks--) {
+			gpio_put(PICO_DEFAULT_LED_PIN, 1);
+			sleep_ms(100);
+			gpio_put(PICO_DEFAULT_LED_PIN, 0);
+			sleep_ms(50);
             }
         }
     }
