@@ -410,7 +410,7 @@ RFM69_RETURN rfm69_rssi_measurment_get(Rfm69 *rfm, int16_t *_rssi) {
 	RFM69_RETURN rval = rfm69_read(rfm, RFM69_REG_RSSI_CONFIG, &reg, 1);
     if (rval != RFM69_OK) return rval;
 
-	if(!reg) return RFM69_RSSI_BUSY; //checks RssiDone flag - all other bits should be 0
+	if(reg & RFM69_RSSI_MEASURMENT_DONE ) return RFM69_RSSI_BUSY; //checks RssiDone flag - all other bits should be 0
 
 	rval = rfm69_read(rfm, RFM69_REG_RSSI_VALUE, &reg, 1);
 

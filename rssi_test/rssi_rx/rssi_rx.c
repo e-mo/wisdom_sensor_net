@@ -157,7 +157,7 @@ int main() {
 		int16_t rssi = 0;
 		char rssi_string[8];
 
-		if(rfm69_rssi_measurment_get(rfm, &rssi)) {
+		if(!rfm69_rssi_measurment_get(rfm, &rssi)) {
 
 		sprintf(rssi_string, "%i", rssi);
 
