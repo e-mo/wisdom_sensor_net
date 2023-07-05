@@ -6,3 +6,6 @@ test/*/.cache
 *.swo
 pico
 .vscode
+turbidity/build
+**/build
+*.sw?
