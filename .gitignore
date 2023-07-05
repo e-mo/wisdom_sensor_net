@@ -1,6 +1,6 @@
 test/*/build
 test/*/.cache
-*/build
+**/build
 */.cache
 *.swp
 *.swo
