@@ -24,8 +24,8 @@
 #define PIN_IRQ_1  21
 
 void set_bi() {
-    bi_decl(bi_program_name("Test Receiver"));
-    bi_decl(bi_program_description("WISDOM sensor network rx test."))
+    bi_decl(bi_program_name("Penny Brook Test Receiver"));
+    bi_decl(bi_program_description("WISDOM sensor network pennybrook rx test."))
     bi_decl(bi_1pin_with_name(PIN_MISO, "MISO"));
     bi_decl(bi_1pin_with_name(PIN_CS, "CS"));
     bi_decl(bi_1pin_with_name(PIN_SCK, "SCK"));
@@ -42,9 +42,9 @@ int main() {
 
     spi_init(SPI_PORT, 1000*1000); // Defaults to master mode, which we want
 
-    Rfm69 *rfm = rfm69_create();
+    Rfm69 *rfm;
     uint rval = rfm69_init(
-        rfm,
+        &rfm,
         SPI_PORT,
         PIN_MISO,
         PIN_MOSI,
@@ -71,7 +71,7 @@ int main() {
     // Transmit starts with any data in the FIFO
 
 
-    rfm69_node_address_set(rfm, 0x02)
+    rfm69_node_address_set(rfm, 0x02); 
 
     // Check if rfm69_init was successful (== 0)
     // Set last error and halt process if not.
@@ -80,17 +80,15 @@ int main() {
         critical_error();
     }
 
-    rfm69_power_level_set(rfm, 20);
-    TrxReport report;
+    //rfm69_power_level_set(rfm, -2);
+    rx_report_t report;
     bool success;
+	float *teros_buf;
     for(ever) { 
 
         uint8_t address;
         uint size = 100000;
         uint8_t payload[size];
-
-        printf("Waiting for message\n");
-        printf("...\n");
 
         success = rfm69_rudp_receive(
                 rfm,
@@ -106,12 +104,12 @@ int main() {
         printf("------\n");
         printf("      tx_address: %u\n", report.tx_address);
         printf("      rx_address: %u\n", report.rx_address);
-        printf("  bytes_expected: %u\n", report.payload_size);
+        printf("  bytes_expected: %u\n", report.bytes_expected);
         printf("  bytes_received: %u\n", report.bytes_received);
-        printf("packets_received: %u\n", report.data_packets_received);
+        printf("packets_received: %u\n", report.packets_received);
         printf("       acks_sent: %u\n", report.acks_sent);
         printf("      racks_sent: %u\n", report.racks_sent);
-        printf("   rack_requests: %u\n", report.rack_requests_received);
+        printf("   rack_requests: %u\n", report.rack_requests);
 
         switch(report.return_status) {
             case RUDP_OK:
@@ -124,8 +122,7 @@ int main() {
                 printf("   return_status: RUDP_BUFFER_OVERFLOW\n");
                 break;
         }
-        printf("         message: %s\n", payload);
-        printf("\n");
+
 
         if (success) {
             uint num_blinks = 3;
@@ -135,7 +132,14 @@ int main() {
                 gpio_put(PICO_DEFAULT_LED_PIN, 0);
                 sleep_ms(50);
             }
+
+			teros_buf = (float *)payload;
+			printf("vwc: %.6f\n", teros_buf[0]);
+			printf("temp: %.6f\n", teros_buf[1]);
+			printf("\n");
         }
+
+		sleep_ms(60000);
     }
     
     return 0;

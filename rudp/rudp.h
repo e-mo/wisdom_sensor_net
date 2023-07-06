@@ -11,7 +11,25 @@ typedef enum _RUDP_RETURN {
     RUDP_PAYLOAD_OVERFLOW
 } RUDP_RETURN;
 
-typedef struct _tx_report {
+typedef struct _trx_report_t {
+    uint payload_size;
+	uint bytes_sent;
+	uint bytes_received;
+	uint data_packets_sent;
+	uint data_packets_received;
+	uint data_packets_retransmitted;
+	uint acks_sent;
+	uint acks_received;
+	uint racks_sent;
+	uint racks_received;
+	uint rack_requests_sent;
+	uint rack_requests_received;
+	RUDP_RETURN return_status;
+	uint8_t tx_address;
+	uint8_t rx_address;
+} TrxReport;
+
+typedef struct _tx_report_t {
     uint payload_size;
     uint packets_sent;
     uint rbt_retries;
@@ -22,9 +40,9 @@ typedef struct _tx_report {
     uint8_t tx_address;
     uint8_t rx_address;
     uint8_t num_packets;
-} tx_report_t;
+} TxReport;
 
-typedef struct _rx_report {
+typedef struct _rx_report_t {
     uint bytes_expected;
     uint bytes_received;
     uint packets_received;
@@ -34,7 +52,7 @@ typedef struct _rx_report {
     RUDP_RETURN return_status;
     uint8_t rx_address;
     uint8_t tx_address;
-} rx_report_t;
+} RxReport;
 
 // I might eliminate this. I don't think it is really needed.
 #define TX_INTER_PACKET_DELAY 0 
@@ -69,6 +87,23 @@ enum FLAG {
     HEADER_FLAG_OK   = 0x08,
 };
 
+// This is a convenience function which initializes and 
+// configures Rfm69 module to work properly with
+// RUDP protocol transmit and receive functions.
+//
+// This can be used in place of rfm69_init since
+// rfm69_init is called internally. 
+bool rfm69_rudp_init(
+    Rfm69 *rfm,
+    spi_inst_t *spi,
+    uint pin_miso,
+    uint pin_mosi,
+    uint pin_cs,
+    uint pin_sck,
+    uint pin_rst,
+    uint pin_irq_0,
+    uint pin_irq_1
+);
 
 // rfm          - pointer to Rfm69 struct
 // report       - returns witn info in transmission. Can be NULL
@@ -79,7 +114,7 @@ enum FLAG {
 // retries      - number of retries until timeout
 bool rfm69_rudp_transmit(
         Rfm69 *rfm, 
-        tx_report_t *report,
+        TrxReport *report,
         uint8_t address,
         uint8_t *payload, 
         uint payload_size, 
@@ -90,15 +125,17 @@ bool rfm69_rudp_transmit(
 static inline void _rudp_block_until_packet_sent(Rfm69 *rfm);
 
 // rfm                - pointer to Rfm69 struct
+// report       - returns witn info in transmission. Can be NULL
 // address            - returns with TX address
 // payload            - void buffer to recieve payload
-// payload_size       - should be passed containing length of payload buffer (to prevent overflow)
-//                      and returns containing number of bytes actually received
+// payload_size       - should be passed containing length of payload buffer 
+// 						(to prevent overflow) and returns containing number 
+// 						of bytes actually received
 // per_packet_timeout - time in us to delay for each expected packet in data loop
 // timeout            - total time in ms until receiver times out
 bool rfm69_rudp_receive(
         Rfm69 *rfm, 
-        rx_report_t *report,
+        TrxReport *report,
 		uint8_t *address,
         uint8_t *payload, 
         uint *payload_size,
@@ -106,14 +143,14 @@ bool rfm69_rudp_receive(
         uint timeout
 );
 
-static void _rudp_init(Rfm69 *rfm);
-
+// Internal ack rx logic
 static RUDP_RETURN _rudp_rx_ack(
         Rfm69 *rfm,
         uint8_t seq_num,
         uint timeout
 );
 
+// Internal rack rx logic
 static RUDP_RETURN _rudp_rx_rack(
         Rfm69 *rfm,
         uint8_t seq_num,
@@ -121,6 +158,7 @@ static RUDP_RETURN _rudp_rx_rack(
         uint8_t *header
 );
 
+// Internal polling block on payload ready flag
 static inline bool _rudp_is_payload_ready(Rfm69 *rfm);
 
 #endif // RFM60_RUDP_H

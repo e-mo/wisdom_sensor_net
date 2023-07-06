@@ -2,9 +2,39 @@
 #include "pico/rand.h"
 #include "string.h"
 
+bool rfm69_rudp_init(
+		Rfm69 *rfm,
+		spi_inst_t *spi,
+		uint pin_miso,
+		uint pin_mosi,
+		uint pin_cs,
+		uint pin_sck,
+		uint pin_rst,
+		uint pin_irq_0,
+		uint pin_irq_1
+) 
+{
+	if (!rfm69_init(
+			rfm,
+			spi,
+			pin_miso,
+			pin_mosi,
+			pin_cs,
+			pin_sck,
+			pin_rst,
+			pin_irq_0,
+			pin_irq_1
+	)) return false;
+
+	if (!rfm69_packet_format_set(rfm, RFM69_PACKET_VARIABLE))	
+		return false;
+
+	return true;
+}
+
 bool rfm69_rudp_transmit(
         Rfm69 *rfm, 
-        tx_report_t *report,
+		TrxReport *report,
         uint8_t address,
         uint8_t *payload, 
         uint payload_size,
@@ -12,14 +42,10 @@ bool rfm69_rudp_transmit(
         uint8_t retries
 )
 {
-
     // Cache previous op mode so it can be restored
     // after transmit.
     uint8_t previous_mode;
     rfm69_mode_get(rfm, &previous_mode);
-
-    // Ensures registers are set correctly
-    _rudp_init(rfm);
 
 	uint8_t seq_num = get_rand_32() % SEQ_NUM_RAND_LIMIT;
 
@@ -43,22 +69,18 @@ bool rfm69_rudp_transmit(
 	uint8_t num_packets = payload_size/PAYLOAD_MAX;
     if (payload_size % PAYLOAD_MAX) num_packets++;
 
-    if (report) {
-        report->tx_address = tx_address;
-        report->rx_address = address;
-        report->payload_size = payload_size;
-        report->num_packets = num_packets;
-        report->rbt_retries = 0;
-        report->packets_sent = 0;
-        report->retransmissions = 0;
-        report->racks_received = 0;
-        report->rack_requests = 0;
-        report->return_status = RUDP_TIMEOUT;
-    }
+	if (report) {
+		// zero report struct
+		memset(report, 0x00, (sizeof *report));
+		report->tx_address = tx_address;
+		report->rx_address = address;
+		report->payload_size = payload_size;
+		report->return_status = RUDP_TIMEOUT;
+	}
 
     // This payload is too large and should be fplit into multiple transmissions
     if (num_packets > TX_PACKETS_MAX) {
-        if (report) report->return_status = RUDP_PAYLOAD_OVERFLOW; 
+        report->return_status = RUDP_PAYLOAD_OVERFLOW; 
         return false;
     }
 
@@ -70,8 +92,6 @@ bool rfm69_rudp_transmit(
     for (uint retry = 0; retry <= retries; retry++) {
         
         rfm69_mode_set(rfm, RFM69_OP_MODE_STDBY);
-
-        if (retry) report->rbt_retries++;
 
         // Write header to fifo
         rfm69_write(
@@ -146,7 +166,7 @@ bool rfm69_rudp_transmit(
         rfm69_mode_set(rfm, RFM69_OP_MODE_TX);
         _rudp_block_until_packet_sent(rfm);
 
-        if (report) report->packets_sent++;
+        if (report) report->data_packets_sent++;
     }
 
     uint8_t message_size = num_packets;
@@ -177,7 +197,7 @@ bool rfm69_rudp_transmit(
                 rfm69_mode_set(rfm, RFM69_OP_MODE_TX);
                 _rudp_block_until_packet_sent(rfm);
 
-                if (report) report->rack_requests++;
+                if (report) report->rack_requests_sent++;
 
                 continue;
             }
@@ -226,11 +246,11 @@ bool rfm69_rudp_transmit(
             rfm69_mode_set(rfm, RFM69_OP_MODE_TX);
 
             _rudp_block_until_packet_sent(rfm);
-
-            if (report) {
-                report->retransmissions++;
-                report->packets_sent++;
-            }
+			
+			if (report) {
+				report->data_packets_retransmitted++;
+				report->data_packets_sent++;
+			}
         }
     }
 
@@ -248,7 +268,7 @@ CLEANUP:
 
 bool rfm69_rudp_receive(
         Rfm69 *rfm, 
-        rx_report_t *report,
+        TrxReport *report,
 		uint8_t *address,
         uint8_t *payload, 
         uint *payload_size,
@@ -264,9 +284,6 @@ bool rfm69_rudp_receive(
     uint payload_buffer_size = *payload_size;
     *payload_size = 0;
 
-    // Ensures registers are set correctly
-    _rudp_init(rfm);
-
     uint8_t rx_address;
     rfm69_node_address_get(rfm, &rx_address);
 
@@ -279,14 +296,9 @@ bool rfm69_rudp_receive(
     uint8_t seq_num;
 
     if (report) {
+		// Zero that stuff meow
+		memset(report, 0x00, (sizeof *report));
         report->rx_address = rx_address;
-        report->tx_address = 0;
-        report->bytes_expected = 0;
-        report->bytes_received = 0;
-        report->packets_received = 0;
-        report->acks_sent = 0;
-        report->racks_sent = 0;
-        report->rack_requests = 0;
         report->return_status = RUDP_TIMEOUT;
     }
 
@@ -297,7 +309,6 @@ bool rfm69_rudp_receive(
 RESTART_RBT_LOOP: // This is to return to the RBT loop in case of a false
                   // start receiving the transmission
     tx_started = false;
-    memset(packet, 0, RFM69_FIFO_SIZE);
     for (;;) {
         if (get_absolute_time() >= timeout_time) break;
 
@@ -368,7 +379,7 @@ RESTART_RBT_LOOP: // This is to return to the RBT loop in case of a false
         _rudp_block_until_packet_sent(rfm);
 
         if (report) {
-            report->bytes_expected = *payload_size;
+            report->payload_size = *payload_size;
             report->tx_address = *address;
             report->acks_sent++;
         } 
@@ -487,7 +498,7 @@ RESTART_RBT_LOOP: // This is to return to the RBT loop in case of a false
         // Check if this is a request Rack
         is_req_rack = packet[HEADER_FLAGS] & HEADER_FLAG_RACK;
         if (is_req_rack && packet_num == seq_num) {
-            if (report) report->rack_requests++;
+            if (report) report->rack_requests_received++;
             rack_timeout = 0;
             continue;
         }
@@ -500,7 +511,7 @@ RESTART_RBT_LOOP: // This is to return to the RBT loop in case of a false
 
         payload_bytes_received += message_size;
         if (report) {
-            report->packets_received++;
+            report->data_packets_received++;
             report->bytes_received = payload_bytes_received;
         }
         if (payload_bytes_received > payload_buffer_size) {
@@ -540,17 +551,6 @@ CLEANUP:
     *payload_size = payload_bytes_received;
     rfm69_mode_set(rfm, previous_mode);
     return success;
-}
-
-static void _rudp_init(Rfm69 *rfm) {
-    // Always start in stdby
-	rfm69_mode_set(rfm, RFM69_OP_MODE_STDBY);
-	// Set payload length max to FIFO max
-	// For variable length packets, this only matters when receiving
-    rfm69_payload_length_set(rfm, RFM69_FIFO_SIZE);
-
-	// Set packet format to variable
-	rfm69_packet_format_set(rfm, RFM69_PACKET_VARIABLE);	
 }
 
 static RUDP_RETURN _rudp_rx_rack(
