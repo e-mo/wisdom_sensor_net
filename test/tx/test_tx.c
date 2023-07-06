@@ -74,6 +74,7 @@ int main() {
 
     rfm69_power_level_set(rfm, 20);
 
+    rfm69_power_level_set(rfm, 20);
     bool success;
     TrxReport report;
     for(ever) { 

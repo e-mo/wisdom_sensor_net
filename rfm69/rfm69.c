@@ -401,7 +401,7 @@ bool rfm69_rssi_measurment_get(Rfm69 *rfm, int16_t *rssi) {
 	if (!rfm69_read(rfm, RFM69_REG_RSSI_CONFIG, &reg, 1)) return false;
 
 	//checks RssiDone flag - all other bits should be 0
-	if(reg != RFM69_RSSI_MEASURMENT_DONE) {
+	if(reg & RFM69_RSSI_MEASURMENT_DONE) {
 		rfm->return_status = RFM69_RSSI_BUSY; 
 		return false;
 	}
