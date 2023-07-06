@@ -24,7 +24,7 @@ void rfm69_destory(Rfm69 *rfm) {
 }
 
 bool rfm69_init(
-        Rfm69 **rfm,
+        Rfm69 *rfm,
         spi_inst_t *spi,
         uint pin_miso,
         uint pin_mosi,
@@ -37,19 +37,19 @@ bool rfm69_init(
 	bool success = false;
 
     // Reset so that we can guarantee default register values
-    rfm69_reset(*rfm);
+    rfm69_reset(rfm);
 
-    (*rfm)->spi = spi;
-    (*rfm)->pin_cs = pin_cs;
-    (*rfm)->pin_rst = pin_rst;
+    rfm->spi = spi;
+    rfm->pin_cs = pin_cs;
+    rfm->pin_rst = pin_rst;
     
     // These are the default values for every version
     // of the RFM69 I can find.
-    (*rfm)->op_mode = RFM69_OP_MODE_STDBY;
-    (*rfm)->pa_level = 0xFF;
-    (*rfm)->pa_mode = RFM69_PA_MODE_PA0;
-    (*rfm)->ocp_trim = RFM69_OCP_TRIM_DEFAULT;
-	(*rfm)->address = 0; // All nodes default to address 0
+    rfm->op_mode = RFM69_OP_MODE_STDBY;
+    rfm->pa_level = 0xFF;
+    rfm->pa_mode = RFM69_PA_MODE_PA0;
+    rfm->ocp_trim = RFM69_OCP_TRIM_DEFAULT;
+	rfm->address = 0; // All nodes default to address 0
 
     gpio_set_function(pin_miso, GPIO_FUNC_SPI);
     gpio_set_function(pin_sck,  GPIO_FUNC_SPI);
@@ -73,28 +73,28 @@ bool rfm69_init(
     // The most common return is 0x24, but I can't guarantee that future
     // modules will return the same value.
     uint8_t buf;
-	if (!rfm69_read(*rfm, RFM69_REG_VERSION, &buf, 1)) goto RETURN; 
+	if (!rfm69_read(rfm, RFM69_REG_VERSION, &buf, 1)) goto RETURN; 
 		
 	if (buf == 0x00 || buf == 0xFF) { 
-		(*rfm)->return_status = RFM69_REGISTER_TEST_FAIL;
+		rfm->return_status = RFM69_REGISTER_TEST_FAIL;
 		goto RETURN;
 	}
 
-	rfm69_data_mode_set(*rfm, RFM69_DATA_MODE_PACKET);
+	rfm69_data_mode_set(rfm, RFM69_DATA_MODE_PACKET);
 
 	// You have no idea how important this is and how odd
 	// the radio can behave with it off
-	rfm69_dagc_set(*rfm, RFM69_DAGC_IMPROVED_0);
+	rfm69_dagc_set(rfm, RFM69_DAGC_IMPROVED_0);
 
-	rfm69_power_level_set(*rfm, 13);
-	rfm69_rssi_threshold_set(*rfm, 0xE4);
-	rfm69_tx_start_condition_set(*rfm, RFM69_TX_FIFO_NOT_EMPTY);
-	rfm69_broadcast_address_set(*rfm, 0xFF); 
-	rfm69_address_filter_set(*rfm, RFM69_FILTER_NODE_BROADCAST);
+	rfm69_power_level_set(rfm, 13);
+	rfm69_rssi_threshold_set(rfm, 0xE4);
+	rfm69_tx_start_condition_set(rfm, RFM69_TX_FIFO_NOT_EMPTY);
+	rfm69_broadcast_address_set(rfm, 0xFF); 
+	rfm69_address_filter_set(rfm, RFM69_FILTER_NODE_BROADCAST);
 
 	// Set sync value (essentially functions as subnet)
 	uint8_t sync[3] = {0x01, 0x01, 0x01};
-	rfm69_sync_value_set(*rfm, sync, 3);
+	rfm69_sync_value_set(rfm, sync, 3);
 
 	success = true;
 RETURN:
@@ -301,7 +301,7 @@ bool rfm69_mode_set(Rfm69 *rfm, RFM69_OP_MODE mode) {
 	// Just return true/OK if we are already in requested mode
 	if (rfm->op_mode == mode) {
 		rfm->return_status = RFM69_OK;
-		return true
+		return true;
 	}
 
 	// Switch off high power if switching into RX
@@ -439,7 +439,7 @@ bool rfm69_power_level_set(Rfm69 *rfm, int8_t pa_level) {
 
     if (rfm->pa_level == pa_level) {
         rfm->return_status = RFM69_OK;
-		goto RETURN:
+		goto RETURN;
 	}
 
     uint8_t buf;

@@ -330,7 +330,7 @@ void rfm69_destroy(Rfm69 *rfm);
 // module typically stays active for the lifetime of the process, I
 // see no reason to provide an rfm69 specific free function.
 bool rfm69_init(
-    Rfm69 **rfm,
+    Rfm69 *rfm,
     spi_inst_t *spi,
     uint pin_miso,
     uint pin_mosi,

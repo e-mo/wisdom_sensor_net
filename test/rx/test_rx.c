@@ -42,9 +42,9 @@ int main() {
 
     spi_init(SPI_PORT, 1000*1000); // Defaults to master mode, which we want
 
-    Rfm69 *rfm;
+    Rfm69 *rfm = rfm69_create();
     uint rval = rfm69_init(
-        &rfm,
+        rfm,
         SPI_PORT,
         PIN_MISO,
         PIN_MOSI,
@@ -81,7 +81,7 @@ int main() {
     }
 
     rfm69_power_level_set(rfm, 20);
-    RxReport report;
+    TrxReport report;
     bool success;
     for(ever) { 
 
@@ -106,12 +106,12 @@ int main() {
         printf("------\n");
         printf("      tx_address: %u\n", report.tx_address);
         printf("      rx_address: %u\n", report.rx_address);
-        printf("  bytes_expected: %u\n", report.bytes_expected);
+        printf("  bytes_expected: %u\n", report.payload_size);
         printf("  bytes_received: %u\n", report.bytes_received);
-        printf("packets_received: %u\n", report.packets_received);
+        printf("packets_received: %u\n", report.data_packets_received);
         printf("       acks_sent: %u\n", report.acks_sent);
         printf("      racks_sent: %u\n", report.racks_sent);
-        printf("   rack_requests: %u\n", report.rack_requests);
+        printf("   rack_requests: %u\n", report.rack_requests_received);
 
         switch(report.return_status) {
             case RUDP_OK:

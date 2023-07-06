@@ -42,9 +42,9 @@ int main() {
 
     spi_init(SPI_PORT, 1000*1000); // Defaults to master mode, which we want
 
-    Rfm69 *rfm;
-    uint rval = rfm69_init(
-        &rfm,
+    Rfm69 *rfm = rfm69_create();
+    rfm69_init(
+        rfm,
         SPI_PORT,
         PIN_MISO,
         PIN_MOSI,
@@ -72,16 +72,10 @@ int main() {
 
     rfm69_node_address_set(rfm, 0x01); 
 
-    // Check if rfm69_init was successful (== 0)
-    // Set last error and halt process if not.
-    if (rval != 0) {
-        set_last_error(rval); // Can use return value from rfm69_init directly
-        critical_error();
-    }
-
     rfm69_power_level_set(rfm, 20);
+
     bool success;
-    TxReport report;
+    TrxReport report;
     for(ever) { 
 
         char *message = "hi,campers";
@@ -113,12 +107,10 @@ int main() {
         printf("     tx_address: %u\n", report.tx_address);
         printf("     rx_address: %u\n", report.rx_address);
         printf("   payload_size: %u\n", report.payload_size);
-        printf("    num_packets: %u\n", report.num_packets);
-        printf("   packets_sent: %u\n", report.packets_sent);
-        printf("    rbt_retries: %u\n", report.rbt_retries);
-        printf("retransmissions: %u\n", report.retransmissions);
+        printf("   packets_sent: %u\n", report.data_packets_sent);
+        printf("retransmissions: %u\n", report.data_packets_retransmitted);
         printf(" racks_received: %u\n", report.racks_received);
-        printf("  rack_requests: %u\n", report.rack_requests);
+        printf("  rack_requests: %u\n", report.rack_requests_sent);
         switch(report.return_status) {
             case RUDP_OK:
                 printf("  return_status: RUDP_OK\n");
