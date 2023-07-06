@@ -133,10 +133,8 @@ typedef struct Rfm69 Rfm69;
 
 typedef enum _RETURN {
     RFM69_OK                      =  0,
-    RFM69_INIT_MALLOC             = -1,
-    RFM69_INIT_TEST               = -2,
+    RFM69_REGISTER_TEST_FAIL      = -2,
     RFM69_SPI_UNEXPECTED_RETURN   = -3,
-    RFM69_REG_ALREADY_SET         = -4,
     RFM69_RSSI_BUSY               = -5,
 } RFM69_RETURN;
 
@@ -314,6 +312,15 @@ typedef enum _PACKET_FORMAT {
 	RFM69_PACKET_VARIABLE = 0x80
 } RFM69_PACKET_FORMAT;
 
+typedef enum _DAGC_SETTING {
+	RFM69_DAGC_NORMAL,
+	RFM69_DAGC_IMPROVED_1 = 0x20,
+	RFM69_DAGC_IMPROVED_0 = 0x30
+} RFM69_DAGC_SETTING;
+
+Rfm69 *rfm69_create();
+void rfm69_destroy(Rfm69 *rfm);
+
 // Initializes passed in Rfm69 pointer and sets pins to proper
 // mode for spi communication. Passed pins must match the passed in
 // spi instane (e.g. spi0 pins for spi0 instance).
@@ -322,7 +329,7 @@ typedef enum _PACKET_FORMAT {
 // This function returns heap allocated memory. Since this kind of
 // module typically stays active for the lifetime of the process, I
 // see no reason to provide an rfm69 specific free function.
-RFM69_RETURN rfm69_init(
+bool rfm69_init(
     Rfm69 **rfm,
     spi_inst_t *spi,
     uint pin_miso,
@@ -350,7 +357,7 @@ void rfm69_reset(Rfm69 *rfm);
 // src     - an array of uint8_t to be written.
 // len     - src array length.
 // Returns number of bytes written (not including address byte).
-RFM69_RETURN rfm69_write(
+bool rfm69_write(
         Rfm69 *rfm, 
         uint8_t address, 
         const uint8_t *src, 
@@ -362,7 +369,7 @@ RFM69_RETURN rfm69_write(
 // address - register address
 // src     - properly aligned value to be written
 // mask    - mask for clearing bit field
-RFM69_RETURN rfm69_write_masked(
+bool rfm69_write_masked(
         Rfm69 *rfm, 
         uint8_t address, 
         const uint8_t src,
@@ -377,7 +384,7 @@ RFM69_RETURN rfm69_write_masked(
 // dst     - an array of uint8_t to be read into.
 // len     - dst array length.
 // Returns number of bytes written (not including address byte).
-RFM69_RETURN rfm69_read(Rfm69 *rfm, 
+bool rfm69_read(Rfm69 *rfm, 
         uint8_t address, 
         uint8_t *dst, 
         size_t len);
@@ -388,7 +395,7 @@ RFM69_RETURN rfm69_read(Rfm69 *rfm,
 // address - register address
 // src     - buffer to read field into
 // mask    - mask for isolating bit field
-RFM69_RETURN rfm69_read_masked(
+bool rfm69_read_masked(
         Rfm69 *rfm,
         uint8_t address,
         uint8_t *dst,
@@ -400,66 +407,66 @@ RFM69_RETURN rfm69_read_masked(
 // state   - stores flag state.
 //
 // Returns number of bytes written. 
-RFM69_RETURN rfm69_irq1_flag_state(Rfm69 *rfm, RFM69_IRQ1_FLAG flag, bool *state);
-RFM69_RETURN rfm69_irq2_flag_state(Rfm69 *rfm, RFM69_IRQ2_FLAG flag, bool *state);
+bool rfm69_irq1_flag_state(Rfm69 *rfm, RFM69_IRQ1_FLAG flag, bool *state);
+bool rfm69_irq2_flag_state(Rfm69 *rfm, RFM69_IRQ2_FLAG flag, bool *state);
 
 // Sets the opterating frequency of the module.
 // frequency - desired frequency in MHz.
 //
 // Returns number of bytes written. 
-RFM69_RETURN rfm69_frequency_set(Rfm69 *rfm, uint32_t frequency);
+bool rfm69_frequency_set(Rfm69 *rfm, uint32_t frequency);
 
 // Reads operating frequency from module.
 // Note - might not reflect set freqency until a mode change.
 // frequency - stores frequency in Hz.
 //
 // Returns number of bytes written. 
-RFM69_RETURN rfm69_frequency_get(Rfm69 *rfm, uint32_t *frequency);
+bool rfm69_frequency_get(Rfm69 *rfm, uint32_t *frequency);
 
 // Sets frequency deviation. 
 // Note: 0.5 <= 2* Fdev/Bitrate <= 10
 // Beta value should stay within this range per specification.
-RFM69_RETURN rfm69_fdev_set(Rfm69 *rfm, uint32_t fdev);
+bool rfm69_fdev_set(Rfm69 *rfm, uint32_t fdev);
 
-RFM69_RETURN rfm69_rxbw_set(Rfm69 *rfm, RFM69_RXBW_MANTISSA mantissa, uint8_t exponent);
+bool rfm69_rxbw_set(Rfm69 *rfm, RFM69_RXBW_MANTISSA mantissa, uint8_t exponent);
 
 // Sets modem bitrate.
-RFM69_RETURN rfm69_bitrate_set(Rfm69 *rfm,
+bool rfm69_bitrate_set(Rfm69 *rfm,
                       RFM69_MODEM_BITRATE bit_rate);
 
 // Reads modem bitrate.
-RFM69_RETURN rfm69_bitrate_get(Rfm69 *rfm, uint16_t *bit_rate);
+bool rfm69_bitrate_get(Rfm69 *rfm, uint16_t *bit_rate);
 
 // Sets module into a new mode.
 // Blocks until mode is ready.
-RFM69_RETURN rfm69_mode_set(Rfm69 *rfm, RFM69_OP_MODE mode);
+bool rfm69_mode_set(Rfm69 *rfm, RFM69_OP_MODE mode);
 
 // Gets current mode.
 void rfm69_mode_get(Rfm69 *rfm, uint8_t *mode);
 
 // Checks if current mode is ready.
-static RFM69_RETURN _mode_ready(Rfm69 *rfm, bool *ready);
+bool _mode_ready(Rfm69 *rfm, bool *ready);
 
 // Blocks until mode ready IRQ flag is set. 
-static RFM69_RETURN _mode_wait_until_ready(Rfm69 *rfm);
+bool _mode_wait_until_ready(Rfm69 *rfm);
 
 // Sets module into packet or continuous mode. 
-RFM69_RETURN rfm69_data_mode_set(Rfm69 *rfm, RFM69_DATA_MODE mode);
+bool rfm69_data_mode_set(Rfm69 *rfm, RFM69_DATA_MODE mode);
 // Read data mode register. For testing. 
-RFM69_RETURN rfm69_data_mode_get(Rfm69 *rfm, uint8_t *mode);
+bool rfm69_data_mode_get(Rfm69 *rfm, uint8_t *mode);
 
 // Sets modulation scheme (FSK or OOK)
-RFM69_RETURN rfm69_modulation_type_set(Rfm69 *rfm, RFM69_MODULATION_TYPE type);
-RFM69_RETURN rfm69_modulation_type_get(Rfm69 *rfm, uint8_t *type);
+bool rfm69_modulation_type_set(Rfm69 *rfm, RFM69_MODULATION_TYPE type);
+bool rfm69_modulation_type_get(Rfm69 *rfm, uint8_t *type);
 
-RFM69_RETURN rfm69_modulation_shaping_set(Rfm69 *rfm, RFM69_MODULATION_SHAPING shaping);
-RFM69_RETURN rfm69_modulation_shaping_get(Rfm69 *rfm, uint8_t *shaping);
+bool rfm69_modulation_shaping_set(Rfm69 *rfm, RFM69_MODULATION_SHAPING shaping);
+bool rfm69_modulation_shaping_get(Rfm69 *rfm, uint8_t *shaping);
 
 // Read value of last RSSI measurment
-RFM69_RETURN rfm69_rssi_measurment_get(Rfm69 *rfm, int16_t *rssi);
+bool rfm69_rssi_measurment_get(Rfm69 *rfm, int16_t *rssi);
 // Trigger a new RSSI reading
-RFM69_RETURN rfm69_rssi_measurment_start(Rfm69 *rfm);
-RFM69_RETURN rfm69_rssi_threshold_set(Rfm69 *rfm, uint8_t threshold);
+bool rfm69_rssi_measurment_start(Rfm69 *rfm);
+bool rfm69_rssi_threshold_set(Rfm69 *rfm, uint8_t threshold);
 
 // Sets power level of module.
 // Low power modules accept power levels -18 -> 13 
@@ -468,29 +475,29 @@ RFM69_RETURN rfm69_rssi_threshold_set(Rfm69 *rfm, uint8_t threshold);
 // Define RFM69_HIGH_POWER for high power modules. 
 // Also sets appropriate PA* and power flags based
 // on desired power level. 
-RFM69_RETURN rfm69_power_level_set(Rfm69 *rfm, int8_t pa_level);
+bool rfm69_power_level_set(Rfm69 *rfm, int8_t pa_level);
 void rfm69_power_level_get(Rfm69 *rfm, uint8_t *pa_level);
-static RFM69_RETURN _power_mode_set(Rfm69 *rfm, RFM69_PA_MODE mode);
+bool _power_mode_set(Rfm69 *rfm, RFM69_PA_MODE mode);
 
 // Enable or disable overcurent protection
-static RFM69_RETURN _ocp_set(Rfm69 *rfm, RFM69_OCP state);
+bool _ocp_set(Rfm69 *rfm, RFM69_OCP state);
 // Enable or disable high power settings
-static RFM69_RETURN _hp_set(Rfm69 *rfm, RFM69_HP_CONFIG enable);
+bool _hp_set(Rfm69 *rfm, RFM69_HP_CONFIG enable);
 
-RFM69_RETURN rfm69_tx_start_condition_set(Rfm69 *rfm, RFM69_TX_START_CONDITION condition);
+bool rfm69_tx_start_condition_set(Rfm69 *rfm, RFM69_TX_START_CONDITION condition);
 
-RFM69_RETURN rfm69_payload_length_set(Rfm69 *rfm, uint8_t length);
-RFM69_RETURN rfm69_packet_format_set(Rfm69 *rfm, RFM69_PACKET_FORMAT format);
+bool rfm69_payload_length_set(Rfm69 *rfm, uint8_t length);
+bool rfm69_packet_format_set(Rfm69 *rfm, RFM69_PACKET_FORMAT format);
 
-RFM69_RETURN rfm69_address_filter_set(Rfm69 *rfm, RFM69_ADDRESS_FILTER filter);
-RFM69_RETURN rfm69_node_address_set(Rfm69 *rfm, uint8_t address);
+bool rfm69_address_filter_set(Rfm69 *rfm, RFM69_ADDRESS_FILTER filter);
+bool rfm69_node_address_set(Rfm69 *rfm, uint8_t address);
 void rfm69_node_address_get(Rfm69 *rfm, uint8_t *address);
-RFM69_RETURN rfm69_broadcast_address_set(Rfm69 *rfm, uint8_t address);
+bool rfm69_broadcast_address_set(Rfm69 *rfm, uint8_t address);
 
-RFM69_RETURN rfm69_sync_value_set(Rfm69 *rfm, uint8_t *value, uint8_t size);
+bool rfm69_sync_value_set(Rfm69 *rfm, uint8_t *value, uint8_t size);
 
-RFM69_RETURN rfm69_crc_autoclear_set(Rfm69 *rfm, bool set);
+bool rfm69_crc_autoclear_set(Rfm69 *rfm, bool set);
 
-RFM69_RETURN rfm69_dcfree_set(Rfm69 *rfm, RFM69_DCFREE_SETTING setting);
-
+bool rfm69_dcfree_set(Rfm69 *rfm, RFM69_DCFREE_SETTING setting);
+bool rfm69_dagc_set(Rfm69 *rfm, RFM69_DAGC_SETTING setting);
 #endif // RFM69_DRIVER_H

@@ -71,7 +71,7 @@ int main() {
     // Transmit starts with any data in the FIFO
 
 
-    rfm69_node_address_set(rfm, 0x02); 
+    rfm69_node_address_set(rfm, 0x02);
 
     // Check if rfm69_init was successful (== 0)
     // Set last error and halt process if not.
@@ -80,8 +80,8 @@ int main() {
         critical_error();
     }
 
-    rfm69_power_level_set(rfm, -2);
-    rx_report_t report;
+    rfm69_power_level_set(rfm, 20);
+    RxReport report;
     bool success;
     for(ever) { 
 

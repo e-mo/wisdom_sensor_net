@@ -2,9 +2,36 @@
 #include "pico/rand.h"
 #include "string.h"
 
+struct _rfm69_rudp_t {
+	Rfm69 *rfm,
+	uint8_t address,
+};
+
+Rfm69Rudp *rfm69_rudp_create() {
+	Rfm69Rudp *rudp = malloc(sizeof *rudp);
+	if (!rudp) return NULL;
+	rfm69_create(rudp->rfm);
+	if (!rudp->rfm) {
+		free(rudp);
+		return NULL;
+	}
+
+	if (!rfm69_init(rudp->rfm)) {
+		rfm69_rudp_destroy(rudp);
+		return NULL;
+	}
+
+	return rudp;
+}
+
+void rfm69_rudp_destroy(Rfm69Rudp *rudp) {
+	rfm69_destroy(rudp->rfm);
+	free(rudp);
+}
+
 bool rfm69_rudp_transmit(
-        Rfm69 *rfm, 
-        tx_report_t *report,
+        Rfm69Rudp *rudp, 
+        TxReport *report,
         uint8_t address,
         uint8_t *payload, 
         uint payload_size,
@@ -12,7 +39,7 @@ bool rfm69_rudp_transmit(
         uint8_t retries
 )
 {
-
+	Rfm69 *rfm = rudp->rfm;
     // Cache previous op mode so it can be restored
     // after transmit.
     uint8_t previous_mode;
@@ -247,7 +274,7 @@ CLEANUP:
 
 
 bool rfm69_rudp_receive(
-        Rfm69 *rfm, 
+        Rfm69Rudp *rudp, 
         rx_report_t *report,
 		uint8_t *address,
         uint8_t *payload, 
@@ -256,6 +283,7 @@ bool rfm69_rudp_receive(
         uint timeout
 )
 {
+	Rfm69 *rfm = rudp->rfm;
     // Cache previous op mode so it can be restored
     // after RX
     uint8_t previous_mode;

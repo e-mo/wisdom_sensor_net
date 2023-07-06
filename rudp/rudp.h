@@ -3,6 +3,8 @@
 
 #include "rfm69.h"
 
+typedef struct _rfm69_rudp_t Rfm69Rudp;
+
 typedef enum _RUDP_RETURN {
     RUDP_OK,
     RUDP_OK_UNCONFIRMED,
@@ -11,7 +13,7 @@ typedef enum _RUDP_RETURN {
     RUDP_PAYLOAD_OVERFLOW
 } RUDP_RETURN;
 
-typedef struct _tx_report {
+typedef struct _tx_report_t {
     uint payload_size;
     uint packets_sent;
     uint rbt_retries;
@@ -22,9 +24,9 @@ typedef struct _tx_report {
     uint8_t tx_address;
     uint8_t rx_address;
     uint8_t num_packets;
-} tx_report_t;
+} TxReport;
 
-typedef struct _rx_report {
+typedef struct _rx_report_t {
     uint bytes_expected;
     uint bytes_received;
     uint packets_received;
@@ -34,7 +36,7 @@ typedef struct _rx_report {
     RUDP_RETURN return_status;
     uint8_t rx_address;
     uint8_t tx_address;
-} rx_report_t;
+} RxReport;
 
 // I might eliminate this. I don't think it is really needed.
 #define TX_INTER_PACKET_DELAY 0 
@@ -79,7 +81,7 @@ enum FLAG {
 // retries      - number of retries until timeout
 bool rfm69_rudp_transmit(
         Rfm69 *rfm, 
-        tx_report_t *report,
+        TxReport *report,
         uint8_t address,
         uint8_t *payload, 
         uint payload_size, 

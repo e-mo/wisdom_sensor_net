@@ -79,9 +79,9 @@ int main() {
         critical_error();
     }
 
-    rfm69_power_level_set(rfm, -2);
+    rfm69_power_level_set(rfm, 20);
     bool success;
-    tx_report_t report;
+    TxReport report;
     for(ever) { 
 
         char *message = "hi,campers";

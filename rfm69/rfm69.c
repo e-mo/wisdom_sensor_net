@@ -10,11 +10,20 @@ struct Rfm69 {
     RFM69_OP_MODE op_mode;
     int8_t pa_level;
     RFM69_PA_MODE pa_mode;
+	RFM69_RETURN return_status;
     uint8_t ocp_trim;
 	uint8_t address;
 };
 
-RFM69_RETURN rfm69_init(
+Rfm69 *rfm69_create() {
+	return malloc(sizeof(Rfm69));
+}
+
+void rfm69_destory(Rfm69 *rfm) {
+	free(rfm);
+}
+
+bool rfm69_init(
         Rfm69 **rfm,
         spi_inst_t *spi,
         uint pin_miso,
@@ -25,8 +34,7 @@ RFM69_RETURN rfm69_init(
         uint pin_irq_0,
         uint pin_irq_1) 
 {
-    *rfm = malloc(sizeof(Rfm69));    
-    if (rfm == NULL) return RFM69_INIT_MALLOC;
+	bool success = false;
 
     // Reset so that we can guarantee default register values
     rfm69_reset(*rfm);
@@ -65,35 +73,32 @@ RFM69_RETURN rfm69_init(
     // The most common return is 0x24, but I can't guarantee that future
     // modules will return the same value.
     uint8_t buf;
-    RFM69_RETURN rval = rfm69_read(*rfm, RFM69_REG_VERSION, &buf, 1);
-    if (rval == RFM69_OK) {
-        if (buf == 0x00 || buf == 0xFF) { rval = RFM69_INIT_TEST; }
-        // Everything is working great and we can safely
-        // set some registers to sane defaults.
-        else {
-            rfm69_data_mode_set(*rfm, RFM69_DATA_MODE_PACKET);
+	if (!rfm69_read(*rfm, RFM69_REG_VERSION, &buf, 1)) goto RETURN; 
+		
+	if (buf == 0x00 || buf == 0xFF) { 
+		(*rfm)->return_status = RFM69_REGISTER_TEST_FAIL;
+		goto RETURN;
+	}
 
-            uint8_t dagc = 0x30;
-            rfm69_write(
-                    *rfm,
-                    RFM69_REG_TEST_DAGC,
-                    &dagc,
-                    1 
-            );
+	rfm69_data_mode_set(*rfm, RFM69_DATA_MODE_PACKET);
 
-            rfm69_power_level_set(*rfm, 13);
-            rfm69_rssi_threshold_set(*rfm, 0xE4);
-            rfm69_tx_start_condition_set(*rfm, RFM69_TX_FIFO_NOT_EMPTY);
-            rfm69_broadcast_address_set(*rfm, 0xFF); 
-            rfm69_address_filter_set(*rfm, RFM69_FILTER_NODE_BROADCAST);
+	// You have no idea how important this is and how odd
+	// the radio can behave with it off
+	rfm69_dagc_set(*rfm, RFM69_DAGC_IMPROVED_0);
 
-            // Set sync value (essentially functions as subnet)
-            uint8_t sync[3] = {0x01, 0x01, 0x01};
-            rfm69_sync_value_set(*rfm, sync, 3);
-        }
-    }
+	rfm69_power_level_set(*rfm, 13);
+	rfm69_rssi_threshold_set(*rfm, 0xE4);
+	rfm69_tx_start_condition_set(*rfm, RFM69_TX_FIFO_NOT_EMPTY);
+	rfm69_broadcast_address_set(*rfm, 0xFF); 
+	rfm69_address_filter_set(*rfm, RFM69_FILTER_NODE_BROADCAST);
 
-    return rval;
+	// Set sync value (essentially functions as subnet)
+	uint8_t sync[3] = {0x01, 0x01, 0x01};
+	rfm69_sync_value_set(*rfm, sync, 3);
+
+	success = true;
+RETURN:
+    return success;
 }
 
 // Have you tried turning it off and on again?
@@ -121,7 +126,7 @@ static inline void cs_deselect(uint pin_cs) {
 }
 
 
-RFM69_RETURN rfm69_write(
+bool rfm69_write(
         Rfm69 *rfm, 
         uint8_t address, 
         const uint8_t *src,
@@ -135,21 +140,23 @@ RFM69_RETURN rfm69_write(
 
     cs_deselect(rfm->pin_cs);
 
-    if (rval != len + 1)
-        return RFM69_SPI_UNEXPECTED_RETURN;
+    if (rval != len + 1) {
+        rfm->return_status = RFM69_SPI_UNEXPECTED_RETURN;
+		return false;
+	}
 
-    return RFM69_OK;
+	rfm->return_status = RFM69_OK;
+    return true;
 }
 
-RFM69_RETURN rfm69_write_masked(
+bool rfm69_write_masked(
         Rfm69 *rfm, 
         uint8_t address, 
         const uint8_t src,
         const uint8_t mask)
 {
     uint8_t reg;
-    int rval = rfm69_read(rfm, address, &reg, 1); 
-    if (rval == RFM69_SPI_UNEXPECTED_RETURN) return rval;
+	if (!rfm69_read(rfm, address, &reg, 1)) return false;
 
     reg &= ~mask;
     reg |= src & mask;
@@ -157,7 +164,7 @@ RFM69_RETURN rfm69_write_masked(
     return rfm69_write(rfm, address, &reg, 1);
 }
 
-RFM69_RETURN rfm69_read(
+bool rfm69_read(
         Rfm69 *rfm, 
         uint8_t address, 
         uint8_t *dst,
@@ -167,88 +174,83 @@ RFM69_RETURN rfm69_read(
 
     cs_select(rfm->pin_cs);
 
-    RFM69_RETURN rval = spi_write_blocking(rfm->spi, &address, 1);
+    int rval = spi_write_blocking(rfm->spi, &address, 1);
     rval += spi_read_blocking(rfm->spi, 0, dst, len);
 
     cs_deselect(rfm->pin_cs);
 
-    if (rval != len + 1)
-        return RFM69_SPI_UNEXPECTED_RETURN;
+    if (rval != len + 1) {
+        rfm->return_status = RFM69_SPI_UNEXPECTED_RETURN;
+		return false;
+	}
 
-    return RFM69_OK;
+	rfm->return_status = RFM69_OK;
+	return true;
 }
 
-RFM69_RETURN rfm69_read_masked(
+bool rfm69_read_masked(
         Rfm69 *rfm,
         uint8_t address,
         uint8_t *dst,
         const uint8_t mask)
 {
-    RFM69_RETURN rval = rfm69_read(rfm, address, dst, 1);
+    if(!rfm69_read(rfm, address, dst, 1)) return false;
+
     *dst &= mask;
 
-    return rval;
+    return true;
 }
 
 
-RFM69_RETURN rfm69_irq1_flag_state(Rfm69 *rfm, RFM69_IRQ1_FLAG flag, bool *state) {
+bool rfm69_irq1_flag_state(Rfm69 *rfm, RFM69_IRQ1_FLAG flag, bool *state) {
     uint8_t reg;
-    RFM69_RETURN rval = rfm69_read_masked(
-            rfm,
-            RFM69_REG_IRQ_FLAGS_1,
-            &reg,
-            flag
-    );
+    if (!rfm69_read_masked(rfm, RFM69_REG_IRQ_FLAGS_1, &reg, flag))
+		return false;
 
     if (reg) *state = true;
     else *state = false;
 
-    return rval;
+    return true;
 }
 
-RFM69_RETURN rfm69_irq2_flag_state(Rfm69 *rfm, RFM69_IRQ2_FLAG flag, bool *state) {
+bool rfm69_irq2_flag_state(Rfm69 *rfm, RFM69_IRQ2_FLAG flag, bool *state) {
     uint8_t reg;
-    RFM69_RETURN rval = rfm69_read_masked(
-            rfm,
-            RFM69_REG_IRQ_FLAGS_2,
-            &reg,
-            flag
-    );
+    if (!rfm69_read_masked(rfm, RFM69_REG_IRQ_FLAGS_2, &reg, flag))
+		return false;
 
     if (reg) *state = true;
     else *state = false;
 
-    return rval;
+    return true;
 }
 
-RFM69_RETURN rfm69_frequency_set(Rfm69 *rfm, uint32_t frequency) {
-    // Frf = Fstep * Frf(23,0)
-    frequency *= 1000000; // MHz to Hz
-
-
-    frequency =(frequency / RFM69_FSTEP) + 0.5; // Gives needed register value
+bool rfm69_frequency_set(Rfm69 *rfm, uint32_t frequency) {
+    // Frf = Fstep * Frf(23,0) frequency *= 1000000; // MHz to Hz
+    frequency = (frequency / RFM69_FSTEP) + 0.5; // Gives needed register value
+												 //
     // Split into three bytes.
     uint8_t buf[3] = {
         (frequency >> 16) & 0xFF,
         (frequency >> 8) & 0xFF,
         frequency & 0xFF
     };
+
     return rfm69_write(rfm, RFM69_REG_FRF_MSB, buf, 3);
 }
 
-RFM69_RETURN rfm69_frequency_get(Rfm69 *rfm, uint32_t *frequency) {
+bool rfm69_frequency_get(Rfm69 *rfm, uint32_t *frequency) {
     uint8_t buf[3] = {0};
-    RFM69_RETURN rval = rfm69_read(rfm, RFM69_REG_FRF_MSB, buf, 3);
+    if (!rfm69_read(rfm, RFM69_REG_FRF_MSB, buf, 3)) return false;
 
     *frequency = (uint32_t) buf[0] << 16;
     *frequency |= (uint32_t) buf[1] << 8;
     *frequency |= (uint32_t) buf[2];
     *frequency *= RFM69_FSTEP;
 
-    return rval;
+    return true;
 }
 
-RFM69_RETURN rfm69_fdev_set(Rfm69 *rfm, uint32_t fdev) {
+bool rfm69_fdev_set(Rfm69 *rfm, uint32_t fdev) {
     fdev = (fdev / RFM69_FSTEP) + 0.5;
 
     uint8_t buf[2] = {
@@ -259,7 +261,7 @@ RFM69_RETURN rfm69_fdev_set(Rfm69 *rfm, uint32_t fdev) {
     return rfm69_write(rfm, RFM69_REG_FDEV_MSB, buf, 2);
 }
 
-RFM69_RETURN rfm69_rxbw_set(Rfm69 *rfm, RFM69_RXBW_MANTISSA mantissa, uint8_t exponent) {
+bool rfm69_rxbw_set(Rfm69 *rfm, RFM69_RXBW_MANTISSA mantissa, uint8_t exponent) {
     // Mask all inputs to prevent invalid input
     exponent &= RFM69_RXBW_EXPONENT_MASK;
     mantissa &= RFM69_RXBW_MANTISSA_MASK;
@@ -274,81 +276,71 @@ RFM69_RETURN rfm69_rxbw_set(Rfm69 *rfm, RFM69_RXBW_MANTISSA mantissa, uint8_t ex
     );
 }
 
-RFM69_RETURN rfm69_bitrate_set(Rfm69 *rfm,
-                      uint16_t bit_rate)
-{
+bool rfm69_bitrate_set(Rfm69 *rfm, uint16_t bit_rate) {
     uint8_t bytes[2] = {
         (bit_rate & 0xFF00) >> 8,
         bit_rate & 0xFF
     }; 
+
     return rfm69_write(rfm, RFM69_REG_BITRATE_MSB, bytes, 2);
 }
 
-RFM69_RETURN rfm69_bitrate_get(Rfm69 *rfm, uint16_t *bit_rate) {
+bool rfm69_bitrate_get(Rfm69 *rfm, uint16_t *bit_rate) {
     uint8_t buf[2] = {0}; 
-    RFM69_RETURN rval = rfm69_read(rfm, RFM69_REG_BITRATE_MSB, buf, 2);
+    if (!rfm69_read(rfm, RFM69_REG_BITRATE_MSB, buf, 2)) return false;
 
     *bit_rate = (uint16_t) buf[0] << 8;
     *bit_rate |= (uint16_t) buf[1];
 
-    return rval;
+    return true;
 }
 
-RFM69_RETURN rfm69_mode_set(Rfm69 *rfm, RFM69_OP_MODE mode) {
-    RFM69_RETURN rval = RFM69_OK;
+bool rfm69_mode_set(Rfm69 *rfm, RFM69_OP_MODE mode) {
+	bool success = false;
 
-    if (rfm->op_mode != mode) {
+	// Just return true/OK if we are already in requested mode
+	if (rfm->op_mode == mode) {
+		rfm->return_status = RFM69_OK;
+		return true
+	}
 
-        // Switch off high power if switching into RX
-        if (mode == RFM69_OP_MODE_RX && rfm->pa_level >= 17) {
-            rval = _hp_set(rfm, RFM69_HP_DISABLE);
-        }
-        // Enable high power if necessary if switching into TX
-        else if (mode == RFM69_OP_MODE_TX >= 17) {
-            rval = _hp_set(rfm, RFM69_HP_ENABLE);
-        }
+	// Switch off high power if switching into RX
+	if (mode == RFM69_OP_MODE_RX && rfm->pa_level >= 17) {
+		if(!_hp_set(rfm, RFM69_HP_DISABLE)) goto RETURN;
+	}
+	// Enable high power if necessary if switching into TX
+	else if (mode == RFM69_OP_MODE_TX >= 17) {
+		if(!_hp_set(rfm, RFM69_HP_ENABLE)) goto RETURN;
+	}
 
-        if (rval == RFM69_OK) {
-            rval = rfm69_write_masked(
-                rfm, 
-                RFM69_REG_OP_MODE,
-                mode,
-                RFM69_OP_MODE_MASK
-            );
-            if (rval == RFM69_OK) {
-                rval = _mode_wait_until_ready(rfm);
-                rfm->op_mode = mode;
-            }
-        }
+	if (!rfm69_write_masked(rfm, RFM69_REG_OP_MODE, mode, RFM69_OP_MODE_MASK))
+		goto RETURN;
 
-    } 
-    else {
-        rval = RFM69_REG_ALREADY_SET; // Already in requested mode
-    }
-
-    return rval;
+	if (!_mode_wait_until_ready(rfm)) goto RETURN;
+	rfm->op_mode = mode;
+	
+	success = true;
+RETURN:
+    return success;
 }
 
 void rfm69_mode_get(Rfm69 *rfm, uint8_t *mode) { *mode = rfm->op_mode; }
 
-static RFM69_RETURN _mode_ready(Rfm69 *rfm, bool *ready) {
+bool _mode_ready(Rfm69 *rfm, bool *ready) {
     return rfm69_irq1_flag_state(rfm, RFM69_IRQ1_FLAG_MODE_READY, ready);
 }
 
-static RFM69_RETURN _mode_wait_until_ready(Rfm69 *rfm) {
-    RFM69_RETURN rval;
-
+bool _mode_wait_until_ready(Rfm69 *rfm) {
     bool ready = false;
     while (!ready) {
         // Return immediately if there is an spi error
-        if ((rval = _mode_ready(rfm, &ready)) != RFM69_OK)
-            break;
+        if (!_mode_ready(rfm, &ready)) return false;
     }
 
-    return rval;
+    return true;
 }
 
-RFM69_RETURN rfm69_data_mode_set(Rfm69 *rfm, RFM69_DATA_MODE mode) {
+bool rfm69_data_mode_set(Rfm69 *rfm, RFM69_DATA_MODE mode) {
     return rfm69_write_masked(
             rfm, 
             RFM69_REG_DATA_MODUL,
@@ -357,7 +349,7 @@ RFM69_RETURN rfm69_data_mode_set(Rfm69 *rfm, RFM69_DATA_MODE mode) {
     );
 }
 
-RFM69_RETURN rfm69_data_mode_get(Rfm69 *rfm, uint8_t *mode) {
+bool rfm69_data_mode_get(Rfm69 *rfm, uint8_t *mode) {
     return rfm69_read_masked(
             rfm,
             RFM69_REG_DATA_MODUL,
@@ -366,7 +358,7 @@ RFM69_RETURN rfm69_data_mode_get(Rfm69 *rfm, uint8_t *mode) {
     );
 }
 
-RFM69_RETURN rfm69_modulation_type_set(Rfm69 *rfm, RFM69_MODULATION_TYPE type) {
+bool rfm69_modulation_type_set(Rfm69 *rfm, RFM69_MODULATION_TYPE type) {
     return rfm69_write_masked(
             rfm,
             RFM69_REG_DATA_MODUL,
@@ -375,7 +367,7 @@ RFM69_RETURN rfm69_modulation_type_set(Rfm69 *rfm, RFM69_MODULATION_TYPE type) {
     );
 }
 
-RFM69_RETURN rfm69_modulation_type_get(Rfm69 *rfm, uint8_t *type) {
+bool rfm69_modulation_type_get(Rfm69 *rfm, uint8_t *type) {
     return rfm69_read_masked(
             rfm,
             RFM69_REG_DATA_MODUL,
@@ -384,7 +376,7 @@ RFM69_RETURN rfm69_modulation_type_get(Rfm69 *rfm, uint8_t *type) {
     );
 }
 
-RFM69_RETURN rfm69_modulation_shaping_set(Rfm69 *rfm, RFM69_MODULATION_SHAPING shaping) {
+bool rfm69_modulation_shaping_set(Rfm69 *rfm, RFM69_MODULATION_SHAPING shaping) {
     return rfm69_write_masked(
             rfm,
             RFM69_REG_DATA_MODUL,
@@ -393,7 +385,7 @@ RFM69_RETURN rfm69_modulation_shaping_set(Rfm69 *rfm, RFM69_MODULATION_SHAPING s
     );
 }
 
-RFM69_RETURN rfm69_modulation_shaping_get(Rfm69 *rfm, uint8_t *shaping) {
+bool rfm69_modulation_shaping_get(Rfm69 *rfm, uint8_t *shaping) {
     return rfm69_read_masked(
             rfm,
             RFM69_REG_DATA_MODUL,
@@ -403,35 +395,37 @@ RFM69_RETURN rfm69_modulation_shaping_get(Rfm69 *rfm, uint8_t *shaping) {
 }
 
 //reads rssi - see p.68 of rfm69 datasheet
-RFM69_RETURN rfm69_rssi_measurment_get(Rfm69 *rfm, int16_t *rssi) {
+bool rfm69_rssi_measurment_get(Rfm69 *rfm, int16_t *rssi) {
 	uint8_t reg;
 
-	RFM69_RETURN rval = rfm69_read(rfm, RFM69_REG_RSSI_CONFIG, &reg, 1);
-    if (rval != RFM69_OK) return rval;
+	if (!rfm69_read(rfm, RFM69_REG_RSSI_CONFIG, &reg, 1)) return false;
 
-	if(reg != RFM69_RSSI_MEASURMENT_DONE) return RFM69_RSSI_BUSY; //checks RssiDone flag - all other bits should be 0
+	//checks RssiDone flag - all other bits should be 0
+	if(reg != RFM69_RSSI_MEASURMENT_DONE) {
+		rfm->return_status = RFM69_RSSI_BUSY; 
+		return false;
+	}
 
-	rval = rfm69_read(rfm, RFM69_REG_RSSI_VALUE, &reg, 1);
+	if(!rfm69_read(rfm, RFM69_REG_RSSI_VALUE, &reg, 1)) return false;
 
 	*rssi = -((int16_t)(reg >> 1));
 
-	return rval;
+	return true;
 }
 
 //triggers the rfm69 to check rssi
 //probably best to run this function before calling rfm69_rssi_get
-RFM69_RETURN rfm69_rssi_measurment_start(Rfm69 *rfm) {
+bool rfm69_rssi_measurment_start(Rfm69 *rfm) {
 	uint8_t reg;
 
-	RFM69_RETURN rval = rfm69_read(rfm, RFM69_REG_RSSI_CONFIG, &reg, 1);
-    if (rval != RFM69_OK) return rval;
+	if (!rfm69_read(rfm, RFM69_REG_RSSI_CONFIG, &reg, 1)) return false;
 
 	reg |= RFM69_RSSI_MEASURMENT_START;
 
 	return rfm69_write(rfm, RFM69_REG_RSSI_CONFIG, &reg, 1);
 }
 
-RFM69_RETURN rfm69_rssi_threshold_set(Rfm69 *rfm, uint8_t threshold) {
+bool rfm69_rssi_threshold_set(Rfm69 *rfm, uint8_t threshold) {
     return rfm69_write(
             rfm,
             RFM69_REG_RSSI_THRESH,
@@ -440,11 +434,14 @@ RFM69_RETURN rfm69_rssi_threshold_set(Rfm69 *rfm, uint8_t threshold) {
     );
 }
 
-RFM69_RETURN rfm69_power_level_set(Rfm69 *rfm, int8_t pa_level) {
-    if (rfm->pa_level == pa_level)
-        return RFM69_REG_ALREADY_SET;
+bool rfm69_power_level_set(Rfm69 *rfm, int8_t pa_level) {
+	bool success = false;
 
-    RFM69_RETURN rval;
+    if (rfm->pa_level == pa_level) {
+        rfm->return_status = RFM69_OK;
+		goto RETURN:
+	}
+
     uint8_t buf;
     RFM69_PA_MODE pa_mode;
     int8_t pout;
@@ -482,7 +479,6 @@ RFM69_RETURN rfm69_power_level_set(Rfm69 *rfm, int8_t pa_level) {
             pa_mode = RFM69_PA_MODE_HIGH;
             pout = pa_level + 11; 
         }
-
     }
     else {
         // Low power modules only use PA0
@@ -496,72 +492,60 @@ RFM69_RETURN rfm69_power_level_set(Rfm69 *rfm, int8_t pa_level) {
         pout = pa_level + 18;
     }
 
-    rval = _power_mode_set(rfm, pa_mode);
-    // If power mode was successfully set (or already set)
-    if (rval == RFM69_OK || rval == RFM69_REG_ALREADY_SET) {
-        rfm->pa_mode = pa_mode;
-        rval = rfm69_write_masked(
-                rfm,
-                RFM69_REG_PA_LEVEL,
-                pout,
-                RFM69_PA_OUTPUT_MASK
-        );
-        // If power level was successfully set, cache value
-        if (rval == RFM69_OK)
-            rfm->pa_level = pa_level; 
-    }
+    if(!_power_mode_set(rfm, pa_mode)) goto RETURN;
 
-    return rval;
+	rfm->pa_mode = pa_mode;
+	if (!rfm69_write_masked(rfm, RFM69_REG_PA_LEVEL, pout, RFM69_PA_OUTPUT_MASK))
+		goto RETURN;
+
+	// If power level was successfully set, cache value
+	rfm->pa_level = pa_level; 
+	success = true;
+RETURN:
+    return false;
 }
 
 void rfm69_power_level_get(Rfm69 *rfm, uint8_t *pa_level) {
     *pa_level = rfm->pa_level;
 };
 
-static RFM69_RETURN _power_mode_set(Rfm69 *rfm, RFM69_PA_MODE pa_mode) {
-    RFM69_RETURN rval;
-    uint8_t buf = 0;
-    
+bool _power_mode_set(Rfm69 *rfm, RFM69_PA_MODE pa_mode) {
     // Skip if we are already in this mode
-    if (rfm->pa_mode == pa_mode)//pa_mode)
-        rval = RFM69_REG_ALREADY_SET;
-    else {
-        switch (pa_mode) {
-            case RFM69_PA_MODE_PA0:
-                buf |= RFM69_PA0_ON;
-                break;
-            case RFM69_PA_MODE_PA1:
-                buf |= RFM69_PA1_ON;
-                break;
-            case RFM69_PA_MODE_PA1_PA2:
-                buf |= RFM69_PA1_ON | RFM69_PA2_ON;
-                break;
-            case RFM69_PA_MODE_HIGH:
-                buf |= RFM69_PA1_ON | RFM69_PA2_ON;
-                break;
-        } 
+    if (rfm->pa_mode == pa_mode) {
+		rfm->return_status = RFM69_OK;
+		return true;
+	}
 
-        // Set needed PA pins
-        rval = rfm69_write_masked(
-            rfm,
-            RFM69_REG_PA_LEVEL,
-            buf,
-            RFM69_PA_PINS_MASK
-        );
+    uint8_t buf = 0x00;
+	switch (pa_mode) {
+		case RFM69_PA_MODE_PA0:
+			buf |= RFM69_PA0_ON;
+			break;
+		case RFM69_PA_MODE_PA1:
+			buf |= RFM69_PA1_ON;
+			break;
+		case RFM69_PA_MODE_PA1_PA2:
+			buf |= RFM69_PA1_ON | RFM69_PA2_ON;
+			break;
+		case RFM69_PA_MODE_HIGH:
+			buf |= RFM69_PA1_ON | RFM69_PA2_ON;
+			break;
+	} 
 
-        // Set high or low power mode
-        if (rval == RFM69_OK) {
-            if (pa_mode == RFM69_PA_MODE_HIGH)
-                rval = _hp_set(rfm, RFM69_HP_ENABLE);
-            else 
-                rval = _hp_set(rfm, RFM69_HP_DISABLE);
-        }
-    }
+	// Set needed PA pins
+	if (!rfm69_write_masked(rfm, RFM69_REG_PA_LEVEL, buf, RFM69_PA_PINS_MASK))
+		return false;
 
-    return rval;
+	bool success;
+	if (pa_mode == RFM69_PA_MODE_HIGH)
+		success = _hp_set(rfm, RFM69_HP_ENABLE);
+	else 
+		success = _hp_set(rfm, RFM69_HP_DISABLE);
+
+    return success;
 }
 
-static RFM69_RETURN _ocp_set(Rfm69 *rfm, RFM69_OCP state) {
+bool _ocp_set(Rfm69 *rfm, RFM69_OCP state) {
     return rfm69_write_masked(
             rfm,
             RFM69_REG_OCP,
@@ -570,8 +554,7 @@ static RFM69_RETURN _ocp_set(Rfm69 *rfm, RFM69_OCP state) {
     );
 }
 
-static RFM69_RETURN _hp_set(Rfm69 *rfm, RFM69_HP_CONFIG config) {
-    RFM69_RETURN rval;
+bool _hp_set(Rfm69 *rfm, RFM69_HP_CONFIG config) {
     RFM69_HP_CONFIG buf[2];
     RFM69_OCP ocp;
     RFM69_OCP_TRIM ocp_trim;
@@ -591,36 +574,22 @@ static RFM69_RETURN _hp_set(Rfm69 *rfm, RFM69_HP_CONFIG config) {
         ocp_trim = rfm->ocp_trim;
     }
 
-    if ((rval = rfm69_write(
-            rfm,
-            RFM69_REG_TEST_PA1,
-            &buf[0],
-            1
-    )) == RFM69_OK) {
-        rval = rfm69_write(
-                rfm,
-                RFM69_REG_TEST_PA2,
-                &buf[1],
-                1
-        );
-    }
+    if (!rfm69_write(rfm, RFM69_REG_TEST_PA1, &buf[0], 1))
+		return false;
 
-    if (rval == RFM69_OK) {
+    if (!rfm69_write(rfm, RFM69_REG_TEST_PA2, &buf[1], 1))
+		return false;
 
-        if ((rval = _ocp_set(rfm, ocp)) == RFM69_OK) {
-            rval = rfm69_write_masked(
-                    rfm,
-                    RFM69_REG_OCP,
-                    ocp_trim,
-                    _OCP_TRIM_MASK
-            );
-        }
-    }
 
-    return rval;
+	if (!_ocp_set(rfm, ocp)) return false;
+
+	if (!rfm69_write_masked(rfm, RFM69_REG_OCP, ocp_trim, _OCP_TRIM_MASK))
+		return false;
+
+    return true;
 }
 
-RFM69_RETURN rfm69_tx_start_condition_set(Rfm69 *rfm, RFM69_TX_START_CONDITION condition) {
+bool rfm69_tx_start_condition_set(Rfm69 *rfm, RFM69_TX_START_CONDITION condition) {
     return rfm69_write_masked(
             rfm,
             RFM69_REG_FIFO_THRESH,
@@ -629,7 +598,7 @@ RFM69_RETURN rfm69_tx_start_condition_set(Rfm69 *rfm, RFM69_TX_START_CONDITION c
     );
 }
 
-RFM69_RETURN rfm69_payload_length_set(Rfm69 *rfm, uint8_t length) {
+bool rfm69_payload_length_set(Rfm69 *rfm, uint8_t length) {
     return rfm69_write(
             rfm,
             RFM69_REG_PAYLOAD_LENGTH,
@@ -638,7 +607,7 @@ RFM69_RETURN rfm69_payload_length_set(Rfm69 *rfm, uint8_t length) {
     );
 }
 
-RFM69_RETURN rfm69_packet_format_set(Rfm69 *rfm, RFM69_PACKET_FORMAT format) {
+bool rfm69_packet_format_set(Rfm69 *rfm, RFM69_PACKET_FORMAT format) {
 	return rfm69_write_masked(
 			rfm,
 			RFM69_REG_PACKET_CONFIG_1,
@@ -647,7 +616,7 @@ RFM69_RETURN rfm69_packet_format_set(Rfm69 *rfm, RFM69_PACKET_FORMAT format) {
 	);
 }
 
-RFM69_RETURN rfm69_address_filter_set(Rfm69 *rfm, RFM69_ADDRESS_FILTER filter) {
+bool rfm69_address_filter_set(Rfm69 *rfm, RFM69_ADDRESS_FILTER filter) {
     return rfm69_write_masked(
             rfm,
             RFM69_REG_PACKET_CONFIG_1,
@@ -656,23 +625,19 @@ RFM69_RETURN rfm69_address_filter_set(Rfm69 *rfm, RFM69_ADDRESS_FILTER filter) {
     );
 }
 
-RFM69_RETURN rfm69_node_address_set(Rfm69 *rfm, uint8_t address) {
-    RFM69_RETURN rval = rfm69_write(
-            rfm,
-            RFM69_REG_NODE_ADRS,
-            &address,
-            1
-    );
+bool rfm69_node_address_set(Rfm69 *rfm, uint8_t address) {
+    if (!rfm69_write( rfm, RFM69_REG_NODE_ADRS, &address, 1))
+		return false;
 
-	if (rval == RFM69_OK) rfm->address = address;
-	return rval;
+	rfm->address = address;
+	return true;
 }
 
 void rfm69_node_address_get(Rfm69 *rfm, uint8_t *address) {
     *address = rfm->address;
 }
 
-RFM69_RETURN rfm69_broadcast_address_set(Rfm69 *rfm, uint8_t address) {
+bool rfm69_broadcast_address_set(Rfm69 *rfm, uint8_t address) {
     return rfm69_write(
             rfm,
             RFM69_REG_BROADCAST_ADRS,
@@ -681,28 +646,15 @@ RFM69_RETURN rfm69_broadcast_address_set(Rfm69 *rfm, uint8_t address) {
     );
 }
 
-RFM69_RETURN rfm69_sync_value_set(Rfm69 *rfm, uint8_t *value, uint8_t size) {
-    RFM69_RETURN rval;
-    rval = rfm69_write(
-            rfm,
-            RFM69_REG_SYNC_VALUE_1,
-            value,
-            size
-    );
-    if (rval == RFM69_OK) {
-        size = (size - 1) << _SYNC_SIZE_OFFSET;
-        rval = rfm69_write_masked(
-                rfm,
-                RFM69_REG_SYNC_CONFIG,
-                size,
-                _SYNC_SIZE_MASK 
-        );
-    }
+bool rfm69_sync_value_set(Rfm69 *rfm, uint8_t *value, uint8_t size) {
+    if (!rfm69_write(rfm, RFM69_REG_SYNC_VALUE_1, value, size))
+		return false;
 
-    return rval;
+	size = (size - 1) << _SYNC_SIZE_OFFSET;
+	return rfm69_write_masked(rfm, RFM69_REG_SYNC_CONFIG, size, _SYNC_SIZE_MASK);
 }
 
-RFM69_RETURN rfm69_crc_autoclear_set(Rfm69 *rfm, bool set) {
+bool rfm69_crc_autoclear_set(Rfm69 *rfm, bool set) {
     return rfm69_write_masked(
             rfm,
             RFM69_REG_PACKET_CONFIG_1,
@@ -711,7 +663,7 @@ RFM69_RETURN rfm69_crc_autoclear_set(Rfm69 *rfm, bool set) {
     );
 }
 
-RFM69_RETURN rfm69_dcfree_set(Rfm69 *rfm, RFM69_DCFREE_SETTING setting) {
+bool rfm69_dcfree_set(Rfm69 *rfm, RFM69_DCFREE_SETTING setting) {
     return rfm69_write_masked(
             rfm,
             RFM69_REG_PACKET_CONFIG_1,
@@ -720,29 +672,11 @@ RFM69_RETURN rfm69_dcfree_set(Rfm69 *rfm, RFM69_DCFREE_SETTING setting) {
     );
 }
 
-//reads rssi - see p.68 of rfm69 datasheet
-int rfm69_rssi_get(Rfm69 *rfm, int8_t *rssi) {
-	uint8_t reg;
-
-	int rval = rfm69_read(rfm, RFM69_REG_RSSI_CONFIG, &reg, 1);
-	if(reg != 0x2) return 0; //checks RssiDone flag - all other bits should be 0
-
-	rval += rfm69_read(rfm, RFM69_REG_RSSI_VALUE, &reg, 1);
-
-	*rssi = 0 - (reg / 2);
-
-	return rval;
-}
-
-//triggers the rfm69 to check rssi
-//probably best to run this function before calling rfm69_rssi_get
-int rfm69_rssi_trig(Rfm69 *rfm) {	
-	uint8_t reg;
-
-	int rval = rfm69_read(rfm, RFM69_REG_RSSI_CONFIG, &reg, 1);
-	
-	reg |= 0x1;
-
-	rval += rfm69_write(rfm, RFM69_REG_RSSI_CONFIG, &reg, 1);
-	return rval;
+bool rfm69_dagc_set(Rfm69 *rfm, RFM69_DAGC_SETTING setting) {
+    return rfm69_write(
+            rfm,
+            RFM69_REG_TEST_DAGC,
+            &setting,
+            1
+    );
 }
