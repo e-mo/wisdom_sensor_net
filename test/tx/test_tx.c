@@ -73,8 +73,6 @@ int main() {
     rfm69_node_address_set(rfm, 0x01); 
 
     rfm69_power_level_set(rfm, 20);
-
-    rfm69_power_level_set(rfm, 20);
     bool success;
     TrxReport report;
     for(ever) { 

@@ -64,7 +64,7 @@ int main() {
     spi_init(SPI_PORT, 1000*1000); // Defaults to master mode, which we want
 
     Rfm69 *rfm = rfm69_create();
-    uint rval = rfm69_init(
+    rfm69_init(
         rfm,
         SPI_PORT,
         PIN_MISO,
@@ -89,20 +89,12 @@ int main() {
     // RXBW >= fdev + br/2
     rfm69_rxbw_set(rfm, RFM69_RXBW_MANTISSA_20, 2);
     rfm69_dcfree_set(rfm, RFM69_DCFREE_WHITENING);
-    // Transmit starts with any data in the FIFO
 
     rfm69_node_address_set(rfm, 0x01); 
 
-    // Check if rfm69_init was successful (== 0)
-    // Set last error and halt process if not.
-    if (rval != 0) {
-        set_last_error(rval); // Can use return value from rfm69_init directly
-        critical_error();
-    }
-
     rfm69_power_level_set(rfm, 17);
     bool success;
-    TrxReport report;
+	TrxReport report;
 	uint buf_size = sizeof(float) * 2;
 	float buf[2] = {0.0};
     for(ever) { 

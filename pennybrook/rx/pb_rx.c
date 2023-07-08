@@ -43,8 +43,7 @@ int main() {
     spi_init(SPI_PORT, 1000*1000); // Defaults to master mode, which we want
 
     Rfm69 *rfm = rfm69_create();
-    
-    uint rval = rfm69_init(
+    rfm69_init(
         rfm,
         SPI_PORT,
         PIN_MISO,
@@ -71,15 +70,7 @@ int main() {
     rfm69_dcfree_set(rfm, RFM69_DCFREE_WHITENING);
     // Transmit starts with any data in the FIFO
 
-
     rfm69_node_address_set(rfm, 0x02); 
-
-    // Check if rfm69_init was successful (== 0)
-    // Set last error and halt process if not.
-    if (rval != 0) {
-        set_last_error(rval); // Can use return value from rfm69_init directly
-        critical_error();
-    }
 
     rfm69_power_level_set(rfm, 10);
     TrxReport report;
@@ -109,7 +100,7 @@ int main() {
         printf("  bytes_received: %u\n", report.bytes_received);
         printf("packets_received: %u\n", report.data_packets_received);
         printf("       acks_sent: %u\n", report.acks_sent);
-        printf("      racks_sent: %u\n", report.rack_requests_sent);
+        printf("      racks_sent: %u\n", report.racks_sent);
         printf("   rack_requests: %u\n", report.rack_requests_received);
 
         switch(report.return_status) {
