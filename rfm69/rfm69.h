@@ -384,7 +384,8 @@ bool rfm69_write_masked(
 // dst     - an array of uint8_t to be read into.
 // len     - dst array length.
 // Returns number of bytes written (not including address byte).
-bool rfm69_read(Rfm69 *rfm, 
+bool rfm69_read(
+        Rfm69 *rfm, 
         uint8_t address, 
         uint8_t *dst, 
         size_t len);

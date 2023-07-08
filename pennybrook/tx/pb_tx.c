@@ -40,6 +40,33 @@ void set_bi() {
     //bi_decl(bi_1pin_with_name(PIN_IRQ_1, "IRQ 1"));
 }
 
+void print_registers(Rfm69 *rfm) {
+    uint8_t test = 0x00;
+    for (int i = 1; i < 0x50; i++) {
+        rfm69_read(
+                rfm,
+                i,
+                &test,
+                1
+        );
+        printf("0x%02X: 0x%02X\n", i, test);
+    }
+    rfm69_read(
+            rfm,
+            0x5A,
+            &test,
+            1
+    );
+    printf("0x5A: 0x%02X\n", test);
+    rfm69_read(
+            rfm,
+            0x5C,
+            &test,
+            1
+    );
+    printf("0x5C: 0x%02X\n", test);
+}
+
 int main() {
     // Set Picotool binary info
     set_bi();
@@ -49,7 +76,6 @@ int main() {
 	teros *teros;
 	teros_data t11;
 
-	sleep_ms(2000);
 	teros_init( //initialize it!
     		&teros,
 			uart0, //pick a uart
@@ -59,12 +85,11 @@ int main() {
 	    	TEROS_PWR,
 		    mineral //soilless or mineral
 	);
-	sleep_ms(3000);
 
     spi_init(SPI_PORT, 1000*1000); // Defaults to master mode, which we want
 
     Rfm69 *rfm = rfm69_create();
-    rfm69_rudp_init(
+    bool success = rfm69_rudp_init(
         rfm,
         SPI_PORT,
         PIN_MISO,
@@ -92,23 +117,28 @@ int main() {
 
     rfm69_node_address_set(rfm, 0x01); 
 
-    rfm69_power_level_set(rfm, 17);
-    bool success;
+    //rfm69_power_level_set(rfm, 2);
 	TrxReport report;
 	uint buf_size = sizeof(float) * 2;
 	float buf[2] = {0.0};
+
+    //print_registers(rfm);
+    sleep_ms(2000);
     for(ever) { 
-		// Zero our buffer
-		memset(buf, 0x00, buf_size);
+		// Zero our buffer memset(buf, 0x00, buf_size);
 
-		if (teros_get_data(teros, &t11)) {
-			printf("Teros Error!\n");
-			sleep_ms(1000);
-			continue;
-		}
+		//if (teros_get_data(teros, &t11)) {
+		//	printf("Teros Error!\n");
+		//	sleep_ms(1000);
+		//	continue;
+		//}
 
-		buf[0] = t11.vwc;
-		buf[1] = t11.temperature;
+		//buf[0] = t11.vwc;
+		//buf[1] = t11.temperature;
+		buf[0] = 0;
+		buf[1] = 0;
+
+        printf("Transmitting...\n");
 
         success = rfm69_rudp_transmit(
                 rfm,
@@ -153,9 +183,12 @@ int main() {
                 gpio_put(PICO_DEFAULT_LED_PIN, 0);
                 sleep_ms(50);
             }
+        } else {
+            sleep_ms(1000);
+            continue;
         }
 
-        sleep_ms(60000);
+        sleep_ms(1000);
     }
     
     return 0;

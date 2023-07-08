@@ -47,6 +47,8 @@ bool rfm69_rudp_transmit(
     uint8_t previous_mode;
     rfm69_mode_get(rfm, &previous_mode);
 
+    rfm69_mode_set(rfm, RFM69_OP_MODE_STDBY);
+
 	uint8_t seq_num = get_rand_32() % SEQ_NUM_RAND_LIMIT;
 
     uint8_t size_bytes[sizeof(payload_size)];
@@ -449,7 +451,6 @@ RESTART_RBT_LOOP: // This is to return to the RBT loop in case of a false
                         1
                 );
                 size--;
-                printf("%u\n", missing_packet);
             }
 
             rfm69_mode_set(rfm, RFM69_OP_MODE_TX);
