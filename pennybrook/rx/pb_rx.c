@@ -43,7 +43,7 @@ int main() {
     spi_init(SPI_PORT, 1000*1000); // Defaults to master mode, which we want
 
     Rfm69 *rfm = rfm69_create();
-    rfm69_init(
+    rfm69_rudp_init(
         rfm,
         SPI_PORT,
         PIN_MISO,
