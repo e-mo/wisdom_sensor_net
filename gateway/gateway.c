@@ -29,8 +29,8 @@
 #define TEROS_PWR 3
 
 void set_bi() {
-    bi_decl(bi_program_name("Test Transmitter"));
-    bi_decl(bi_program_description("WISDOM sensor network tx test."))
+    bi_decl(bi_program_name("Wisdom gateway"));
+    bi_decl(bi_program_description("WISDOM sensor network gateway."))
     bi_decl(bi_1pin_with_name(PIN_MISO, "MISO"));
     bi_decl(bi_1pin_with_name(PIN_CS, "CS"));
     bi_decl(bi_1pin_with_name(PIN_SCK, "SCK"));
