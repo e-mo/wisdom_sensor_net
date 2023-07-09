@@ -79,18 +79,18 @@ teros_return teros_get_data(teros *teros, teros_data *data) {
 	if(str[0] == '\t') { //just be absolutely certain its correct and starts with a tab
 		for(i = 1; str[i] != ' '; i++) { //pull calibrated counts vwc out
 			vwc_str[i - 1] = str[i];
-		} vwc_raw = atof(&vwc_str); //convert string to float
+		} vwc_raw = atof((const char *)&vwc_str); //convert string to float
 		i++; //skip over a space
 
 		for(n = 0; str[i] != ' ' && str[i] != '\r'; i++, n++) { //pull temperature
 			temp_str[n] = str[i];
-		} temp_raw = atof(&temp_str);
+		} temp_raw = atof((const char *)&temp_str);
 		i++; //skip over a space or carriage return
 
 		if(teros->model == teros_12) { //pull conductivity if applicable(teros 12)
 			for(n = 0; str[i] != ' ' && str[i] != '\r'; i++, n++) {
 				cond_str[n] = str[i];
-			} if(teros->model == teros_12) cond_raw = atof(&cond_str);
+			} if(teros->model == teros_12) cond_raw = atof((const char *)&cond_str);
 			i++;
 		}
 
