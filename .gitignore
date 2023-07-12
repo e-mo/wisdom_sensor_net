@@ -1,0 +1,11 @@
+test/*/build
+turbidity/build
+test/*/.cache
+**/build
+*/.cache
+*.swp
+*.swo
+pico
+.vscode
+**/build
+*.sw?
