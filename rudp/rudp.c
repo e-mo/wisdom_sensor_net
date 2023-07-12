@@ -162,7 +162,6 @@ bool rfm69_rudp_transmit(
                 size
         );
 
-        sleep_ms(TX_INTER_PACKET_DELAY);
         rfm69_mode_set(rfm, RFM69_OP_MODE_TX);
         _rudp_block_until_packet_sent(rfm);
 
@@ -193,7 +192,6 @@ bool rfm69_rudp_transmit(
                         HEADER_SIZE
                 );
 
-                sleep_ms(TX_INTER_PACKET_DELAY);
                 rfm69_mode_set(rfm, RFM69_OP_MODE_TX);
                 _rudp_block_until_packet_sent(rfm);
 
@@ -242,7 +240,6 @@ bool rfm69_rudp_transmit(
                     size
             );
 
-            sleep_ms(TX_INTER_PACKET_DELAY);
             rfm69_mode_set(rfm, RFM69_OP_MODE_TX);
 
             _rudp_block_until_packet_sent(rfm);
@@ -540,7 +537,6 @@ RESTART_RBT_LOOP: // This is to return to the RBT loop in case of a false
             HEADER_SIZE
     );
 
-    sleep_ms(TX_INTER_PACKET_DELAY);
     rfm69_mode_set(rfm, RFM69_OP_MODE_TX);
     _rudp_block_until_packet_sent(rfm);
 

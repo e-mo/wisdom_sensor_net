@@ -1,6 +1,6 @@
 // Negotiate with another node the lowest stable
 // transmission power required
-bool tx_negotiate_power_level(
+bool _tx_negotiate_power_level(
 		Rfm69 *rfm,
 		uint8_t address,
 		uint8_t *power_level
@@ -18,7 +18,7 @@ bool tx_negotiate_power_level(
 	return success;
 }
 
-bool rx_negotiate_power_level(
+bool _rx_negotiate_power_level(
 		Rfm69 *rfm,
 		uint8_t *address,
 		uint8_t *power_level
