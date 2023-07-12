@@ -36,8 +36,6 @@ bool rfm69_init(
 {
 	bool success = false;
 
-    // Reset so that we can guarantee default register values
-    rfm69_reset(rfm);
 
     rfm->spi = spi;
     rfm->pin_cs = pin_cs;
@@ -72,6 +70,7 @@ bool rfm69_init(
     // As long as this returns anything other than 0 or 255, this passes.
     // The most common return is 0x24, but I can't guarantee that future
     // modules will return the same value.
+    rfm69_reset(rfm);
     uint8_t buf;
 	if (!rfm69_read(rfm, RFM69_REG_VERSION, &buf, 1)) goto RETURN; 
 		
@@ -92,7 +91,7 @@ bool rfm69_init(
 	rfm69_broadcast_address_set(rfm, 0xFF); 
 	rfm69_address_filter_set(rfm, RFM69_FILTER_NODE_BROADCAST);
 
-	// Set sync value (essentially functions as subnet)
+	//Set sync value (essentially functions as subnet)
 	uint8_t sync[3] = {0x01, 0x01, 0x01};
 	rfm69_sync_value_set(rfm, sync, 3);
 
@@ -195,7 +194,7 @@ bool rfm69_read_masked(
         const uint8_t mask)
 {
     if(!rfm69_read(rfm, address, dst, 1)) return false;
-
+    
     *dst &= mask;
 
     return true;
@@ -209,7 +208,7 @@ bool rfm69_irq1_flag_state(Rfm69 *rfm, RFM69_IRQ1_FLAG flag, bool *state) {
 
     if (reg) *state = true;
     else *state = false;
-
+    
     return true;
 }
 
@@ -226,6 +225,7 @@ bool rfm69_irq2_flag_state(Rfm69 *rfm, RFM69_IRQ2_FLAG flag, bool *state) {
 
 bool rfm69_frequency_set(Rfm69 *rfm, uint32_t frequency) {
     // Frf = Fstep * Frf(23,0) frequency *= 1000000; // MHz to Hz
+    frequency *= 1000000;
     frequency = (frequency / RFM69_FSTEP) + 0.5; // Gives needed register value
 												 //
     // Split into three bytes.
@@ -309,7 +309,7 @@ bool rfm69_mode_set(Rfm69 *rfm, RFM69_OP_MODE mode) {
 		if(!_hp_set(rfm, RFM69_HP_DISABLE)) goto RETURN;
 	}
 	// Enable high power if necessary if switching into TX
-	else if (mode == RFM69_OP_MODE_TX >= 17) {
+	else if (mode == RFM69_OP_MODE_TX && rfm->pa_level >= 17) {
 		if(!_hp_set(rfm, RFM69_HP_ENABLE)) goto RETURN;
 	}
 

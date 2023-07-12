@@ -82,6 +82,8 @@ int main() {
         uint size = 100000;
         uint8_t payload[size];
 
+        printf("Receiving...\n");
+
         success = rfm69_rudp_receive(
                 rfm,
                 &report,
@@ -131,7 +133,7 @@ int main() {
 			printf("\n");
         }
 
-		sleep_ms(60000);
+		//sleep_ms(60000);
     }
     
     return 0;
