@@ -5,3 +5,6 @@
 [submodule "rfm69"]
 	path = rfm69
 	url = git@github.com:e-mo/rfm69_pico.git
+[submodule "server"]
+	path = server
+	url = git@github.com:e-mo/wisdom_server.git
