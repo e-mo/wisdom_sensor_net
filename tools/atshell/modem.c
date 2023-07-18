@@ -34,6 +34,8 @@ Modem *modem_start(
 	MODEM.pin_rx = pin_rx;
 	MODEM.pin_power = pin_power;
 
+    modem_gpio_init(&MODEM);
+
 	char buf[256];
 	bool reset = false;
 	for (int i = 0; i < MODEM_START_RETRIES; i++) {
@@ -71,7 +73,7 @@ bool modem_at_send(
 )
 {
 	uart_puts(modem->uart, command);
-	uart_puts(modem->uart, "\r\n");
+	uart_puts(modem->uart, "\r");
 
 	char *p = return_buffer;
 
@@ -79,8 +81,9 @@ bool modem_at_send(
 	while ((get_absolute_time() - now < timeout * 1000) 
 		   && (p - return_buffer < buffer_size))
 	{
-		while (uart_is_readable_within_us(modem->uart, 2000) > 0)
+		while (uart_is_readable_within_us(modem->uart, 2000) > 0) {
 			uart_read_blocking(modem->uart, p++, 1);
+		}
 	}
 	*p = '\0';
 
@@ -133,4 +136,12 @@ bool modem_toggle_power(Modem *modem) {
 	gpio_put(modem->pin_power, 1);
 	sleep_ms(2500);
 	gpio_put(modem->pin_power, 0);
+}
+
+static void modem_gpio_init(Modem *modem) {
+	gpio_init(modem->pin_power);
+	gpio_set_dir(modem->pin_power, GPIO_OUT);
+	gpio_put(modem->pin_power, 0);
+	gpio_set_function(modem->pin_tx, GPIO_FUNC_UART);
+	gpio_set_function(modem->pin_rx, GPIO_FUNC_UART);
 }

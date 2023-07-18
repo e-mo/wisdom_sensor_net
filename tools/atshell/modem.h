@@ -25,5 +25,6 @@ bool modem_at_send(
 static bool modem_config(Modem *modem, char *apn);
 
 bool modem_toggle_power(Modem *modem);
+static void modem_gpio_init(Modem *modem);
 
 #endif // WISDOM_MODEM_H
