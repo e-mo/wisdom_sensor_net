@@ -34,15 +34,6 @@ Modem *modem_start(
 		uint pin_power
 );
 
-bool modem_at_send(
-		Modem *modem,
-		char *command,
-		char *needle,
-		char *return_buffer,
-		uint buffer_size,
-		uint timeout
-); 
-
 static bool modem_config(Modem *modem, char *apn);
 
 bool modem_toggle_power(Modem *modem);
