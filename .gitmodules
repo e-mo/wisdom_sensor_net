@@ -2,3 +2,6 @@
 	path = pico-ssd1306
 	url = git@github.com:daschr/pico-ssd1306.git
 	url = https://github.com/daschr/pico-ssd1306.git
+[submodule "no-OS-FatFS-SD-SPI-RPi-Pico"]
+	path = no-OS-FatFS-SD-SPI-RPi-Pico
+	url = https://github.com/carlk3/no-OS-FatFS-SD-SPI-RPi-Pico.git
