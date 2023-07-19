@@ -54,7 +54,7 @@ Modem *modem_start(
 	for (int i = 0; i < MODEM_START_RETRIES; i++) {
 
 
-		bool success = modem_at_send(&MODEM, "ATE0", "OK", buf, 256, 100);
+		bool success = false; //modem_at_send(&MODEM, "ATE0", "OK", buf, 256, 100);
 		if (success) {
 			MODEM_STARTED = true;
 
@@ -145,37 +145,6 @@ uint32_t modem_read_blocking(Modem *modem, uint8_t *dst, size_t dst_len) {
 	return received;
 }
 
-bool modem_at_send(
-		Modem *modem, 
-		char *command, 
-		char *needle,
-		char *return_buffer,
-		uint buffer_size,
-		uint timeout
-)
-{
-	uart_puts(modem->uart, command);
-	uart_puts(modem->uart, "\r");
-
-	char *p = return_buffer;
-
-	absolute_time_t now = get_absolute_time();
-	while ((get_absolute_time() - now < timeout * 1000) 
-		   && (p - return_buffer < buffer_size))
-	{
-		while (uart_is_readable_within_us(modem->uart, 2000) > 0) {
-			uart_read_blocking(modem->uart, p++, 1);
-		}
-	}
-	*p = '\0';
-
-	// If we hit the end of our buffer
-	if ((p - return_buffer) > buffer_size) return false;
-
-	// Return if expected substring was found in return
-	return !!strstr(return_buffer, needle);
-}
-
 static bool modem_config(Modem *modem, char *apn) {
 	char buf[256];
 	// +CMEE=2  Verbose errors
@@ -183,32 +152,32 @@ static bool modem_config(Modem *modem, char *apn) {
 	// +CMGD=4  Clear any existing SMS messages in buffer
 	// +CNMP=38 Preferred mode: LTE only
 	// +CMNB=1  Preferred network: CAT-M
-	bool success = modem_at_send(
-			modem,
-			"AT+CMEE=2;+CMGF=1;+CMGD=4;+CNMP=38;+CMNB=1;",
-			"OK",
-			buf,
-			256,
-			500
-	);
-	if (!success) return false;
-	printf("%s\n", buf);
+	bool success = false; //modem_at_send(
+	//		modem,
+	//		"AT+CMEE=2;+CMGF=1;+CMGD=4;+CNMP=38;+CMNB=1;",
+	//		"OK",
+	//		buf,
+	//		256,
+	//		500
+	//);
+	//if (!success) return false;
+	//printf("%s\n", buf);
 
-	// Define PDP context
-	char command[256] = "AT+CGDCONT=1,\"IP\",\"";
-	strcat(command, apn);
-	strcat(command, "\"");
+	//// Define PDP context
+	//char command[256] = "AT+CGDCONT=1,\"IP\",\"";
+	//strcat(command, apn);
+	//strcat(command, "\"");
 
-	success = modem_at_send(
-			modem,
-			command,
-			"OK",
-			buf,
-			256,
-			500
-	);
-	if (!success) return false;
-	printf("%s\n", buf);
+	//success = modem_at_send(
+	//		modem,
+	//		command,
+	//		"OK",
+	//		buf,
+	//		256,
+	//		500
+	//);
+	//if (!success) return false;
+	//printf("%s\n", buf);
 
 	return success;
 }

@@ -26,10 +26,10 @@ pico_sdk_init()
 # Add executable. Default name is the project name, version 0.1
 
 add_executable(gateway 
-	gateway.c
-	modem_core.c
-	modem.c
-	command_buffer.c
+	src/gateway.c
+	src/modem_core.c
+	src/modem.c
+	src/command_buffer.c
 )
 
 pico_enable_stdio_uart(gateway 0)
@@ -53,6 +53,7 @@ target_compile_definitions(gateway PUBLIC RFM69_HIGH_POWER)
 target_include_directories(gateway PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}
   ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts or any other standard includes, if required
+  ${CMAKE_CURRENT_LIST_DIR}/src
 )
 
 # Add any user requested libraries
