@@ -7,7 +7,7 @@
 
 #include "modem.h"
 
-#define MODEM_START_RETRIES 20
+#define MODEM_START_RETRIES 50 
 #define UART_BAUD 115200
 #define RX_BUFFER_SIZE 1024
 
@@ -29,8 +29,6 @@ Modem *modem_start(
 	uint pin_power
 )
 {
-	// This protects us from wierd things happening
-	// if we call this function twice
 	if (MODEM_STARTED) return &MODEM;
 	
 	if (!uart_is_enabled(uart)) {
@@ -49,16 +47,58 @@ Modem *modem_start(
 	gpio_set_function(MODEM.pin_tx, GPIO_FUNC_UART);
 	gpio_set_function(MODEM.pin_rx, GPIO_FUNC_UART);
 
-	char buf[1024];
+
 	bool reset = false;
+
+	CommandBuffer *cb = command_buffer_create();
+	command_buffer_prefix_set(cb);
+	command_buffer_write(cb, "E0", 4);
+
+	printf("here\n");
+	ResponseParser *rp = rp_create();
+
+	size_t read_buffer_len = 1024;
+	uint8_t read_buffer[read_buffer_len];
+
+	// Clear RX
+	while(uart_is_readable(MODEM.uart))
+		modem_read_within_us(&MODEM, read_buffer, read_buffer_len, 100);
+
+	bool power_toggled = false;
 	for (int i = 0; i < MODEM_START_RETRIES; i++) {
 
+		bool success = modem_command_write_within_us(&MODEM, cb, 1000 * 10);
+		if (!success) {
+			sleep_ms(100); 
+			continue;
+		}
 
-		bool success = false; //modem_at_send(&MODEM, "ATE0", "OK", buf, 256, 100);
-		if (success) {
+		uint32_t received = modem_read_within_us(
+				&MODEM, 
+				read_buffer, 
+				read_buffer_len, 
+				1000 * 100
+		);
+
+		printf("%u\n", received);
+		if (received < 2) {
+			if (!power_toggled) {
+				modem_toggle_power(&MODEM);
+				power_toggled = true;
+			}
+			sleep_ms(1000);
+			continue;
+		}
+
+
+		rp_parse(rp, read_buffer, received);
+
+		sleep_ms(1000);
+		continue;
+
+		if (false) {
 			MODEM_STARTED = true;
 
-			printf("%s\n", buf);
 
 			success = modem_config(&MODEM, apn);
 
@@ -105,15 +145,23 @@ bool modem_command_write_within_us(
 		uint32_t us
 ) 
 {
-	return modem_write_within_us(
+	bool success =  modem_write_within_us(
 			modem,	
 			command_buffer_get(cb),
 			command_buffer_length(cb),
 			us
 	);
+	if (!success) return false;
+
+	return modem_write_within_us(
+			modem,	
+			"\r",
+			1,
+			WRITE_TIMEOUT_RESOLUTION_US	
+	);
 }
 
-#define READ_STOP_TIMEOUT_US 20
+#define READ_STOP_TIMEOUT_US 100 
 uint32_t modem_read_within_us(
 		Modem *modem, 
 		uint8_t *dst, 
@@ -187,7 +235,4 @@ bool modem_toggle_power(Modem *modem) {
 	gpio_put(modem->pin_power, 1);
 	sleep_ms(2500);
 	gpio_put(modem->pin_power, 0);
-}
-
-static void _gpio_init(Modem *modem) {
 }

@@ -70,7 +70,6 @@ int main() {
     rfm69_dcfree_set(rfm, RFM69_DCFREE_WHITENING);
     // Transmit starts with any data in the FIFO
 
-
     rfm69_node_address_set(rfm, 0x02)
 
     // Check if rfm69_init was successful (== 0)
@@ -89,7 +88,7 @@ int main() {
         uint size = 100000;
         uint8_t payload[size];
 
-        printf("Waiting for message\n");
+        printf("waiting for message\n");
         printf("...\n");
 
         success = rfm69_rudp_receive(

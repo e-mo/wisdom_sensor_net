@@ -29,9 +29,9 @@ add_executable(
     pb_tx
 	pb_tx.c
 	../../rfm69/rfm69.c
-    ../../error/error_report.c
     ../../rudp/rudp.c
 	../../teros/teros_11.c
+	../../common/common_config.c
 )
 
 pico_enable_stdio_uart(pb_tx 0)
@@ -57,9 +57,9 @@ target_include_directories(pb_tx PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}
   ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts or any other standard includes, if required
   ../../rfm69/
-  ../../error/
   ../../rudp/
   ../../teros/
+  ../../common/
 )
 
 # Add any user requested libraries

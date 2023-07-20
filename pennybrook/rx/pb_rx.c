@@ -7,7 +7,7 @@
 
 #include "rfm69.h" 
 #include "rudp.h"
-#include "error_report.h"
+#include "common_config.h"
 
 #define ever ;; 
 
@@ -58,21 +58,11 @@ int main() {
     gpio_init(PICO_DEFAULT_LED_PIN);
     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
     
-    // 250kb/s baud rate
-    rfm69_bitrate_set(rfm, RFM69_MODEM_BITRATE_57_6);
-    // ~2 beta 
-    rfm69_fdev_set(rfm, 70000);
-    // 915MHz 
-    rfm69_frequency_set(rfm, 915);
-    // rfm69_modulation_shaping_set(rfm, RFM69_FSK_GAUSSIAN_0_3);
-    // RXBW >= fdev + br/2
-    rfm69_rxbw_set(rfm, RFM69_RXBW_MANTISSA_20, 2);
-    rfm69_dcfree_set(rfm, RFM69_DCFREE_WHITENING);
-    // Transmit starts with any data in the FIFO
+	common_radio_config(rfm);
 
     rfm69_node_address_set(rfm, 0x02); 
 
-    rfm69_power_level_set(rfm, 10);
+    rfm69_power_level_set(rfm, 0);
     TrxReport report;
     bool success;
 	float *teros_buf;
@@ -91,7 +81,7 @@ int main() {
                 payload,
                 &size,
                 12000,
-                30000
+                2000
         );
 
         printf("Report\n");
@@ -131,12 +121,11 @@ int main() {
 			printf("vwc: %.6f\n", teros_buf[0]);
 			printf("temp: %.6f\n", teros_buf[1]);
 			printf("\n");
+			
+			sleep_ms(60000);
         }
 
-		//sleep_ms(60000);
     }
     
     return 0;
 }
-
-

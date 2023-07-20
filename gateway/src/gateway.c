@@ -16,13 +16,6 @@
 // SPI Defines
 // We are going to use SPI 0, and allocate it to the following GPIO pins
 // Pins can be changed, see the GPIO function select table in the datasheet for information on GPIO assignments
-#define UART_PORT uart0
-#define UART_BAUD 115200
-#define UART_PIN_TX 0
-#define UART_PIN_RX 1
-
-#define MODEM_PIN_PWR 14
-#define MODEM_APN "iot.1nce.net"
 
 #define BUF_SIZE 4096
 
@@ -31,25 +24,13 @@ void set_bi() {
     bi_decl(bi_program_description("Wisdom gateway software"))
 }
 
-void _modem_uart_init() {
-	uart_init(UART_PORT, UART_BAUD); 
-	gpio_set_function(UART_PIN_TX, GPIO_FUNC_UART);
-	gpio_set_function(UART_PIN_RX, GPIO_FUNC_UART);
-	uart_set_hw_flow(UART_PORT, false, false);
-}
-
-void _modem_gpio_init() {
-	gpio_init(MODEM_PIN_PWR);
-	gpio_set_dir(MODEM_PIN_PWR, GPIO_OUT);
-	gpio_put(MODEM_PIN_PWR, 0);
-}
-
 int main() {
     // Set Picotool binary info
     set_bi();
     stdio_init_all(); // To be able to use printf
 	
 	// Start modem core
+	while (!tud_cdc_connected()) { sleep_ms(100); };
 	multicore_launch_core1(modem_core_main);
 
 	
@@ -58,14 +39,7 @@ int main() {
 
 	//while (!tud_cdc_connected()) { sleep_ms(100); };
 	//printf("Starting modem...\n");
-	//Modem *modem = modem_start(
-	//		MODEM_APN,
-	//		UART_PORT,
-	//		UART_PIN_TX,
-	//		UART_PIN_RX,
-	//		MODEM_PIN_PWR
-	//);
-	//printf("Modem OK!\n");	
+	printf("Modem OK!\n");	
 
 	//char buf[BUF_SIZE];
 	//bool connected = false;

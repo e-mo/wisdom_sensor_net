@@ -30,6 +30,7 @@ add_executable(gateway
 	src/modem_core.c
 	src/modem.c
 	src/command_buffer.c
+	src/response_parser.c
 )
 
 pico_enable_stdio_uart(gateway 0)

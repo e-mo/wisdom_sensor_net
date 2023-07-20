@@ -28,9 +28,9 @@ add_executable(
     pb_rx
     pb_rx.c
     ../../rfm69/rfm69.c
-    ../../error/error_report.c
     ../../pico-ssd1306/ssd1306.c
     ../../rudp/rudp.c
+	../../common/common_config.c
 )
 
 pico_enable_stdio_uart(pb_rx 0)
@@ -56,9 +56,9 @@ target_include_directories(pb_rx PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}
     ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts or any other standard includes, if required
     ../../rfm69/
-    ../../error/
     ../../rudp/
     ../../pico-ssd1306/
+	../../common/
 )
 
 # Add any user requested libraries

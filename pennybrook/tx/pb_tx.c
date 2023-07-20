@@ -7,8 +7,8 @@
 
 #include "rfm69.h"
 #include "rudp.h"
-#include "error_report.h"
 #include "teros_11.h"
+#include "common_config.h"
 
 #define ever ;; 
 
@@ -31,13 +31,6 @@
 void set_bi() {
     bi_decl(bi_program_name("Test Transmitter"));
     bi_decl(bi_program_description("WISDOM sensor network tx test."))
-    bi_decl(bi_1pin_with_name(PIN_MISO, "MISO"));
-    bi_decl(bi_1pin_with_name(PIN_CS, "CS"));
-    bi_decl(bi_1pin_with_name(PIN_SCK, "SCK"));
-    bi_decl(bi_1pin_with_name(PIN_MOSI, "MOSI"));
-    bi_decl(bi_1pin_with_name(PIN_RST, "RST"));
-    //bi_decl(bi_1pin_with_name(PIN_IRQ_0, "IRQ 0"));
-    //bi_decl(bi_1pin_with_name(PIN_IRQ_1, "IRQ 1"));
 }
 
 void print_registers(Rfm69 *rfm) {
@@ -104,16 +97,7 @@ int main() {
     gpio_init(PICO_DEFAULT_LED_PIN);
     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
     
-    // 250kb/s baud rate
-    rfm69_bitrate_set(rfm, RFM69_MODEM_BITRATE_57_6);
-    // ~2 beta 
-    rfm69_fdev_set(rfm, 70000);
-    // 915MHz 
-    rfm69_frequency_set(rfm, 915);
-    //rfm69_modulation_shaping_set(rfm, RFM69_FSK_GAUSSIAN_0_3);
-    // RXBW >= fdev + br/2
-    rfm69_rxbw_set(rfm, RFM69_RXBW_MANTISSA_20, 2);
-    rfm69_dcfree_set(rfm, RFM69_DCFREE_WHITENING);
+	common_radio_config(rfm);
 
     rfm69_node_address_set(rfm, 0x01); 
 
@@ -122,8 +106,8 @@ int main() {
 	uint buf_size = sizeof(float) * 2;
 	float buf[2] = {0.0};
 
+	rfm69_power_level_set(rfm, 20);
     //print_registers(rfm);
-    sleep_ms(2000);
     for(ever) { 
 		// Zero our buffer memset(buf, 0x00, buf_size);
 
@@ -143,7 +127,7 @@ int main() {
         success = rfm69_rudp_transmit(
                 rfm,
                 &report,
-                0x02,
+                0x86,
                 (uint8_t *)buf,
                 buf_size,
                 300,
@@ -176,7 +160,7 @@ int main() {
         printf("\n");
 
         if (success) {
-            uint num_blinks = 3;
+            uint num_blinks = 6;
             for(; num_blinks; num_blinks--) {
                 gpio_put(PICO_DEFAULT_LED_PIN, 1);
                 sleep_ms(100);
@@ -184,6 +168,11 @@ int main() {
                 sleep_ms(50);
             }
         } else {
+			gpio_put(PICO_DEFAULT_LED_PIN, 1);
+			sleep_ms(100);
+			gpio_put(PICO_DEFAULT_LED_PIN, 0);
+			sleep_ms(50);
+
             sleep_ms(1000);
             continue;
         }
@@ -193,5 +182,3 @@ int main() {
     
     return 0;
 }
-
-

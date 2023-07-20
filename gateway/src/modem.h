@@ -7,6 +7,7 @@
 
 #include "modem_core.h"
 #include "command_buffer.h"
+#include "response_parser.h"
 
 typedef struct _modem Modem;
 
@@ -24,7 +25,11 @@ uint32_t modem_read_within_us(
 		uint32_t us
 ); 
 
-bool modem_command_write(Modem *modem, CommandBuffer *cb);
+bool modem_command_write_within_us(
+		Modem *modem, 
+		CommandBuffer *cb,
+		uint32_t us		
+);
 
 Modem *modem_start(
 		char *apn,
@@ -37,6 +42,5 @@ Modem *modem_start(
 static bool modem_config(Modem *modem, char *apn);
 
 bool modem_toggle_power(Modem *modem);
-static void modem_gpio_init(Modem *modem);
 
 #endif // WISDOM_MODEM_H
