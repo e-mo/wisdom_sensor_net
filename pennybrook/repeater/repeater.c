@@ -53,7 +53,7 @@ int main() {
 	common_radio_config(rfm);
 
     rfm69_node_address_set(rfm, 0x86); 
-    rfm69_power_level_set(rfm, 0);
+    rfm69_power_level_set(rfm, 20);
 
     bool success;
     TrxReport report;

@@ -119,15 +119,15 @@ int main() {
 
 		//buf[0] = t11.vwc;
 		//buf[1] = t11.temperature;
-		buf[0] = 0;
-		buf[1] = 0;
+		buf[0] = 0.5;
+		buf[1] = 0.5;
 
         printf("Transmitting...\n");
 
         success = rfm69_rudp_transmit(
                 rfm,
                 &report,
-                0x86,
+                0x02,
                 (uint8_t *)buf,
                 buf_size,
                 300,
