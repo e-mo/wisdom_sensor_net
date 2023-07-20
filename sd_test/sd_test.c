@@ -64,7 +64,7 @@ int main()
     time_since_start = get_absolute_time();
     ms_since_start = to_ms_since_boot(time_since_start);
     sprintf(time_string, "%d", ms_since_start);
-    if(f_printf(&fil, "%s, mow\n", time_string)) {
+    if(!f_printf(&fil, "%s, mow\n", time_string)) {
 		    printf("error writing to file!\n");
 		    printf("%s\n", FRESULT_str(fr));
     } else printf("successfully wrote to file\n");
