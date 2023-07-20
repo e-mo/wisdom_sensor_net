@@ -5,6 +5,7 @@
 #include "hardware/spi.h"
 #include "hardware/dma.h"
 #include "hardware/timer.h"
+#include "rtc.h"
 
 #include "ff.h"
 #include "f_util.h"
@@ -20,13 +21,16 @@
 #define PIN_SCK  18
 #define PIN_MOSI 19
 
-absolute_time_t on_time;
+absolute_time_t time_since_start;
+uint32_t ms_since_start;
+char time_string[16];
 
 
 
 int main()
 {
     stdio_init_all();
+    time_init();
     
     sleep_ms(5000);
 
@@ -40,36 +44,43 @@ int main()
 
     printf("starting\n");
 
+    printf("mounting sd card ...\n");
     fr = f_mount(&sd->fatfs, sd->pcName, 1);
     if(fr != FR_OK) {
 	    printf("error mounting sd card!\n");
 	    printf("%s\n", FRESULT_str(fr));
 	    while(1);
-    }
-    else {
-	    printf("successfully mounted\n");
-	    //f_getlabel("", label, 0);
-	    //printf("volume label: %s\n", label);
-    }
+    } else printf("successfully mounted\n");
 
+    printf("opening file: %s ...\n", filename);
     fr = f_open(&fil, filename, FA_OPEN_APPEND | FA_WRITE);
     if(fr != FR_OK && fr != FR_EXIST) {
 	    printf("error opening file!\n");
 	    printf("%s\n", FRESULT_str(fr));
 	    while(1);
-    }
+    } else printf("successfully opened file\n");
 
-    if(f_printf(&fil, "mow\n")) {
+    printf("writing to file ...\n");
+    time_since_start = get_absolute_time();
+    ms_since_start = to_ms_since_boot(time_since_start);
+    sprintf(time_string, "%d", ms_since_start);
+    if(f_printf(&fil, "%s, mow\n", time_string)) {
 		    printf("error writing to file!\n");
-		    while(1);
-    }
+		    printf("%s\n", FRESULT_str(fr));
+    } else printf("successfully wrote to file\n");
 
-    f_close(&fil);
+    printf("closing file ...\n");
+    fr = f_close(&fil);
+    if(fr != FR_OK) {
+	    printf("error closing file!\n");
+	    printf("%s\n", FRESULT_str(fr));
+    } else printf("successfully closed file\n");
+
+    printf("unmounting\n");
     f_unmount(sd->pcName);
 
     printf("complete");
 
-
-
+    while(1);
     return 0;
 }

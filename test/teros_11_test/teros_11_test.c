@@ -29,6 +29,7 @@ int main()
 	while(1) {
 		printf("\nline\n");
 		if(teros_get_data(teros, &t11_data)) printf("ERROR\n");
+		printf("%f", t11_data.vwc);
 		sleep_ms(1000);
 	}
     return 0;
