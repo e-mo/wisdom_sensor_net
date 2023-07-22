@@ -8,15 +8,15 @@
 
 typedef struct _command_buffer CommandBuffer;
 
-CommandBuffer *command_buffer_create();
-void command_buffer_destroy(CommandBuffer *cb);
-uint32_t command_buffer_write(CommandBuffer *cb, uint8_t *src, uint32_t src_len);
+CommandBuffer *cb_create();
+void cb_destroy(CommandBuffer *cb);
+uint32_t cb_write(CommandBuffer *cb, uint8_t *src, uint32_t src_len);
 
-uint32_t command_buffer_length(CommandBuffer *cb);
-bool command_buffer_full(CommandBuffer *cb);
-bool command_buffer_empty(CommandBuffer *cb);
-uint8_t *command_buffer_get(CommandBuffer *cb);
-void command_buffer_clear(CommandBuffer *cb);
-bool command_buffer_prefix_set(CommandBuffer *cb);
+uint32_t cb_length(CommandBuffer *cb);
+bool cb_full(CommandBuffer *cb);
+bool cb_empty(CommandBuffer *cb);
+uint8_t *cb_get(CommandBuffer *cb);
+void cb_clear(CommandBuffer *cb);
+bool cb_prefix_set(CommandBuffer *cb);
 
 #endif // WISDOM_MODEM_COMMAND_BUFFER_H

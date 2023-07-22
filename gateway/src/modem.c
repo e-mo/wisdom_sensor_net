@@ -7,6 +7,7 @@
 
 #include "modem.h"
 
+#define MODEM_RETRY_DELAY_MS 1000
 #define MODEM_START_RETRIES 50 
 #define UART_BAUD 115200
 #define RX_BUFFER_SIZE 1024
@@ -50,29 +51,32 @@ Modem *modem_start(
 
 	bool reset = false;
 
-	CommandBuffer *cb = command_buffer_create();
-	command_buffer_prefix_set(cb);
-	command_buffer_write(cb, "E0", 4);
+	CommandBuffer *cb = cb_create();
+	cb_prefix_set(cb);
+	cb_write(cb, "E0", 2);
 
-	printf("here\n");
 	ResponseParser *rp = rp_create();
 
 	size_t read_buffer_len = 1024;
 	uint8_t read_buffer[read_buffer_len];
 
 	// Clear RX
+	uint64_t timeout_us = 100;
 	while(uart_is_readable(MODEM.uart))
-		modem_read_within_us(&MODEM, read_buffer, read_buffer_len, 100);
+		modem_read_within_us(&MODEM, read_buffer, read_buffer_len, timeout_us);
 
+	Modem *modem = NULL;
 	bool power_toggled = false;
 	for (int i = 0; i < MODEM_START_RETRIES; i++) {
 
-		bool success = modem_command_write_within_us(&MODEM, cb, 1000 * 10);
+		timeout_us = 1000 * 10; // 10 ms
+		bool success = modem_command_write_within_us(&MODEM, cb, timeout_us);
 		if (!success) {
-			sleep_ms(100); 
+			sleep_ms(MODEM_RETRY_DELAY_MS); 
 			continue;
 		}
 
+		timeout_us = 1000 * 100; // 100 ms
 		uint32_t received = modem_read_within_us(
 				&MODEM, 
 				read_buffer, 
@@ -80,35 +84,30 @@ Modem *modem_start(
 				1000 * 100
 		);
 
-		printf("%u\n", received);
-		if (received < 2) {
+		if (!received) {
 			if (!power_toggled) {
 				modem_toggle_power(&MODEM);
 				power_toggled = true;
 			}
-			sleep_ms(1000);
+			sleep_ms(MODEM_RETRY_DELAY_MS);
 			continue;
 		}
 
-
+		rp_clear(rp);
 		rp_parse(rp, read_buffer, received);
+		if (!rp_contains_ok(rp)) break;
 
-		sleep_ms(1000);
-		continue;
+		if (!modem_config(&MODEM, apn)) break;
 
-		if (false) {
-			MODEM_STARTED = true;
-
-
-			success = modem_config(&MODEM, apn);
-
-			return &MODEM; // Successful return
-		}
-		
-		sleep_ms(500);
+		MODEM_STARTED = true;
+		modem = &MODEM; // Successful return
+		break;
 	}
 
-	return NULL;
+	cb_destroy(cb);
+	rp_destroy(rp);
+
+	return modem;
 }
 
 // Sleep time between checking uart tx readiness
@@ -119,7 +118,7 @@ bool modem_write_within_us(
 		Modem *modem, 
 		const uint8_t *src, 
 		size_t src_len, 
-		uint32_t us
+		uint64_t us
 ) 
 {
 	if (src_len > COMMAND_BUFFER_MAX) return false;
@@ -142,34 +141,27 @@ bool modem_write_within_us(
 bool modem_command_write_within_us(
 		Modem *modem, 
 		CommandBuffer *cb, 
-		uint32_t us
+		uint64_t us
 ) 
 {
-	bool success =  modem_write_within_us(
-			modem,	
-			command_buffer_get(cb),
-			command_buffer_length(cb),
-			us
-	);
-	if (!success) return false;
-
 	return modem_write_within_us(
 			modem,	
-			"\r",
-			1,
-			WRITE_TIMEOUT_RESOLUTION_US	
+			cb_get(cb),
+			cb_length(cb),
+			us
 	);
 }
 
-#define READ_STOP_TIMEOUT_US 100 
+#define READ_STOP_TIMEOUT_US 1000
 uint32_t modem_read_within_us(
 		Modem *modem, 
 		uint8_t *dst, 
 		size_t dst_len, 
-		uint32_t us
+		uint64_t us
 ) 
 {
 	if (!uart_is_readable_within_us(modem->uart, us)) return 0;
+
 	uint8_t received = 0;
 	for (uint8_t *p = dst; p - dst < dst_len; p++, received++) {
 		if (!uart_is_readable_within_us(modem->uart, READ_STOP_TIMEOUT_US)) 
@@ -194,39 +186,43 @@ uint32_t modem_read_blocking(Modem *modem, uint8_t *dst, size_t dst_len) {
 }
 
 static bool modem_config(Modem *modem, char *apn) {
-	char buf[256];
+	bool success = false;
 	// +CMEE=2  Verbose errors
 	// +CMGF=1  SMS message format: text
 	// +CMGD=4  Clear any existing SMS messages in buffer
 	// +CNMP=38 Preferred mode: LTE only
 	// +CMNB=1  Preferred network: CAT-M
-	bool success = false; //modem_at_send(
-	//		modem,
-	//		"AT+CMEE=2;+CMGF=1;+CMGD=4;+CNMP=38;+CMNB=1;",
-	//		"OK",
-	//		buf,
-	//		256,
-	//		500
-	//);
-	//if (!success) return false;
-	//printf("%s\n", buf);
+	CommandBuffer *cb = cb_create();
+	ResponseParser *rp = rp_create();
+	char *command = "+CMEE=2;+CMGF=1;+CMGD=4;+CNMP=38;+CMNB=1;+CGDCONT=1,\"IP\",\"";
+	cb_prefix_set(cb);
+	cb_write(cb, command, strlen(command));
+	cb_write(cb, apn, strlen(apn));
+	cb_write(cb, "\"", 1);
 
-	//// Define PDP context
-	//char command[256] = "AT+CGDCONT=1,\"IP\",\"";
-	//strcat(command, apn);
-	//strcat(command, "\"");
+	if (!modem_command_write_within_us(modem, cb, 100 * 1000)) {
+		goto CLEANUP;
+	}
 
-	//success = modem_at_send(
-	//		modem,
-	//		command,
-	//		"OK",
-	//		buf,
-	//		256,
-	//		500
-	//);
-	//if (!success) return false;
-	//printf("%s\n", buf);
+	uint8_t read_buffer[1024];
+	uint32_t received = modem_read_within_us(
+			modem, 
+			read_buffer, 
+			1024,
+			1000 * 100
+	);
 
+	if (!received) goto CLEANUP;
+
+	rp_clear(rp);
+	rp_parse(rp, read_buffer, received);
+
+	if (rp_contains_ok(rp)) success = true;
+
+	
+CLEANUP:
+	cb_destroy(cb);
+	rp_destroy(rp);
 	return success;
 }
 

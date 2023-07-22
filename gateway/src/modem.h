@@ -15,20 +15,20 @@ bool modem_write_within_us (
 		Modem *modem, 
 		const uint8_t *src, 
 		size_t src_len, 
-		uint32_t us
+		uint64_t us
 ); 
 
 uint32_t modem_read_within_us(
 		Modem *modem, 
 		uint8_t *dst, 
 		size_t dst_len, 
-		uint32_t us
+		uint64_t us
 ); 
 
 bool modem_command_write_within_us(
 		Modem *modem, 
 		CommandBuffer *cb,
-		uint32_t us		
+		uint64_t us		
 );
 
 Modem *modem_start(

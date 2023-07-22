@@ -11,6 +11,6 @@ void common_radio_config(Rfm69 *rfm) {
     // RXBW >= fdev + br/2
     rfm69_rxbw_set(rfm, RFM69_RXBW_MANTISSA_20, 2);
     rfm69_dcfree_set(rfm, RFM69_DCFREE_WHITENING);
-
+	rfm69_mode_set(rfm, RFM69_OP_MODE_SLEEP);
     rfm69_power_level_set(rfm, -2);
 }

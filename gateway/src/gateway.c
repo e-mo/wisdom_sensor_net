@@ -39,7 +39,6 @@ int main() {
 
 	//while (!tud_cdc_connected()) { sleep_ms(100); };
 	//printf("Starting modem...\n");
-	printf("Modem OK!\n");	
 
 	//char buf[BUF_SIZE];
 	//bool connected = false;

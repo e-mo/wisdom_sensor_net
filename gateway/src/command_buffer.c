@@ -3,66 +3,73 @@
 
 struct _command_buffer {
 	// + 2 because the AT prefix is not counted in this limit
+	// + 1 for \r
 	uint8_t buffer[COMMAND_BUFFER_MAX + 2];
 	uint8_t *index;
 	bool at_prefix;
 };
 
-CommandBuffer *command_buffer_create() {
+CommandBuffer *cb_create() {
 	CommandBuffer *cb = malloc((sizeof *cb));
 	if (!cb) return NULL;
 
 	cb->index = cb->buffer;
+	*cb->index = '\r';
 	cb->at_prefix = false;
 
 	return cb;
 }
 
-void command_buffer_destroy(CommandBuffer *cb) {
+void cb_destroy(CommandBuffer *cb) {
 	free(cb);
 }
 
-uint32_t command_buffer_write(CommandBuffer *cb, uint8_t *src, uint32_t src_len) {
+uint32_t cb_write(CommandBuffer *cb, uint8_t *src, uint32_t src_len) {
 	uint32_t written;
 	for (written = 0; written < src_len ; written++) {
-		if (command_buffer_full(cb)) break;
+		if (cb_full(cb)) break;
 
 		*cb->index++ = src[written];
 	}
 
+	// Always leave a return character at end
+	// which will be overwritten if the buffer is appended
+	// to
+	*cb->index = '\r';
 	return written;
 }
 
-uint32_t command_buffer_length(CommandBuffer *cb) { 
-	return cb->index - cb->buffer;
+uint32_t cb_length(CommandBuffer *cb) { 
+	// +1 for terminating '\r'
+	return cb->index - cb->buffer + 1;
 }
 
-bool command_buffer_full(CommandBuffer *cb) {
-	uint32_t buf_len = command_buffer_length(cb);
+bool cb_full(CommandBuffer *cb) {
+	uint32_t buf_len = cb_length(cb);
 
 	if (cb->at_prefix) 
-		return command_buffer_length(cb) >= COMMAND_BUFFER_MAX + 2;
+		return cb_length(cb) >= COMMAND_BUFFER_MAX + 2;
 
-	return command_buffer_length(cb) >= COMMAND_BUFFER_MAX;
+	return cb_length(cb) >= COMMAND_BUFFER_MAX;
 }
 
-bool command_buffer_empty(CommandBuffer *cb) {
-	return command_buffer_length(cb) == 0;
+bool cb_empty(CommandBuffer *cb) {
+	return cb_length(cb) <= 1;
 }
 
-uint8_t *command_buffer_get(CommandBuffer *cb) {
+uint8_t *cb_get(CommandBuffer *cb) {
 	return cb->buffer;
 }
 
-void command_buffer_clear(CommandBuffer *cb) {
+void cb_clear(CommandBuffer *cb) {
 	cb->index = cb->buffer;	
 	cb->at_prefix = false;
 }
 
-bool command_buffer_prefix_set(CommandBuffer *cb) {
-	if (!command_buffer_empty(cb)) return false;
+bool cb_prefix_set(CommandBuffer *cb) {
+	if (!cb_empty(cb)) return false;
 
-	command_buffer_write(cb, "AT", 2);
+	cb_write(cb, "AT", 2);
 
 	cb->at_prefix = true;
 }

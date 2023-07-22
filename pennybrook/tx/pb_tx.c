@@ -106,32 +106,31 @@ int main() {
 	uint buf_size = sizeof(float) * 2;
 	float buf[2] = {0.0};
 
-	rfm69_power_level_set(rfm, 20);
-    //print_registers(rfm);
+	rfm69_power_level_set(rfm, 20); //print_registers(rfm);
     for(ever) { 
 		// Zero our buffer memset(buf, 0x00, buf_size);
 
-		//if (teros_get_data(teros, &t11)) {
-		//	printf("Teros Error!\n");
-		//	sleep_ms(1000);
-		//	continue;
-		//}
+		if (teros_get_data(teros, &t11)) {
+			printf("Teros Error!\n");
+			sleep_ms(1000);
+			continue;
+		}
 
-		//buf[0] = t11.vwc;
-		//buf[1] = t11.temperature;
-		buf[0] = 0.5;
-		buf[1] = 0.5;
+		buf[0] = t11.vwc;
+		buf[1] = t11.temperature;
+
+		printf("%f\n%f\n", buf[0], buf[1]);
 
         printf("Transmitting...\n");
 
         success = rfm69_rudp_transmit(
                 rfm,
                 &report,
-                0x02,
+                0x86,
                 (uint8_t *)buf,
                 buf_size,
-                300,
-                5 
+                100,
+                10
         );
 
         printf("Report\n");
@@ -159,25 +158,17 @@ int main() {
         }
         printf("\n");
 
-        if (success) {
-            uint num_blinks = 6;
-            for(; num_blinks; num_blinks--) {
-                gpio_put(PICO_DEFAULT_LED_PIN, 1);
-                sleep_ms(100);
-                gpio_put(PICO_DEFAULT_LED_PIN, 0);
-                sleep_ms(50);
-            }
-        } else {
+		if (!success) continue;
+
+		uint num_blinks = 6;
+		for(; num_blinks; num_blinks--) {
 			gpio_put(PICO_DEFAULT_LED_PIN, 1);
 			sleep_ms(100);
 			gpio_put(PICO_DEFAULT_LED_PIN, 0);
 			sleep_ms(50);
+		}
 
-            sleep_ms(1000);
-            continue;
-        }
-
-        sleep_ms(1000);
+        sleep_ms(60000);
     }
     
     return 0;
