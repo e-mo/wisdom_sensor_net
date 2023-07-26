@@ -83,9 +83,9 @@ int main() {
 
     f_close(&fil);
     
-    Rfm69 *rfm = rfm69_create();
+    Rfm69 rfm = (Rfm69) {0};
     rfm69_rudp_init(
-        rfm,
+        &rfm,
         SPI_PORT,
         PIN_MISO,
         PIN_MOSI,
@@ -99,11 +99,11 @@ int main() {
     gpio_init(PICO_DEFAULT_LED_PIN);
     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
     
-	common_radio_config(rfm);
+	common_radio_config(&rfm);
 
-    rfm69_node_address_set(rfm, 0x02); 
+    rfm69_node_address_set(&rfm, 0x02); 
 
-    rfm69_power_level_set(rfm, 0);
+    rfm69_power_level_set(&rfm, 20);
     TrxReport report;
     bool success;
 	float *teros_buf;
@@ -116,7 +116,7 @@ int main() {
         printf("Receiving...\n");
 
         success = rfm69_rudp_receive(
-                rfm,
+                &rfm,
                 &report,
                 &address,
                 payload,
@@ -171,7 +171,7 @@ int main() {
 			f_close(&fil);
 
 			
-			sleep_ms(60000);
+			sleep_ms(1000);
         }
     }
     

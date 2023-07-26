@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <string.h>
 
 #include "pico/stdlib.h"
 #include "pico/binary_info.h"
@@ -10,8 +9,7 @@
 
 #include "modem.h"
 #include "command_buffer.h"
-
-#define ever ;; 
+#include "rfm69.h"
 
 // SPI Defines
 // We are going to use SPI 0, and allocate it to the following GPIO pins
@@ -33,6 +31,19 @@ int main() {
 	while (!tud_cdc_connected()) { sleep_ms(100); };
 	multicore_launch_core1(modem_core_main);
 
+	Rfm69 rfm;
+	Rfm69Config config = {
+		.spi      = spi0,
+		.pin_miso = 16,
+		.pin_cs   = 17,
+		.pin_sck  = 18,
+		.pin_mosi = 19,
+		.pin_rst  = 20,
+		.pin_irq0 = 21,
+		.pin_irq1 = 21
+	};
+
+	rfm69_init(&rfm, &config);
 	
 	//_modem_uart_init();
 	//_modem_gpio_init();

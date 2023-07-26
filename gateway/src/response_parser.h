@@ -1,12 +1,23 @@
 #ifndef WISDOM_RESPONSE_PARSER_H
 #define WISDOM_RESPONSE_PARSER_H
 
-typedef struct _response_parser ResponseParser;
+#include <stdint.h>
+#include <string.h>
+
+#define RP_RESPONSE_NUM_MAX 20
+#define RP_RESPONSE_LEN_MAX 256
+
+typedef struct _response_parser {
+	uint8_t buffer[RP_RESPONSE_NUM_MAX][RP_RESPONSE_LEN_MAX + 1];
+	uint8_t num_messages;
+	uint8_t index;
+	uint32_t length_array[RP_RESPONSE_NUM_MAX];
+} ResponseParser;
 
 ResponseParser *rp_create();
 void rp_destroy(ResponseParser *rp);
 
-void rp_clear(ResponseParser *rp);
+ResponseParser *rp_reset(ResponseParser *rp);
 
 uint32_t rp_num_messages(ResponseParser *rp);
 

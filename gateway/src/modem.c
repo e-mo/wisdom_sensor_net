@@ -12,13 +12,6 @@
 #define UART_BAUD 115200
 #define RX_BUFFER_SIZE 1024
 
-struct _modem {
-	uart_inst_t *uart;
-	uint pin_tx;
-	uint pin_rx;
-	uint pin_power;
-};
-
 static Modem MODEM;
 static bool MODEM_STARTED = false;
 
@@ -31,83 +24,72 @@ Modem *modem_start(
 )
 {
 	if (MODEM_STARTED) return &MODEM;
+
+	MODEM = (Modem) {0};
+	static Modem *modem = &MODEM;
 	
-	if (!uart_is_enabled(uart)) {
+	// Because you can actually check if uart is initialized
+	// the function can accept a uart instance in any state
+	if (!uart_is_enabled(uart)) 
 		uart_init(uart, UART_BAUD); 
-		uart_set_hw_flow(uart, false, false);
-	}
 
-	MODEM.uart = uart;
-	MODEM.pin_tx = pin_tx;
-	MODEM.pin_rx = pin_rx;
-	MODEM.pin_power = pin_power;
+	// Disable hardware flow completely
+	uart_set_hw_flow(uart, false, false);
 
-	gpio_init(MODEM.pin_power);
-	gpio_set_dir(MODEM.pin_power, GPIO_OUT);
-	gpio_put(MODEM.pin_power, 0);
-	gpio_set_function(MODEM.pin_tx, GPIO_FUNC_UART);
-	gpio_set_function(MODEM.pin_rx, GPIO_FUNC_UART);
+	modem->uart = uart;
+	modem->pin_tx = pin_tx;
+	modem->pin_rx = pin_rx;
+	modem->pin_power = pin_power;
 
+	// gpio stuff
+	gpio_init(modem->pin_power);
+	gpio_set_dir(modem->pin_power, GPIO_OUT);
+	gpio_put(modem->pin_power, 0);
+	gpio_set_function(modem->pin_tx, GPIO_FUNC_UART);
+	gpio_set_function(modem->pin_rx, GPIO_FUNC_UART);
 
-	bool reset = false;
+	// Make our two helpful objects
+	CommandBuffer *cb = cb_reset(&(CommandBuffer) {0});
+	ResponseParser *rp = rp_reset(&(ResponseParser) {0});
 
-	CommandBuffer *cb = cb_create();
-	cb_prefix_set(cb);
+	// The command we use to test if the modem is responding
+	// which also helpfully disables command echoing
+	cb_at_prefix_set(cb);
 	cb_write(cb, "E0", 2);
 
-	ResponseParser *rp = rp_create();
-
-	size_t read_buffer_len = 1024;
-	uint8_t read_buffer[read_buffer_len];
-
-	// Clear RX
-	uint64_t timeout_us = 100;
-	while(uart_is_readable(MODEM.uart))
-		modem_read_within_us(&MODEM, read_buffer, read_buffer_len, timeout_us);
-
-	Modem *modem = NULL;
 	bool power_toggled = false;
-	for (int i = 0; i < MODEM_START_RETRIES; i++) {
+	uint8_t read_buffer[RX_BUFFER_SIZE] = {0};
+	for (int tries = 0; tries < MODEM_START_RETRIES; tries++) {
 
-		timeout_us = 1000 * 10; // 10 ms
-		bool success = modem_command_write_within_us(&MODEM, cb, timeout_us);
-		if (!success) {
-			sleep_ms(MODEM_RETRY_DELAY_MS); 
-			continue;
-		}
+		modem_cb_write_blocking(modem, cb);
 
-		timeout_us = 1000 * 100; // 100 ms
-		uint32_t received = modem_read_within_us(
-				&MODEM, 
-				read_buffer, 
-				read_buffer_len, 
-				1000 * 100
-		);
-
-		if (!received) {
+		if (!modem_read_blocking_ok(modem, read_buffer, RX_BUFFER_SIZE)) {
 			if (!power_toggled) {
-				modem_toggle_power(&MODEM);
+				modem_toggle_power(modem);
 				power_toggled = true;
 			}
 			sleep_ms(MODEM_RETRY_DELAY_MS);
 			continue;
 		}
-
-		rp_clear(rp);
-		rp_parse(rp, read_buffer, received);
-		if (!rp_contains_ok(rp)) break;
-
-		if (!modem_config(&MODEM, apn)) break;
+		
+		if (!modem_config(modem, apn)) break;
+		if (!modem_connect(modem)) break;
 
 		MODEM_STARTED = true;
-		modem = &MODEM; // Successful return
+		modem = modem; // Successful return
 		break;
 	}
 
-	cb_destroy(cb);
-	rp_destroy(rp);
-
 	return modem;
+}
+
+void modem_write_blocking(
+		Modem modem[static 1],
+		const uint8_t src[],
+		size_t src_len
+)
+{
+	uart_write_blocking(modem->uart, src, src_len);
 }
 
 // Sleep time between checking uart tx readiness
@@ -138,7 +120,13 @@ bool modem_write_within_us(
 	return true;
 }
 
-bool modem_command_write_within_us(
+
+void modem_cb_write_blocking(Modem modem[static 1], CommandBuffer cb[static 1]) {
+	modem_write_blocking(modem, cb_get_buffer(cb), cb_length(cb));
+}
+
+
+bool modem_cb_write_within_us(
 		Modem *modem, 
 		CommandBuffer *cb, 
 		uint64_t us
@@ -146,13 +134,13 @@ bool modem_command_write_within_us(
 {
 	return modem_write_within_us(
 			modem,	
-			cb_get(cb),
+			cb_get_buffer(cb),
 			cb_length(cb),
 			us
 	);
 }
 
-#define READ_STOP_TIMEOUT_US 1000
+#define READ_STOP_TIMEOUT_US (1000 * 10)
 uint32_t modem_read_within_us(
 		Modem *modem, 
 		uint8_t *dst, 
@@ -162,15 +150,7 @@ uint32_t modem_read_within_us(
 {
 	if (!uart_is_readable_within_us(modem->uart, us)) return 0;
 
-	uint8_t received = 0;
-	for (uint8_t *p = dst; p - dst < dst_len; p++, received++) {
-		if (!uart_is_readable_within_us(modem->uart, READ_STOP_TIMEOUT_US)) 
-			break;
-
-		uart_read_blocking(modem->uart, p, 1);
-	}
-
-	return received;
+	return modem_read_blocking(modem, dst, dst_len);
 }
 
 uint32_t modem_read_blocking(Modem *modem, uint8_t *dst, size_t dst_len) {
@@ -185,47 +165,107 @@ uint32_t modem_read_blocking(Modem *modem, uint8_t *dst, size_t dst_len) {
 	return received;
 }
 
+bool modem_read_blocking_ok(Modem modem[static 1], uint8_t dst[], size_t dst_len) {
+
+	uint32_t received = modem_read_blocking(modem, dst, dst_len);
+
+	ResponseParser *rp = rp_reset(&(ResponseParser) {0});
+	rp_parse(rp, dst, received);
+	return rp_contains_ok(rp);
+}
+
+bool modem_sim_ready(Modem *modem) {
+	CommandBuffer *cb = cb_reset(&(CommandBuffer) {0});
+	ResponseParser *rp = rp_reset(&(ResponseParser) {0});
+
+	cb_at_prefix_set(cb);
+	cb_write(cb, "+CPIN?", 6);
+
+	modem_cb_write_blocking(modem, cb);
+
+	uint8_t read_buffer[RX_BUFFER_SIZE];
+	uint32_t received = modem_read_blocking(modem, read_buffer, RX_BUFFER_SIZE);
+	
+	rp_parse(rp, read_buffer, received);
+	return rp_contains(rp, "+CPIN: READY", 12, NULL);
+}
+
 static bool modem_config(Modem *modem, char *apn) {
-	bool success = false;
+	if (!modem_sim_ready(modem)) return false;
+
+	// CONFIGURING THE FOLLOWING:
 	// +CMEE=2  Verbose errors
 	// +CMGF=1  SMS message format: text
 	// +CMGD=4  Clear any existing SMS messages in buffer
 	// +CNMP=38 Preferred mode: LTE only
 	// +CMNB=1  Preferred network: CAT-M
-	CommandBuffer *cb = cb_create();
-	ResponseParser *rp = rp_create();
-	char *command = "+CMEE=2;+CMGF=1;+CMGD=4;+CNMP=38;+CMNB=1;+CGDCONT=1,\"IP\",\"";
-	cb_prefix_set(cb);
+	// +CGDCONT Set APN
+	// +CNCFG   Request proper code from carrier network
+	uint8_t *command = 
+		"+CMEE=2;+CMGF=1;+CMGD=,4;+CNMP=38;+CMNB=1;+CGDCONT=1,\"IP\",\"iot.1nce.net\"";
+	CommandBuffer *cb = cb_reset(&(CommandBuffer) {0});
+	cb_at_prefix_set(cb);
 	cb_write(cb, command, strlen(command));
-	cb_write(cb, apn, strlen(apn));
-	cb_write(cb, "\"", 1);
+	//cb_write(cb, apn, strlen(apn));
+	//cb_write(cb, "\"", 1);
+	//command = "+CNCFG=0,1,\"\"";
+	//cb_write(cb, command, strlen(command));
+	modem_cb_write_blocking(modem, cb);
 
-	if (!modem_command_write_within_us(modem, cb, 100 * 1000)) {
-		goto CLEANUP;
-	}
+	uint8_t read_buffer[RX_BUFFER_SIZE];
+	uint32_t received = modem_read_blocking(modem, read_buffer, RX_BUFFER_SIZE);
 
-	uint8_t read_buffer[1024];
-	uint32_t received = modem_read_within_us(
-			modem, 
-			read_buffer, 
-			1024,
-			1000 * 100
-	);
-
-	if (!received) goto CLEANUP;
-
-	rp_clear(rp);
+	ResponseParser *rp = rp_reset(&(ResponseParser) {0});
 	rp_parse(rp, read_buffer, received);
 
-	if (rp_contains_ok(rp)) success = true;
+	if (!rp_contains_ok(rp)) return false;
 
-	
-CLEANUP:
-	cb_destroy(cb);
-	rp_destroy(rp);
-	return success;
+	return true;
 }
 
+bool modem_connect(Modem *modem) {
+	bool success = false;
+
+	CommandBuffer *cb = cb_reset(&(CommandBuffer) {0});
+	ResponseParser *rp = rp_reset(&(ResponseParser) {0});
+
+	uint8_t *command = "+COPS?";
+	uint8_t read_buffer[RX_BUFFER_SIZE];
+	uint32_t received = 0;
+
+	cb_reset(cb);
+	cb_at_prefix_set(cb);
+	cb_write(cb, command, strlen(command));
+	while(!modem_cb_write_within_us(modem, cb, 1000 * 1000))
+		sleep_us(1000 * 1000 * 5);
+	// Wait until we receive something
+	while(!(received = modem_read_within_us(modem, read_buffer, RX_BUFFER_SIZE, 1000 * 100)))
+		sleep_us(1000 * 1000 * 5);
+
+	rp_reset(rp); rp_parse(rp, read_buffer, received);
+	printf("%.*s\n", received, read_buffer);
+
+	uint8_t *command2 = "+COPS?";
+
+	uint8_t index;
+	while(!rp_contains(rp, ",", 1, &index)) {
+
+		cb_reset(cb);
+		cb_at_prefix_set(cb);
+		cb_write(cb, command2, strlen(command));
+		while(!modem_cb_write_within_us(modem, cb, 1000 * 1000))
+			sleep_us(1000 * 1000 * 5);
+		// Wait until we receive something
+		while(!(received = modem_read_within_us(modem, read_buffer, RX_BUFFER_SIZE, 1000 * 100)))
+			sleep_us(1000 * 1000 * 5);
+
+		rp_reset(rp); rp_parse(rp, read_buffer, received);
+		printf("%.*s\n", received, read_buffer);
+		sleep_us(1000 * 1000 * 5);
+	}
+
+	return success;
+}
 
 bool modem_toggle_power(Modem *modem) {
 	gpio_put(modem->pin_power, 1);

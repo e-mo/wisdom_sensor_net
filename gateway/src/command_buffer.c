@@ -1,13 +1,6 @@
 #include <stdlib.h>
 #include "command_buffer.h"
 
-struct _command_buffer {
-	// + 2 because the AT prefix is not counted in this limit
-	// + 1 for \r
-	uint8_t buffer[COMMAND_BUFFER_MAX + 2];
-	uint8_t *index;
-	bool at_prefix;
-};
 
 CommandBuffer *cb_create() {
 	CommandBuffer *cb = malloc((sizeof *cb));
@@ -57,16 +50,19 @@ bool cb_empty(CommandBuffer *cb) {
 	return cb_length(cb) <= 1;
 }
 
-uint8_t *cb_get(CommandBuffer *cb) {
+uint8_t *cb_get_buffer(CommandBuffer *cb) {
 	return cb->buffer;
 }
 
-void cb_clear(CommandBuffer *cb) {
+CommandBuffer *cb_reset(CommandBuffer *cb) {
 	cb->index = cb->buffer;	
+	*cb->index = '\r';
 	cb->at_prefix = false;
+
+	return cb;
 }
 
-bool cb_prefix_set(CommandBuffer *cb) {
+bool cb_at_prefix_set(CommandBuffer *cb) {
 	if (!cb_empty(cb)) return false;
 
 	cb_write(cb, "AT", 2);

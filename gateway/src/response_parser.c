@@ -1,19 +1,8 @@
 #include <stdlib.h>
-#include <string.h>
 #include <stdbool.h>
 #include <stdio.h>
 
 #include "response_parser.h"
-
-#define RESPONSE_NUM_MAX 20
-#define RESPONSE_LEN_MAX 256
-
-struct _response_parser {
-	uint8_t buffer[RESPONSE_NUM_MAX][RESPONSE_LEN_MAX + 1];
-	uint8_t num_messages;
-	uint8_t index;
-	uint32_t length_array[RESPONSE_NUM_MAX];
-};
 
 ResponseParser *rp_create() {
 	ResponseParser *rp = malloc((sizeof *rp));
@@ -27,9 +16,10 @@ void rp_destroy(ResponseParser *rp) {
 	free(rp);
 }
 
-void rp_clear(ResponseParser *rp) {
+ResponseParser *rp_reset(ResponseParser *rp) {
 	rp->num_messages = 0;
 	rp->index = 0;
+	return rp;
 }
 
 uint32_t rp_num_messages(ResponseParser *rp) {
@@ -41,6 +31,7 @@ void rp_parse(ResponseParser *rp, uint8_t *src, uint32_t src_len) {
 	bool non_standard_response = false;
 	bool close_response = false;
 	uint8_t response_len = 0;
+
 
 	for (int i = 0; i < src_len; i++) {
 		if (src[i] == '\r') {
@@ -61,15 +52,17 @@ void rp_parse(ResponseParser *rp, uint8_t *src, uint32_t src_len) {
 			}
 
 			rp_close_response(rp, response_len);
+			prefix = false;
 			response_len = 0;
 			continue;
 		}
 
-		if (!prefix) non_standard_response = true;
-
+		if (!prefix) {
+			non_standard_response = true;
+		}
 		rp->buffer[rp->num_messages][response_len] = src[i];
 		response_len++;
-		if (response_len > RESPONSE_LEN_MAX) break;
+		if (response_len > RP_RESPONSE_LEN_MAX) break;
 	}
 
 	// If we are at the end of the src but have an unclosed
@@ -91,10 +84,20 @@ bool rp_contains(
 ) 
 {
 	bool found = false;
+
+	if (index == NULL) index = &(uint8_t) {0};
+
 	for (*index = 0; *index < rp->num_messages; (*index)++) {
 		if (n > rp->length_array[*index]) continue;
-		
-		found = !strnstr(needle, &rp->buffer[*index][0], n);
+
+		for (int i = 0; i < n; i++) {
+			if (needle[i] != rp->buffer[*index][i]) {
+				found = false;
+				continue;
+			}
+			found = true;
+		}
+
 		if (found) break;
 	}
 
@@ -102,12 +105,12 @@ bool rp_contains(
 }
 
 bool rp_contains_ok(ResponseParser *rp) {
-	uint8_t _index;
-	return rp_contains(rp, "OK", 2, &_index);
+	return rp_contains(rp, "OK", 2, NULL);
 }
 
 bool rp_get(ResponseParser *rp, uint8_t index, uint8_t **dst, uint8_t *dst_len) {
 	if (index >= rp->num_messages) return false;
+
 
 	*dst = &rp->buffer[index][0];
 	*dst_len = rp->length_array[index];

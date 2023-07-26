@@ -17,6 +17,7 @@
 void modem_core_main(void) {
 	
 	printf("Starting modem...\n");
+
 	Modem *modem = modem_start(
 			MODEM_APN,
 			UART_PORT,
@@ -26,6 +27,7 @@ void modem_core_main(void) {
 	);
 
 	if (modem) printf("yay!\n");
+	printf("done\n");
 
 	for(ever) {
 		sleep_ms(2000);

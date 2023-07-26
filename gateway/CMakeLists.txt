@@ -31,6 +31,7 @@ add_executable(gateway
 	src/modem.c
 	src/command_buffer.c
 	src/response_parser.c
+	../rfm69/rfm69.c
 )
 
 pico_enable_stdio_uart(gateway 0)
@@ -55,13 +56,14 @@ target_include_directories(gateway PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}
   ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts or any other standard includes, if required
   ${CMAKE_CURRENT_LIST_DIR}/src
+  ../rfm69
 )
 
 # Add any user requested libraries
 target_link_libraries(gateway
+	hardware_spi
 	hardware_uart
 	pico_multicore
 )
 
 pico_add_extra_outputs(gateway)
-

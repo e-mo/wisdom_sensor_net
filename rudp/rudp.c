@@ -14,18 +14,18 @@ bool rfm69_rudp_init(
 		uint pin_irq_1
 ) 
 {
-	if (!rfm69_init(
-			rfm,
-			spi,
-			pin_miso,
-			pin_mosi,
-			pin_cs,
-			pin_sck,
-			pin_rst,
-			pin_irq_0,
-			pin_irq_1
-	)) return false;
+	Rfm69Config config = {
+		.spi      = spi0,
+		.pin_miso = 16,
+		.pin_cs   = 17,
+		.pin_sck  = 18,
+		.pin_mosi = 19,
+		.pin_rst  = 20,
+		.pin_irq0 = 21,
+		.pin_irq1 = 21
+	};
 
+	if (!rfm69_init(rfm, &config)) return false;
 	if (!rfm69_packet_format_set(rfm, RFM69_PACKET_VARIABLE))	
 		return false;
 
