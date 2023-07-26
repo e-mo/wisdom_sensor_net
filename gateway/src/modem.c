@@ -50,7 +50,6 @@ Modem *modem_start(
 
 	// Make our two helpful objects
 	CommandBuffer *cb = cb_reset(&(CommandBuffer) {0});
-	ResponseParser *rp = rp_reset(&(ResponseParser) {0});
 
 	// The command we use to test if the modem is responding
 	// which also helpfully disables command echoing
@@ -188,6 +187,15 @@ bool modem_sim_ready(Modem *modem) {
 	
 	rp_parse(rp, read_buffer, received);
 	return rp_contains(rp, "+CPIN: READY", 12, NULL);
+}
+
+bool modem_is_ready(Modem modem[static 1]) {
+	
+	CommandBuffer *cb = cb_reset(&(CommandBuffer) {0});
+	cb_at_prefix_set(cb);
+	cb_write(cb, "E0", 2);
+
+    return modem_read_blocking_ok(modem, read_buffer, RX_BUFFER_SIZE);
 }
 
 static bool modem_config(Modem *modem, char *apn) {
