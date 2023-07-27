@@ -150,7 +150,12 @@ uint32_t modem_read_within_us(
 	return modem_read_blocking(modem, dst, dst_len);
 }
 
-uint32_t modem_read_blocking(Modem *modem, uint8_t *dst, size_t dst_len) {
+uint32_t modem_read_blocking(Modem modem[static 1], uint8_t *dst, size_t dst_len) {
+	if (!dst) {
+		dst = (uint8_t[RX_BUFFER_SIZE]) {0};
+		dst_len = RX_BUFFER_SIZE;
+	}
+
 	uint8_t received = 0;
 	for (uint8_t *p = dst; p - dst < dst_len; p++, received++) {
 		if (!uart_is_readable_within_us(modem->uart, READ_STOP_TIMEOUT_US)) 
@@ -162,12 +167,13 @@ uint32_t modem_read_blocking(Modem *modem, uint8_t *dst, size_t dst_len) {
 	return received;
 }
 
-bool modem_read_blocking_ok(Modem modem[static 1], uint8_t dst[], size_t dst_len) {
+bool modem_read_blocking_ok(Modem modem[static 1]) {
 
-	uint32_t received = modem_read_blocking(modem, dst, dst_len);
+	uint8_t read_buffer[RX_BUFFER_SIZE] = {0};
+	uint32_t received = modem_read_blocking(modem, read_buffer, RX_BUFFER_SIZE);
 
 	ResponseParser *rp = rp_reset(&(ResponseParser) {0});
-	rp_parse(rp, dst, received);
+	rp_parse(rp, read_buffer, received);
 
 	return rp_contains_ok(rp);
 }
@@ -180,9 +186,7 @@ bool modem_is_ready(Modem modem[static 1]) {
 
 	modem_cb_write_blocking(modem, cb);
 
-	// TODO: make read ok function able to accept null dst
-	uint8_t read_buffer_[RX_BUFFER_SIZE] = {0};
-    return modem_read_blocking_ok(modem, read_buffer_, RX_BUFFER_SIZE);
+    return modem_read_blocking_ok(modem);
 }
 
 
@@ -238,22 +242,80 @@ static bool modem_config(Modem *modem, char *apn) {
 bool modem_cn_ready(Modem modem[static 1]) {
 
 	CommandBuffer *cb = cb_reset(&(CommandBuffer) {0});
-	ResponseParser *rp = rp_reset(&(ResponseParser) {0});
-
-	uint8_t read_buffer[RX_BUFFER_SIZE];
-	uint8_t *command = "+COPS?";
 
 	cb_at_prefix_set(cb);
-	cb_write(cb, command, 6);
+	cb_write(cb, "+COPS?", 6);
 
 	modem_cb_write_blocking(modem, cb);
 
+	uint8_t read_buffer[RX_BUFFER_SIZE];
 	uint32_t received = modem_read_blocking(modem, read_buffer, RX_BUFFER_SIZE);
 
-	rp_reset(rp);
+	ResponseParser *rp = rp_reset(&(ResponseParser) {0});
 	rp_parse(rp, read_buffer, received);
 
 	return rp_contains(rp, "+COPS: 0,", 9, NULL);
+}
+
+bool modem_cn_is_active(Modem modem[static 1]) {
+	CommandBuffer *cb = cb_reset(&(CommandBuffer) {0});
+	cb_at_prefix_set(cb);
+	cb_write(cb, "+CNACT?", 7); 
+
+	modem_cb_write_blocking(modem, cb);
+
+	uint8_t read_buffer[RX_BUFFER_SIZE];
+	uint32_t received = modem_read_blocking(modem, read_buffer, RX_BUFFER_SIZE);
+
+	ResponseParser *rp = rp_reset(&(ResponseParser) {0});
+	rp_parse(rp, read_buffer, received);
+
+	return rp_contains(rp, "+CNACT: 0,1", 11, NULL);
+}
+
+bool modem_cn_activate(Modem modem[static 1], bool activate) {
+	if (!modem_cn_ready(modem)) return false;
+
+	// Avoid doing anything if we are already in the right state
+	if (activate && modem_cn_is_active(modem)) return true;
+	if (!activate && !modem_cn_is_active(modem)) return true;
+
+	CommandBuffer *cb = cb_reset(&(CommandBuffer) {0});
+	cb_at_prefix_set(cb);
+	cb_write(cb, "+CNACT=0,", 9); 
+	cb_write(cb, activate ? "1" : "0", 1);
+
+	modem_cb_write_blocking(modem, cb);
+
+	ResponseParser *rp = rp_reset(&(ResponseParser) {0});
+	uint32_t received = 0;
+	uint8_t read_buffer[RX_BUFFER_SIZE];
+	while (!rp_contains_ok(rp)) {
+		
+		received = modem_read_blocking(modem, read_buffer, RX_BUFFER_SIZE);
+		rp_parse(rp, read_buffer, received);
+
+		sleep_ms(1000);
+	}
+
+	if (activate)
+		return rp_contains(rp, "+APP PDP: 0,ACTIVE", 18, NULL);
+
+	return rp_contains(rp, "+APP PDP: 0,DEACTIVE", 18, NULL);
+}
+
+bool modem_ssl_enable(Modem modem[static 1], bool enable) {
+	if (!modem_cn_ready(modem)) return false;
+	if (!modem_cn_is_active(modem)) return false;
+
+	CommandBuffer *cb = cb_reset(&(CommandBuffer) {0});
+	cb_at_prefix_set(cb);
+	cb_write(cb, "+CASSLCFG=0,\"SSL\",", 18); 
+	cb_write(cb, enable ? "1" : "0", 1);
+
+	modem_cb_write_blocking(modem, cb);
+	
+	return modem_read_blocking_ok(modem);
 }
 
 void modem_wait_for_network(Modem modem[static 1]) {

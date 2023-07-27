@@ -27,6 +27,12 @@ void modem_core_main(void) {
 	);
 
 	if (modem) printf("success!\n");
+	
+	if (modem_cn_activate(modem, true)) printf("Network activated\n");
+
+	if (modem_ssl_enable(modem, false)) printf("SSL disabled\n");
+
+	if (modem_cn_activate(modem, false)) printf("Network deactivated\n");
 
 	for(ever) {
 		sleep_ms(2000);

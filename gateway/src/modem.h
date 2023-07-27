@@ -48,8 +48,8 @@ bool modem_write_within_us (
 		uint64_t us
 ); 
 
-uint32_t modem_read_blocking(Modem *modem, uint8_t *dst, size_t dst_len);
-bool modem_read_blocking_ok(Modem modem[static 1], uint8_t dst[], size_t dst_len);
+uint32_t modem_read_blocking(Modem modem[static 1], uint8_t *dst, size_t dst_len);
+bool modem_read_blocking_ok(Modem modem[static 1]);
 
 uint32_t modem_read_within_us(
 		Modem *modem, 
@@ -78,6 +78,9 @@ bool modem_is_ready(Modem modem[static 1]);
 bool modem_sim_ready(Modem modem[static 1]);
 static bool modem_config(Modem *modem, char *apn);
 bool modem_cn_ready(Modem modem[static 1]);
+bool modem_cn_is_active(Modem modem[static 1]);
+bool modem_cn_activate(Modem modem[static 1], bool activate);
+bool modem_ssl_enable(Modem modem[static 1], bool enable);
 void modem_wait_for_network(Modem modem[static 1]);
 
 bool modem_toggle_power(Modem *modem);
