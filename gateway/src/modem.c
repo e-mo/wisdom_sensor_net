@@ -301,7 +301,7 @@ bool modem_cn_activate(Modem modem[static 1], bool activate) {
 	if (activate)
 		return rp_contains(rp, "+APP PDP: 0,ACTIVE", 18, NULL);
 
-	return rp_contains(rp, "+APP PDP: 0,DEACTIVE", 18, NULL);
+	return rp_contains(rp, "+APP PDP: 0,DEACTIVE", 20, NULL);
 }
 
 bool modem_ssl_enable(Modem modem[static 1], bool enable) {
