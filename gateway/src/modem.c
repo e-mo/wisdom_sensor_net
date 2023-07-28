@@ -74,11 +74,44 @@ Modem *modem_start(
 	// Wait until network is connected
 	// Blocks until connected since the modem
 	// is worth nothing without a network
-	modem_wait_for_network(modem);
+	modem_wait_for_cn(modem);
 
 	MODEM_STARTED = true;
 
 	return modem;
+}
+
+static bool modem_config(Modem *modem, char *apn) {
+
+	if (!modem_sim_ready(modem)) return false;
+
+	// CONFIGURING THE FOLLOWING:
+	// +CMEE=2  Verbose errors
+	// +CMGF=1  SMS message format: text
+	// +CMGD=4  Clear any existing SMS messages in buffer
+	// +CNMP=38 Preferred mode: LTE only
+	// +CMNB=1  Preferred network: CAT-M
+	// +CGDCONT Set APN
+	// +CNCFG   Request proper code from carrier network
+	uint8_t *command = 
+		"+CMEE=2;+CMGF=1;+CMGD=,4;+CNMP=38;+CMNB=1;+CGDCONT=1,\"IP\",\"";
+	CommandBuffer *cb = cb_reset(&(CommandBuffer) {0});
+	cb_at_prefix_set(cb);
+	cb_write(cb, command, strlen(command));
+	cb_write(cb, apn, strlen(apn));
+	cb_write(cb, "\"", 1);
+
+	modem_cb_write_blocking(modem, cb);
+
+	uint8_t read_buffer[RX_BUFFER_SIZE];
+	uint32_t received = modem_read_blocking(modem, read_buffer, RX_BUFFER_SIZE);
+
+	ResponseParser *rp = rp_reset(&(ResponseParser) {0});
+	rp_parse(rp, read_buffer, received);
+
+	if (!rp_contains_ok(rp)) return false;
+
+	return true;
 }
 
 void modem_write_blocking(
@@ -90,19 +123,16 @@ void modem_write_blocking(
 	uart_write_blocking(modem->uart, src, src_len);
 }
 
-// Sleep time between checking uart tx readiness
-// which effects the resolution of the timeout time
-// in exchange for less mashing on the CPU
 bool modem_write_within_us(
 		Modem *modem, 
 		const uint8_t *src, 
 		size_t src_len, 
-		uint64_t us
+		uint64_t timeout
 ) 
 {
 	if (src_len > COMMAND_BUFFER_MAX) return false;
 	
-	absolute_time_t timeout = make_timeout_time_us(us);
+	absolute_time_t timeout = make_timeout_time_us(timeout);
 
 	bool writable = false;
 	while (get_absolute_time() < timeout) {
@@ -126,26 +156,25 @@ void modem_cb_write_blocking(Modem modem[static 1], CommandBuffer cb[static 1]) 
 bool modem_cb_write_within_us(
 		Modem *modem, 
 		CommandBuffer *cb, 
-		uint64_t us
+		uint64_t timeout
 ) 
 {
 	return modem_write_within_us(
 			modem,	
 			cb_get_buffer(cb),
 			cb_length(cb),
-			us
+			timeout
 	);
 }
 
-#define READ_STOP_TIMEOUT_US (1000 * 10)
 uint32_t modem_read_within_us(
 		Modem *modem, 
 		uint8_t *dst, 
 		size_t dst_len, 
-		uint64_t us
+		uint64_t timeout
 ) 
 {
-	if (!uart_is_readable_within_us(modem->uart, us)) return 0;
+	if (!uart_is_readable_within_us(modem->uart, timeout)) return 0;
 
 	return modem_read_blocking(modem, dst, dst_len);
 }
@@ -206,40 +235,8 @@ bool modem_sim_ready(Modem modem[static 1]) {
 	return rp_contains(rp, "+CPIN: READY", 12, NULL);
 }
 
-static bool modem_config(Modem *modem, char *apn) {
 
-	if (!modem_sim_ready(modem)) return false;
-
-	// CONFIGURING THE FOLLOWING:
-	// +CMEE=2  Verbose errors
-	// +CMGF=1  SMS message format: text
-	// +CMGD=4  Clear any existing SMS messages in buffer
-	// +CNMP=38 Preferred mode: LTE only
-	// +CMNB=1  Preferred network: CAT-M
-	// +CGDCONT Set APN
-	// +CNCFG   Request proper code from carrier network
-	uint8_t *command = 
-		"+CMEE=2;+CMGF=1;+CMGD=,4;+CNMP=38;+CMNB=1;+CGDCONT=1,\"IP\",\"";
-	CommandBuffer *cb = cb_reset(&(CommandBuffer) {0});
-	cb_at_prefix_set(cb);
-	cb_write(cb, command, strlen(command));
-	cb_write(cb, apn, strlen(apn));
-	cb_write(cb, "\"", 1);
-
-	modem_cb_write_blocking(modem, cb);
-
-	uint8_t read_buffer[RX_BUFFER_SIZE];
-	uint32_t received = modem_read_blocking(modem, read_buffer, RX_BUFFER_SIZE);
-
-	ResponseParser *rp = rp_reset(&(ResponseParser) {0});
-	rp_parse(rp, read_buffer, received);
-
-	if (!rp_contains_ok(rp)) return false;
-
-	return true;
-}
-
-bool modem_cn_ready(Modem modem[static 1]) {
+bool modem_cn_available(Modem modem[static 1]) {
 
 	CommandBuffer *cb = cb_reset(&(CommandBuffer) {0});
 
@@ -274,7 +271,7 @@ bool modem_cn_is_active(Modem modem[static 1]) {
 }
 
 bool modem_cn_activate(Modem modem[static 1], bool activate) {
-	if (!modem_cn_ready(modem)) return false;
+	if (!modem_cn_available(modem)) return false;
 
 	// Avoid doing anything if we are already in the right state
 	if (activate && modem_cn_is_active(modem)) return true;
@@ -305,7 +302,6 @@ bool modem_cn_activate(Modem modem[static 1], bool activate) {
 }
 
 bool modem_ssl_enable(Modem modem[static 1], bool enable) {
-	if (!modem_cn_ready(modem)) return false;
 	if (!modem_cn_is_active(modem)) return false;
 
 	CommandBuffer *cb = cb_reset(&(CommandBuffer) {0});
@@ -318,9 +314,31 @@ bool modem_ssl_enable(Modem modem[static 1], bool enable) {
 	return modem_read_blocking_ok(modem);
 }
 
-void modem_wait_for_network(Modem modem[static 1]) {
-	while(!modem_cn_ready(modem)) sleep_ms(1000);
+void modem_wait_for_cn(Modem modem[static 1]) {
+	while(!modem_cn_available(modem)) sleep_ms(1000);
 }
+
+bool modem_tcp_open(
+		Modem modem[static 1], 
+		uint8_t url_len,  
+		uint8_t url[static url_len],
+		uint8_t port
+)
+{
+	if (!modem_cn_is_active(modem)) return false;
+
+	CommandBuffer *cb = cb_reset(&(CommandBuffer) {0});
+	cb_at_prefix_set(cb);
+	cb_write(cb, "+CAOPEN=0,0,\"TCP\",\"", 19); 
+	cb_write(cb, url, url_len);
+	cb_write(cb, "\",", 2);
+	uint8_t port_str[6];
+	sprintf(port_str, "%u", port);
+	cb_write(cb, port_str, strlen(port_str));
+
+	modem_cb_write_blocking(modem, cb);
+
+{
 
 bool modem_toggle_power(Modem *modem) {
 	gpio_put(modem->pin_power, 1);

@@ -11,6 +11,8 @@
 
 #define MODEM_PIN_PWR 14
 #define MODEM_APN "iot.1nce.net"
+#define SERVER_URL "34.27.138.203"
+#define SERVER_PORT 8086
 
 #define ever ;;
 
