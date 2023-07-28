@@ -38,7 +38,6 @@ Modem *modem_start(
 		uint pin_rx,
 		uint pin_power
 );
-static bool modem_config(Modem *modem, char *apn);
 
 // Writes to modem over UART
 //
@@ -151,19 +150,70 @@ bool modem_is_ready(Modem modem[static 1]);
 //         false otherwise
 bool modem_sim_ready(Modem modem[static 1]);
 
-// 
+// Tests if a network is available 
+//
+// modem - pointer to Modem state object
+//
+// return: true if a network is detected
+// 		   false otherwise
 bool modem_cn_available(Modem modem[static 1]);
+
+// Tests if a network connection is currently active
+//
+// modem - pointer to Modem state object
+//
+// return: true if a network connection is active
 bool modem_cn_is_active(Modem modem[static 1]);
+
+// Activate/deactivate network connection
+//
+// modem    - pointer to Modem state object
+// activate - true to activate
+// 			  false to deactivate
+//
+// return: true if command was successful
+//         false if there was an error
 bool modem_cn_activate(Modem modem[static 1], bool activate);
+
+// Enable/disable SSL
+//
+// modem  - pointer to Modem state object
+// enable - true to enable
+// 			false to disable
 bool modem_ssl_enable(Modem modem[static 1], bool enable);
+
+// Block until a network is available
+//
+// modem  - pointer to Modem state object
 void modem_wait_for_cn(Modem modem[static 1]);
 
+// Opens a TCP connection with a remote server
+//
+// modem   - pointer to Modem state object
+// url_len - length of remote server URL/IP address string
+// url     - remote server URL/IP string
+// port    - remote server port
+//
+// return: true if command was successful
+//         false if there was an error
 bool modem_tcp_open(
 		Modem modem[static 1], 
 		uint8_t url_len,  
 		uint8_t url[static url_len],
 		uint16_t port
-);
+); 
+
+// Close a TCP connection with a remote server
+//
+// modem   - pointer to Modem state object
+//
+// return: true if command was successful
+//         false if there was an error
+bool modem_tcp_close(Modem modem[static 1]);
+
+bool modem_tcp_is_open(Modem modem[static 1]);
+
+void modem_read_to_null(Modem modem[static 1]);
 
 bool modem_toggle_power(Modem *modem);
 

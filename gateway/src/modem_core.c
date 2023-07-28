@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "pico/time.h"
 
@@ -17,7 +18,6 @@
 #define ever ;;
 
 void modem_core_main(void) {
-	
 	printf("Starting modem... ");
 
 	Modem *modem = modem_start(
@@ -33,6 +33,12 @@ void modem_core_main(void) {
 	if (modem_cn_activate(modem, true)) printf("Network activated\n");
 
 	if (modem_ssl_enable(modem, false)) printf("SSL disabled\n");
+
+	if (modem_tcp_open(modem, strlen(SERVER_URL), SERVER_URL, SERVER_PORT)) {
+		printf("TCP connection opened\n");
+	}
+
+	if (modem_tcp_close(modem)) printf("TCP connection closed\n");
 
 	if (modem_cn_activate(modem, false)) printf("Network deactivated\n");
 

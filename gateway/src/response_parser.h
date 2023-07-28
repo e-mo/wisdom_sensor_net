@@ -2,7 +2,6 @@
 #define WISDOM_RESPONSE_PARSER_H
 
 #include <stdint.h>
-#include <string.h>
 
 #define RP_RESPONSE_NUM_MAX 20
 #define RP_RESPONSE_LEN_MAX 256
@@ -33,6 +32,10 @@ bool rp_contains(
 ); 
 
 bool rp_contains_ok(ResponseParser *rp);
+
+bool rp_contains_err(ResponseParser *rp);
+
+bool rp_contains_ok_or_err(ResponseParser rp[static 1]);
 
 bool rp_get(ResponseParser *rp, uint8_t index, uint8_t **dst, uint8_t *dst_len);
 

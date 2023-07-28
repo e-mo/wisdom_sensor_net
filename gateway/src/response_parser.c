@@ -108,6 +108,14 @@ bool rp_contains_ok(ResponseParser *rp) {
 	return rp_contains(rp, "OK", 2, NULL);
 }
 
+bool rp_contains_err(ResponseParser *rp) {
+	return rp_contains(rp, "+CME ERROR", 10, NULL);
+}
+
+bool rp_contains_ok_or_err(ResponseParser rp[static 1]) {
+	return rp_contains_ok(rp) || rp_contains_err(rp);
+}
+
 bool rp_get(ResponseParser *rp, uint8_t index, uint8_t **dst, uint8_t *dst_len) {
 	if (index >= rp->num_messages) return false;
 
