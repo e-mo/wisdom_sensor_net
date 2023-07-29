@@ -12,6 +12,7 @@
 #define MODEM_READ_BUFFER_SIZE 1024
 #define WRITE_TIMEOUT_RESOLUTION_US 100
 #define READ_STOP_TIMEOUT_US (1000 * 10)
+#define MODEM_TCP_SEND_MAX 1459
 
 // Modem state object
 typedef struct _modem {
@@ -212,6 +213,12 @@ bool modem_tcp_open(
 bool modem_tcp_close(Modem modem[static 1]);
 
 bool modem_tcp_is_open(Modem modem[static 1]);
+
+bool modem_tcp_send(
+		Modem modem[static 1],
+		size_t data_len,
+		uint8_t data[static data_len]
+);
 
 void modem_read_to_null(Modem modem[static 1]);
 

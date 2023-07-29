@@ -38,6 +38,11 @@ void modem_core_main(void) {
 		printf("TCP connection opened\n");
 	}
 
+	uint8_t *msg = "ALINA IS DUM\nAND SHE HAS A DUM BUM\n";
+	if (modem_tcp_send(modem, strlen(msg), msg)) printf("Data sent!\n");
+
+	sleep_ms(10000);
+
 	if (modem_tcp_close(modem)) printf("TCP connection closed\n");
 
 	if (modem_cn_activate(modem, false)) printf("Network deactivated\n");

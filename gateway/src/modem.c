@@ -335,8 +335,8 @@ bool modem_tcp_open(
 	cb_write(cb, "\",", 2);
 
 	uint8_t port_str[6];
-	sprintf(port_str, "%u", port);
-	cb_write(cb, port_str, strlen(port_str));
+	size_t str_len = sprintf(port_str, "%u", port);
+	cb_write(cb, port_str, str_len);
 
 	modem_cb_write_blocking(modem, cb);
 
@@ -362,10 +362,66 @@ bool modem_tcp_close(Modem modem[static 1]) {
 	CommandBuffer *cb = cb_reset(&(CommandBuffer) {0});
 	cb_at_prefix_set(cb);
 	cb_write(cb, "+CACLOSE=0", 10); 
-
+	
 	modem_cb_write_blocking(modem, cb);
 
 	return modem_read_blocking_ok(modem);
+}
+
+bool modem_tcp_send(
+		Modem modem[static 1],
+		size_t data_len,
+		uint8_t data[static data_len]
+)
+{
+	if (!modem_cn_is_active(modem)) return false;
+
+	CommandBuffer *cb = cb_reset(&(CommandBuffer) {0});
+	ResponseParser *rp = rp_reset(&(ResponseParser) {0});
+
+	size_t send_len;
+	uint8_t command[100];
+	uint8_t command_len;
+	uint8_t *p = data;
+	uint8_t read_buffer[RX_BUFFER_SIZE];
+	uint32_t received;
+
+	while(data_len) {
+		if (data_len > MODEM_TCP_SEND_MAX)
+			send_len = MODEM_TCP_SEND_MAX;
+		else
+			send_len = data_len;
+
+		data_len -= send_len;
+
+		command_len = sprintf(command, "+CASEND=0,%u", send_len);
+
+		cb_reset(cb);
+		cb_at_prefix_set(cb);
+		cb_write(cb, command, command_len);
+
+		modem_cb_write_blocking(modem, cb);
+
+		received = modem_read_blocking(modem, read_buffer, RX_BUFFER_SIZE);
+
+		rp_reset(rp);
+		rp_parse(rp, read_buffer, received);
+		
+		if (!rp_contains(rp, ">", 1, NULL)) return false;
+
+		modem_write_blocking(modem, p, send_len);
+
+		p += send_len;
+
+		received = modem_read_blocking(modem, read_buffer, RX_BUFFER_SIZE);
+
+		rp_reset(rp);
+		rp_parse(rp, read_buffer, received);
+
+		if (!rp_contains_ok(rp)) return false;
+	}
+
+	return true;
 }
 
 bool modem_tcp_is_open(Modem modem[static 1]) {
