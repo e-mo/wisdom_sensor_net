@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
@@ -94,7 +95,7 @@ static bool modem_config(Modem *modem, char *apn) {
 	// +CNMP=38 Preferred mode: LTE only
 	// +CMNB=1  Preferred network: CAT-M
 	// +CGDCONT Set APN
-	// +CNCFG   Request proper code from carrier network
+	// +CNCFG   Restr_puest proper code from carrier network
 	uint8_t *command = 
 		"+CMEE=2;+CMGF=1;+CMGD=,4;+CNMP=38;+CMNB=1;+CGDCONT=1,\"IP\",\"";
 	CommandBuffer *cb = cb_reset(&(CommandBuffer) {0});
@@ -187,10 +188,10 @@ uint32_t modem_read_blocking(Modem modem[static 1], uint8_t *dst, size_t dst_len
 
 	uint8_t received = 0;
 	for (uint8_t *p = dst; p - dst < dst_len; p++, received++) {
+		uart_read_blocking(modem->uart, p, 1);
+
 		if (!uart_is_readable_within_us(modem->uart, READ_STOP_TIMEOUT_US)) 
 			break;
-
-		uart_read_blocking(modem->uart, p, 1);
 	}
 
 	return received;
@@ -207,6 +208,12 @@ bool modem_read_blocking_ok(Modem modem[static 1]) {
 	return rp_contains_ok(rp);
 }
 
+bool modem_read_ok_within_us(Modem modem[static 1], uint64_t timeout) {
+	if (!uart_is_readable_within_us(modem->uart, timeout)) return false;
+
+	return modem_read_blocking_ok(modem);
+}
+
 bool modem_is_ready(Modem modem[static 1]) {
 	
 	CommandBuffer *cb = cb_reset(&(CommandBuffer) {0});
@@ -215,7 +222,7 @@ bool modem_is_ready(Modem modem[static 1]) {
 
 	modem_cb_write_blocking(modem, cb);
 
-    return modem_read_blocking_ok(modem);
+    return modem_read_ok_within_us(modem, 100 * 1000);
 }
 
 
@@ -424,6 +431,119 @@ bool modem_tcp_send(
 	return true;
 }
 
+size_t modem_tcp_recv(
+		Modem modem[static 1],
+		size_t dst_len,
+		uint8_t dst[dst_len]
+)
+{
+	if (!modem_cn_is_active(modem)) return 0;
+
+	CommandBuffer *cb = cb_reset(&(CommandBuffer) {0});
+	ResponseParser *rp = rp_reset(&(ResponseParser) {0});
+
+	size_t recv_len;
+	uint8_t command[100] = {0};
+	size_t command_len = 0;
+	uint8_t *dst_p = dst;
+	uint8_t read_buffer[RX_BUFFER_SIZE];
+	uint32_t received;
+	size_t total_received = 0;
+	uint8_t len_str[6];
+	uint8_t *str_p = NULL;
+	uint16_t data_len = 0;
+	uint8_t *r = NULL;
+	while (dst_len - total_received) {
+		if (dst_len - total_received > MODEM_TCP_SEND_MAX)
+			recv_len = MODEM_TCP_SEND_MAX;
+		else
+			recv_len = dst_len - total_received;
+
+		command_len = sprintf(command, "+CARECV=0,%u", recv_len);
+
+		cb_reset(cb);
+		cb_at_prefix_set(cb);
+		cb_write(cb, command, command_len);
+
+		modem_cb_write_blocking(modem, cb);
+		
+		received = modem_read_blocking(modem, read_buffer, RX_BUFFER_SIZE);
+
+		rp_reset(rp);
+		rp_parse(rp, read_buffer, received);
+
+		uint8_t index;
+		if (!rp_contains(rp, "+CARECV: ", 9, &index)) return 0; 
+	
+		uint8_t *response; 
+		uint32_t response_len;
+		if (!rp_get(rp, index, &response, &response_len)) return 0;
+
+		// No data
+		if (response[9] == '0') break;
+		
+		str_p = len_str;	
+		for (r = &response[9]; *r != ','; r++) {
+			*str_p++ = *r;	
+		}
+		*str_p = '\0';
+		// set r to first byte of data
+		r++;
+		data_len = atoi(len_str);
+
+		for (int i = 0; i < data_len; i++) {
+			if (total_received == dst_len) break;
+			*dst_p++ = *r++;
+			total_received++;
+		}
+	}
+
+	return total_received;
+}
+
+size_t modem_tcp_recv_within_us(
+		Modem modem[static 1],
+		size_t dst_len,
+		uint8_t dst[dst_len],
+		uint64_t timeout
+)
+{
+	absolute_time_t timeout_time = make_timeout_time_us(timeout);
+
+	uint32_t received = 0;
+	while (get_absolute_time() < timeout_time) {
+		received = modem_tcp_recv(modem, dst_len, dst);
+		if (received) break;
+
+		sleep_ms(50);
+	}
+		
+	return received;
+}
+
+bool modem_tcp_recv_ready_within_us(Modem modem[static 1], uint64_t timeout) {
+
+	ResponseParser *rp = &(ResponseParser) {0};
+
+	uint8_t read_buffer[RX_BUFFER_SIZE];
+	uint32_t received = 0;
+	bool success = false;
+	absolute_time_t timeout_time = make_timeout_time_us(timeout);
+	while (get_absolute_time() < timeout_time) {
+
+		received = modem_read_within_us(modem, read_buffer, RX_BUFFER_SIZE, timeout);
+		rp_reset(rp);
+		rp_parse(rp, read_buffer, received);
+
+		if (rp_contains(rp, "+CADATAIND: 0", 13, NULL)) {
+			success = true;
+			break;
+		}
+	}
+
+	return success;
+}
+
 bool modem_tcp_is_open(Modem modem[static 1]) {
 	CommandBuffer *cb = cb_reset(&(CommandBuffer) {0});
 	cb_at_prefix_set(cb);
@@ -440,7 +560,7 @@ bool modem_tcp_is_open(Modem modem[static 1]) {
 		rp_parse(rp, read_buffer, received);
 
 		if (rp_contains_ok_or_err(rp)) break;
-		sleep_ms(1000);
+		sleep_ms(50);
 	}
 
 	return rp_contains(rp, "+CASTATE: 0,1", 13, NULL);

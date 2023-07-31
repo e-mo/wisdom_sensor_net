@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #define RP_RESPONSE_NUM_MAX 20
-#define RP_RESPONSE_LEN_MAX 256
+#define RP_RESPONSE_LEN_MAX 2000
 
 typedef struct _response_parser {
 	uint8_t buffer[RP_RESPONSE_NUM_MAX][RP_RESPONSE_LEN_MAX + 1];
@@ -37,7 +37,7 @@ bool rp_contains_err(ResponseParser *rp);
 
 bool rp_contains_ok_or_err(ResponseParser rp[static 1]);
 
-bool rp_get(ResponseParser *rp, uint8_t index, uint8_t **dst, uint8_t *dst_len);
+bool rp_get(ResponseParser *rp, uint8_t index, uint8_t **dst, uint32_t *dst_len);
 
 bool rp_next(ResponseParser *rp, uint8_t **next, uint8_t *next_len);
 

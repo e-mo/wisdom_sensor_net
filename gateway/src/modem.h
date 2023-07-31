@@ -26,7 +26,7 @@ typedef struct _modem {
 //
 // apn		 - sim provider APN string
 // uart		 - UART hardware instance
-// pin_tx	 - UART tx gpio pin
+// pin_tx	 - UART tx gpio ping
 // pin_rx    - UART rx bpio pin
 // pin_power - modem power gpio pin
 //
@@ -93,6 +93,8 @@ uint32_t modem_read_blocking(Modem modem[static 1], uint8_t *dst, size_t dst_len
 //
 // return: true if read data contains OK message
 bool modem_read_blocking_ok(Modem modem[static 1]);
+
+bool modem_read_ok_within_us(Modem modem[static 1], uint64_t timeout);
 
 // Reads from modem into buffer
 //
@@ -212,13 +214,29 @@ bool modem_tcp_open(
 //         false if there was an error
 bool modem_tcp_close(Modem modem[static 1]);
 
-bool modem_tcp_is_open(Modem modem[static 1]);
 
 bool modem_tcp_send(
 		Modem modem[static 1],
 		size_t data_len,
 		uint8_t data[static data_len]
 );
+
+size_t modem_tcp_recv(
+		Modem modem[static 1],
+		size_t dst_len,
+		uint8_t dst[dst_len]
+);
+
+size_t modem_tcp_recv_within_us(
+		Modem modem[static 1],
+		size_t dst_len,
+		uint8_t dst[dst_len],
+		uint64_t timeout
+);
+
+bool modem_tcp_recv_ready_within_us(Modem modem[static 1], uint64_t timeout);
+
+bool modem_tcp_is_open(Modem modem[static 1]);
 
 void modem_read_to_null(Modem modem[static 1]);
 

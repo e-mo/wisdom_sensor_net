@@ -4,6 +4,8 @@
 
 #include "response_parser.h"
 
+#define RP_RESPONSE_LEN_MAX 2000
+
 ResponseParser *rp_create() {
 	ResponseParser *rp = malloc((sizeof *rp));
 	if (!rp) return NULL;
@@ -122,9 +124,8 @@ bool rp_contains_ok_or_err(ResponseParser rp[static 1]) {
 	return rp_contains_ok(rp) || rp_contains_err(rp);
 }
 
-bool rp_get(ResponseParser *rp, uint8_t index, uint8_t **dst, uint8_t *dst_len) {
+bool rp_get(ResponseParser *rp, uint8_t index, uint8_t **dst, uint32_t *dst_len) {
 	if (index >= rp->num_messages) return false;
-
 
 	*dst = &rp->buffer[index][0];
 	*dst_len = rp->length_array[index];

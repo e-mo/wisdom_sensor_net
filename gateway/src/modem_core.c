@@ -38,10 +38,15 @@ void modem_core_main(void) {
 		printf("TCP connection opened\n");
 	}
 
-	uint8_t *msg = "ALINA IS DUM\nAND SHE HAS A DUM BUM\n";
+	uint8_t *msg = "PING";
 	if (modem_tcp_send(modem, strlen(msg), msg)) printf("Data sent!\n");
 
-	sleep_ms(10000);
+	if (modem_tcp_recv_ready_within_us(modem, 1000 * 1000 * 10)) {
+		uint8_t dst[100] = {0};
+		size_t received = modem_tcp_recv(modem, 100, dst);
+		printf("received: %u\n", received);
+		printf("%.*s\n", received, dst);
+	}
 
 	if (modem_tcp_close(modem)) printf("TCP connection closed\n");
 
