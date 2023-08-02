@@ -575,3 +575,18 @@ bool modem_toggle_power(Modem *modem) {
 	sleep_ms(2500);
 	gpio_put(modem->pin_power, 0);
 }
+
+bool modem_power_down(Modem *modem) {
+	CommandBuffer *cb = cb_reset(&(CommandBuffer) {0});
+	cb_at_prefix_set(cb);
+	cb_write(cb, "+CPOWD=1", 8);
+
+	modem_cb_write_blocking(modem, cb);
+
+	ResponseParser *rp = rp_reset(&(ResponseParser) {0});
+	uint8_t read_buffer[RX_BUFFER_SIZE];
+	uint32_t received = modem_read_blocking(modem, read_buffer, RX_BUFFER_SIZE);
+	rp_parse(rp, read_buffer, received);
+
+	return rp_contains(rp, "NORMAL POWER DOWN", 17, NULL);
+}

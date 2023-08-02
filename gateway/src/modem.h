@@ -242,4 +242,6 @@ void modem_read_to_null(Modem modem[static 1]);
 
 bool modem_toggle_power(Modem *modem);
 
+bool modem_power_down(Modem *modem);
+
 #endif // WISDOM_MODEM_H
