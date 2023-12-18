@@ -18,56 +18,45 @@ if (PICO_SDK_VERSION_STRING VERSION_LESS "1.4.0")
   message(FATAL_ERROR "Raspberry Pi Pico SDK version 1.4.0 (or later) required. Your version is ${PICO_SDK_VERSION_STRING}")
 endif()
 
-project(pb_tx C CXX ASM)
+project(atshell_server C CXX ASM)
 
 # Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
 
-add_executable( 
-    pb_tx
-	pb_tx.c
-	../../rfm69/rfm69.c
-    ../../rudp/rudp.c
-	../../teros/teros_11.c
-	../../common/common_config.c
+add_executable(atshell_server 
+	atshell_server.c
+	modem.c
 )
 
-pico_enable_stdio_uart(pb_tx 0)
-pico_enable_stdio_usb(pb_tx 1)
+pico_enable_stdio_uart(atshell_server 0)
+pico_enable_stdio_usb(atshell_server 1)
 
 # Add the standard library to the build
-target_link_libraries(
-    pb_tx
-    pico_stdlib
+target_link_libraries(atshell_server
+	pico_stdlib
 )
 
 # Print error messages to UART
-target_compile_definitions(pb_tx PUBLIC ERROR_UART) 
+target_compile_definitions(atshell_server PUBLIC ERROR_UART) 
 # Flash error codes on LED
-target_compile_definitions(pb_tx PUBLIC ERROR_LED) 
+target_compile_definitions(atshell_server PUBLIC ERROR_LED) 
 # Log error messages (unimplemented)
-#target_compile_definitions(pb_tx PUBLIC ERROR_LOG) 
+#target_compile_definitions(atshell_server PUBLIC ERROR_LOG) 
 # Enable high power module range
-target_compile_definitions(pb_tx PUBLIC RFM69_HIGH_POWER)
+target_compile_definitions(atshell_server PUBLIC RFM69_HIGH_POWER)
 
 # Add the standard include files to the build
-target_include_directories(pb_tx PRIVATE
+target_include_directories(atshell_server PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}
   ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts or any other standard includes, if required
-  ../../rfm69/
-  ../../rudp/
-  ../../teros/
-  ../../common/
 )
 
 # Add any user requested libraries
-target_link_libraries(
-    pb_tx
-    hardware_spi
-    pico_rand
+target_link_libraries(atshell_server
+	hardware_uart
 )
 
-pico_add_extra_outputs(pb_tx)
+pico_add_extra_outputs(atshell_server)
 

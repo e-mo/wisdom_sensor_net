@@ -18,7 +18,7 @@ if (PICO_SDK_VERSION_STRING VERSION_LESS "1.4.0")
   message(FATAL_ERROR "Raspberry Pi Pico SDK version 1.4.0 (or later) required. Your version is ${PICO_SDK_VERSION_STRING}")
 endif()
 
-project(test_repeat C CXX ASM)
+project(repeater C CXX ASM)
 
 # Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
@@ -26,46 +26,46 @@ pico_sdk_init()
 # Add executable. Default name is the project name, version 0.1
 
 add_executable( 
-    test_repeat
-	test_repeat.c
+    repeater
+	repeater.c
 	../../rfm69/rfm69.c
-    ../../error/error_report.c
     ../../rudp/rudp.c
+	../../common/common_config.c
 )
 
-pico_enable_stdio_uart(test_repeat 0)
-pico_enable_stdio_usb(test_repeat 1)
+pico_enable_stdio_uart(repeater 0)
+pico_enable_stdio_usb(repeater 1)
 
 # Add the standard library to the build
 target_link_libraries(
-    test_repeat
+    repeater
     pico_stdlib
 )
 
 # Print error messages to UART
-target_compile_definitions(test_repeat PUBLIC ERROR_UART) 
+target_compile_definitions(repeater PUBLIC ERROR_UART) 
 # Flash error codes on LED
-target_compile_definitions(test_repeat PUBLIC ERROR_LED) 
+target_compile_definitions(repeater PUBLIC ERROR_LED) 
 # Log error messages (unimplemented)
-#target_compile_definitions(test_repeat PUBLIC ERROR_LOG) 
+#target_compile_definitions(repeater PUBLIC ERROR_LOG) 
 # Enable high power module range
-target_compile_definitions(test_repeat PUBLIC RFM69_HIGH_POWER)
+target_compile_definitions(repeater PUBLIC RFM69_HIGH_POWER)
 
 # Add the standard include files to the build
-target_include_directories(test_repeat PRIVATE
+target_include_directories(repeater PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}
   ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts or any other standard includes, if required
   ../../rfm69/
-  ../../error/
   ../../rudp/
+  ../../common/
 )
 
 # Add any user requested libraries
 target_link_libraries(
-    test_repeat
+    repeater
     hardware_spi
     pico_rand
 )
 
-pico_add_extra_outputs(test_repeat)
+pico_add_extra_outputs(repeater)
 

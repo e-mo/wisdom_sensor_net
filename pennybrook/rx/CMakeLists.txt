@@ -22,15 +22,18 @@ project(pb_rx C CXX ASM)
 # Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
 
+add_subdirectory(../../no-OS-FatFS-SD-SPI-RPi-Pico/FatFs_SPI build)
+
 # Add executable. Default name is the project name, version 0.1
 
 add_executable( 
     pb_rx
     pb_rx.c
+    hw_config.c
     ../../rfm69/rfm69.c
-    ../../error/error_report.c
     ../../pico-ssd1306/ssd1306.c
     ../../rudp/rudp.c
+	../../common/common_config.c
 )
 
 pico_enable_stdio_uart(pb_rx 0)
@@ -56,9 +59,9 @@ target_include_directories(pb_rx PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}
     ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts or any other standard includes, if required
     ../../rfm69/
-    ../../error/
     ../../rudp/
     ../../pico-ssd1306/
+	../../common/
 )
 
 # Add any user requested libraries
@@ -66,7 +69,9 @@ target_link_libraries(
     pb_rx
     hardware_spi
     hardware_i2c
+    hardware_dma
     pico_rand
+    FatFs_SPI
 )
 
 pico_add_extra_outputs(pb_rx)

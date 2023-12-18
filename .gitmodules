@@ -2,6 +2,15 @@
 	path = pico-ssd1306
 	url = git@github.com:daschr/pico-ssd1306.git
 	url = https://github.com/daschr/pico-ssd1306.git
+[submodule "rfm69"]
+	path = rfm69
+	url = git@github.com:e-mo/rfm69_pico.git
+[submodule "server"]
+	path = server
+	url = git@github.com:e-mo/wisdom_server.git
 [submodule "no-OS-FatFS-SD-SPI-RPi-Pico"]
 	path = no-OS-FatFS-SD-SPI-RPi-Pico
 	url = https://github.com/carlk3/no-OS-FatFS-SD-SPI-RPi-Pico.git
+[submodule "ds3231"]
+	path = ds3231
+	url = git@github.com:e-mo/ds3231_pico.git

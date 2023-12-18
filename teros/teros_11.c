@@ -15,7 +15,8 @@ teros_return teros_init(
 		int uart_rx_pin,
 		int pwr_pin,
 		teros_substrate substrate_type
-		) {
+) 
+{
 
 	*_teros = malloc(sizeof(teros));
 

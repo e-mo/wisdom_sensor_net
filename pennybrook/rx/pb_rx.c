@@ -1,13 +1,22 @@
 #include <stdio.h>
+#include <string.h>
+
 #include "pico/stdlib.h"
 #include "pico/binary_info.h"
 #include "hardware/spi.h"
 #include "hardware/i2c.h"
+#include "hardware/dma.h"
+#include "hardware/timer.h"
+
 #include "ssd1306.h"
 
 #include "rfm69.h" 
 #include "rudp.h"
-#include "error_report.h"
+#include "common_config.h"
+
+#include "rtc.h"
+#include "f_util.h"
+#include "hw_config.h"
 
 #define ever ;; 
 
@@ -36,15 +45,47 @@ void set_bi() {
 }
 
 int main() {
+
+    absolute_time_t time_since_boot;
+    uint32_t ms_since_start;
+    char time_string[16];
+    char str[128];
+
     // Set Picotool binary info
     set_bi();
     stdio_init_all(); // To be able to use printf
+    time_init();
+
+    sd_card_t *sd = sd_get_by_num(0);
+    FIL fil;
+    FRESULT fr;
+    UINT bw;
+    BYTE work[FF_MAX_SS];
+    const char* const filename = "test_log_file.csv";
 
     spi_init(SPI_PORT, 1000*1000); // Defaults to master mode, which we want
 
-    Rfm69 *rfm = rfm69_create();
+    fr = f_mount(&sd->fatfs, sd->pcName, 1);
+    if(fr != FR_OK) {
+	    printf("error mounting sd card!\n");
+	    printf("%s\n", FRESULT_str(fr));
+    }
+
+    fr = f_open(&fil, filename, FA_OPEN_APPEND | FA_WRITE);
+    if(fr != FR_OK) {
+	    printf("error opening file\n");
+	    printf("%s\n", FRESULT_str(fr));
+    }
+
+    time_since_boot = get_absolute_time();
+    ms_since_start = to_ms_since_boot(time_since_boot);
+    f_printf(&fil, "\n#Starting log; uptime:  %dms\n", ms_since_start);
+
+    f_close(&fil);
+    
+    Rfm69 rfm = (Rfm69) {0};
     rfm69_rudp_init(
-        rfm,
+        &rfm,
         SPI_PORT,
         PIN_MISO,
         PIN_MOSI,
@@ -58,21 +99,11 @@ int main() {
     gpio_init(PICO_DEFAULT_LED_PIN);
     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
     
-    // 250kb/s baud rate
-    rfm69_bitrate_set(rfm, RFM69_MODEM_BITRATE_57_6);
-    // ~2 beta 
-    rfm69_fdev_set(rfm, 70000);
-    // 915MHz 
-    rfm69_frequency_set(rfm, 915);
-    // rfm69_modulation_shaping_set(rfm, RFM69_FSK_GAUSSIAN_0_3);
-    // RXBW >= fdev + br/2
-    rfm69_rxbw_set(rfm, RFM69_RXBW_MANTISSA_20, 2);
-    rfm69_dcfree_set(rfm, RFM69_DCFREE_WHITENING);
-    // Transmit starts with any data in the FIFO
+	common_radio_config(&rfm);
 
-    rfm69_node_address_set(rfm, 0x02); 
+    rfm69_node_address_set(&rfm, 0x02); 
 
-    rfm69_power_level_set(rfm, 10);
+    rfm69_power_level_set(&rfm, 20);
     TrxReport report;
     bool success;
 	float *teros_buf;
@@ -85,13 +116,13 @@ int main() {
         printf("Receiving...\n");
 
         success = rfm69_rudp_receive(
-                rfm,
+                &rfm,
                 &report,
                 &address,
                 payload,
                 &size,
                 12000,
-                30000
+                2000
         );
 
         printf("Report\n");
@@ -131,12 +162,18 @@ int main() {
 			printf("vwc: %.6f\n", teros_buf[0]);
 			printf("temp: %.6f\n", teros_buf[1]);
 			printf("\n");
-        }
 
-		//sleep_ms(60000);
+			f_open(&fil, filename, FA_OPEN_APPEND | FA_WRITE);
+			time_since_boot = get_absolute_time();
+			ms_since_start = to_ms_since_boot(time_since_boot);
+			//format: TIMESTAMP, VWC, TEMP
+			f_printf(&fil, "%d, %.6f, %.6f\n", ms_since_start, teros_buf[0], teros_buf[1]);
+			f_close(&fil);
+
+			
+			sleep_ms(1000);
+        }
     }
     
     return 0;
 }
-
-
