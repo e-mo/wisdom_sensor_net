@@ -3,6 +3,8 @@
 
 #include "rfm69.h"
 
+typedef struct rudp_context_ rudp_context_t;
+
 typedef enum _RUDP_RETURN {
     RUDP_OK,
     RUDP_OK_UNCONFIRMED,
@@ -11,10 +13,15 @@ typedef enum _RUDP_RETURN {
     RUDP_PAYLOAD_OVERFLOW
 } RUDP_RETURN;
 
+typedef enum RUDP_BAUD {
+	RUDP_BAUD_57_6,
+	RUDP_BAUD_NUM
+} rudp_baud_t;
+
 typedef struct _trx_report_t {
     uint payload_size;
 	uint bytes_sent;
-	uint bytes_received;
+	uint bytes_received; 
 	uint data_packets_sent;
 	uint data_packets_received;
 	uint data_packets_retransmitted;
@@ -54,15 +61,6 @@ typedef struct _rx_report_t {
     uint8_t tx_address;
 } RxReport;
 
-// I might eliminate this. I don't think it is really needed.
-#define TX_INTER_PACKET_DELAY 0 
-
-// The constant amount of time it takes to receive one data
-
-#define _RX_DATA_TIMEOUT 12000
-#define RX_DATA_TIMEOUT (TX_INTER_PACKET_DELAY + _RX_DATA_TIMEOUT)
-#define TX_RACK_TIMEOUT 300
-
 enum HEADER {
     HEADER_PACKET_SIZE,
     HEADER_RX_ADDRESS,
@@ -71,8 +69,8 @@ enum HEADER {
     HEADER_SEQ_NUMBER,
     HEADER_SIZE // Keep this at end
 };
-#define PAYLOAD_BEGIN (HEADER_SIZE)
 
+#define PAYLOAD_BEGIN (HEADER_SIZE)
 #define HEADER_EFFECTIVE_SIZE (HEADER_SIZE - 1) // HEADER_SIZE - length byte (it isn't part of its own count)
 #define PAYLOAD_MAX (65 - HEADER_EFFECTIVE_SIZE)
 #define SEQ_NUM_RAND_LIMIT 25 
@@ -87,61 +85,27 @@ enum FLAG {
     HEADER_FLAG_OK   = 0x08,
 };
 
+rudp_context_t *rfm69_rudp_create(void);
+
 // This is a convenience function which initializes and 
 // configures Rfm69 module to work properly with
 // RUDP protocol transmit and receive functions.
 //
 // This can be used in place of rfm69_init since
 // rfm69_init is called internally. 
-bool rfm69_rudp_init(
-    Rfm69 *rfm,
-    spi_inst_t *spi,
-    uint pin_miso,
-    uint pin_mosi,
-    uint pin_cs,
-    uint pin_sck,
-    uint pin_rst,
-    uint pin_irq_0,
-    uint pin_irq_1
-);
+bool rfm69_rudp_init(rudp_context_t *context, Rfm69 *rfm);
 
-// rfm          - pointer to Rfm69 struct
-// report       - returns witn info in transmission. Can be NULL
-// address      - receiver node address
-// payload      - data payload to be sent
-// payload_size - length of data payload in bytes
-// timeout      - time in ms until retrying RBT or RACK request
-// retries      - number of retries until timeout
-bool rfm69_rudp_transmit(
-        Rfm69 *rfm, 
-        TrxReport *report,
-        uint8_t address,
-        uint8_t *payload, 
-        uint payload_size, 
-        uint timeout,
-        uint8_t retries
-);
+bool rfm69_rudp_baud_set(rudp_context_t *context, rudp_baud_t baud);
+bool rfm69_rudp_tx_timeout_set(rudp_context_t *context, uint timeout);
+int rfm69_rudp_tx_timeout_get(const rudp_context_t *context);
+bool rfm69_rudp_rx_timeout_set(rudp_context_t *context, uint timeout);
+int rfm69_rudp_rx_timeout_get(const rudp_context_t *context);
+
+bool rfm69_rudp_transmit(rudp_context_t *context, uint8_t address);
 
 static inline void _rudp_block_until_packet_sent(Rfm69 *rfm);
 
-// rfm                - pointer to Rfm69 struct
-// report       - returns witn info in transmission. Can be NULL
-// address            - returns with TX address
-// payload            - void buffer to recieve payload
-// payload_size       - should be passed containing length of payload buffer 
-// 						(to prevent overflow) and returns containing number 
-// 						of bytes actually received
-// per_packet_timeout - time in us to delay for each expected packet in data loop
-// timeout            - total time in ms until receiver times out
-bool rfm69_rudp_receive(
-        Rfm69 *rfm, 
-        TrxReport *report,
-		uint8_t *address,
-        uint8_t *payload, 
-        uint *payload_size,
-        uint per_packet_timeout,
-        uint timeout
-);
+bool rfm69_rudp_receive(rudp_context_t *context);
 
 // Internal ack rx logic
 static RUDP_RETURN _rudp_rx_ack(

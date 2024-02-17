@@ -188,6 +188,7 @@ uint32_t modem_read_blocking(Modem modem[static 1], uint8_t *dst, size_t dst_len
 
 	uint8_t received = 0;
 	for (uint8_t *p = dst; p - dst < dst_len; p++, received++) {
+		printf("reading blocking\n");
 		uart_read_blocking(modem->uart, p, 1);
 
 		if (!uart_is_readable_within_us(modem->uart, READ_STOP_TIMEOUT_US)) 
@@ -381,7 +382,7 @@ bool modem_tcp_send(
 		uint8_t data[static data_len]
 )
 {
-	if (!modem_cn_is_active(modem)) return false;
+	//if (!modem_cn_is_active(modem)) return false;
 
 	CommandBuffer *cb = cb_reset(&(CommandBuffer) {0});
 	ResponseParser *rp = rp_reset(&(ResponseParser) {0});
@@ -407,9 +408,13 @@ bool modem_tcp_send(
 		cb_at_prefix_set(cb);
 		cb_write(cb, command, command_len);
 
+		printf("writing\n");
 		modem_cb_write_blocking(modem, cb);
+		printf("writing done\n");
 
+		printf("reading\n");
 		received = modem_read_blocking(modem, read_buffer, RX_BUFFER_SIZE);
+		printf("reading done\n");
 
 		rp_reset(rp);
 		rp_parse(rp, read_buffer, received);
