@@ -13,6 +13,7 @@ typedef enum _RUDP_RETURN {
     RUDP_PAYLOAD_OVERFLOW
 } RUDP_RETURN;
 
+// BAUD rates available to user of library
 typedef enum RUDP_BAUD {
 	RUDP_BAUD_57_6,
 	RUDP_BAUD_NUM
@@ -35,31 +36,6 @@ typedef struct _trx_report_t {
 	uint8_t tx_address;
 	uint8_t rx_address;
 } TrxReport;
-
-typedef struct _tx_report_t {
-    uint payload_size;
-    uint packets_sent;
-    uint rbt_retries;
-    uint retransmissions; 
-    uint racks_received;
-    uint rack_requests;
-    RUDP_RETURN return_status;
-    uint8_t tx_address;
-    uint8_t rx_address;
-    uint8_t num_packets;
-} TxReport;
-
-typedef struct _rx_report_t {
-    uint bytes_expected;
-    uint bytes_received;
-    uint packets_received;
-    uint acks_sent;
-    uint racks_sent;
-    uint rack_requests;
-    RUDP_RETURN return_status;
-    uint8_t rx_address;
-    uint8_t tx_address;
-} RxReport;
 
 enum HEADER {
     HEADER_PACKET_SIZE,
@@ -91,16 +67,21 @@ rudp_context_t *rfm69_rudp_create(void);
 // configures Rfm69 module to work properly with
 // RUDP protocol transmit and receive functions.
 //
-// This can be used in place of rfm69_init since
-// rfm69_init is called internally. 
+// Rfm69 should be initialized before being passed to RUDP
 bool rfm69_rudp_init(rudp_context_t *context, Rfm69 *rfm);
 
+// Set transmission BAUD rate
+// RX and TX must have same BAUD settings
 bool rfm69_rudp_baud_set(rudp_context_t *context, rudp_baud_t baud);
+
+// RX/TX timeout settings
+// TODO: Add documentation on how each timeout setting works
 bool rfm69_rudp_tx_timeout_set(rudp_context_t *context, uint timeout);
 int rfm69_rudp_tx_timeout_get(const rudp_context_t *context);
 bool rfm69_rudp_rx_timeout_set(rudp_context_t *context, uint timeout);
 int rfm69_rudp_rx_timeout_get(const rudp_context_t *context);
 
+// Attempts to send payload to provided radio address
 bool rfm69_rudp_transmit(rudp_context_t *context, uint8_t address);
 
 static inline void _rudp_block_until_packet_sent(Rfm69 *rfm);

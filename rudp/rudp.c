@@ -3,6 +3,9 @@
 #include "pico/rand.h"
 #include "string.h"
 
+// Context struct that handles internal data state of RUDP protocol
+// and Rfm69 hardware
+
 struct rudp_context_ {
 	Rfm69 *rfm;
 	TrxReport *report;
@@ -16,6 +19,11 @@ struct rudp_context_ {
 	rudp_baud_t baud;
 };
 
+
+// BAUD SETTINGS
+// These delay settings correspond with a BAUD rate set by user 
+// Only one BAUD available currently: 57.6 KB/s
+
 typedef struct baud_settings {
 	uint fdev;
 	RFM69_MODEM_BITRATE bitrate;	
@@ -25,6 +33,9 @@ typedef struct baud_settings {
 const baud_settings_t BAUD_SETTINGS_LOOKUP[RUDP_BAUD_NUM] = {
 	{70000, RFM69_MODEM_BITRATE_57_6, 12000} // RUDP_BAUD_57_6, ~2 beta, 12000 us PPD
 };
+
+
+// FUNCS
 
 rudp_context_t *rfm69_rudp_create() {
 	return malloc(sizeof (rudp_context_t));
@@ -53,8 +64,9 @@ bool rfm69_rudp_init(rudp_context_t *context, Rfm69 *rfm) {
 	if (!rfm69_rudp_baud_set(context, RUDP_BAUD_57_6)) return false;
 
 	// Some Rfm69 sane default settings
-	// Only essential things not set are power level, address, and frequency
-	// and should be configured directly though radio
+	// Address and power level should be set directly through radio
+	// TODO: Add power level negotiation to protocol for first
+	// communication with external radio
     rfm69_rxbw_set(rfm, RFM69_RXBW_MANTISSA_20, 2);
     rfm69_dcfree_set(rfm, RFM69_DCFREE_WHITENING);
 	rfm69_mode_set(rfm, RFM69_OP_MODE_SLEEP);
