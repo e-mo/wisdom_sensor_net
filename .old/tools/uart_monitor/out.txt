@@ -1,0 +1,10 @@
+)0[0m(B)0[?1h=[H[J[0m[7m[57;1H[K[34h[?25h[?25l                                                                                             [34h[?25h[34h[?25h[?25lCTRL-A Z for help | 115200 8N1 | NOR | Minicom 2.8 | VT102 | Offline | ttyACM0               [34h[?25h[1;1H
+[0mWelcome to minicom 2.8
+
+OPTIONS: I18n 
+Port /dev/ttyACM0, 17:47:00
+
+Press CTRL-A Z for help on special keys
+
+Test
+[8;37H[?25l+----------------------+[9;37H|    Leave Minicom?    |[10;37H|               No     |[11;37H+----------------------+[10;58H[?25l[10;40H[0m[7m   Yes  [34h[?25h[8;1H[0m                                                            [9;1HTest                                                        [10;1H                                                            [11;1H                                                            [10;1H[34h[?25h[34h[?25h[H[J[34h[?25h[?1l>c[?1000l[?25h
