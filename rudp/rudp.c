@@ -1,3 +1,6 @@
+// rudp.c
+// maintainer: Evan Morse
+//			   emorse8686@gmail.com
 #include <stdlib.h>
 #include "rudp.h"
 #include "pico/rand.h"
