@@ -15,7 +15,7 @@ int main() {
 		// Wait for USB serial connection
 		while (!tud_cdc_connected()) { sleep_ms(100); };
 
-		printf("%i: empty loop...\n", i);
+		printf("%i: %i\n", i, RFM69_PIN_CS);
 		sleep_ms(1000);
 	}
     
