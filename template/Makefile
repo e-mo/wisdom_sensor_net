@@ -1,7 +1,10 @@
+# Maintained by:
+#	Evan Morse
+#   emorse8686@gmail.com
+
 MAKEFLAGS += --no-print-directory
 SHELL := /bin/bash
 
-# Pull in target from cmake config file
 target = ${shell cat wisdom_config.cmake | grep "set(target" | sed -E 's/.*"(.*)".*/\1/'}
 uf2 = build/$(target).uf2
 
