@@ -20,11 +20,9 @@ if (PICO_SDK_VERSION_STRING VERSION_LESS "1.4.0")
 endif()
 
 include(wisdom_import.cmake)
-include(../wisdom_config.cmake)
+include(wisdom_config.cmake)
 
 # step back one level on includes and sources because we are hiding CMakeLists file
-list(TRANSFORM sources PREPEND "../")
-list(TRANSFORM includes PREPEND "../")
 
 project(${target} C CXX ASM)
 

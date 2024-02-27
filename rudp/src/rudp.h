@@ -4,7 +4,7 @@
 #ifndef RFM69_RUDP_H
 #define RFM69_RUDP_H
 
-#include "rfm69.h"
+#include "rfm69_pico.h"
 
 typedef struct rudp_context_ rudp_context_t;
 

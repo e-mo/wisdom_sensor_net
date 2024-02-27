@@ -1,30 +1,25 @@
-# This should match target in local Makefile
 set(target "rudp_test")
 
-# 
-set(sources
+# Source files
+list(APPEND sources
 	src/rudp_test.c
 	src/rudp.c
 )
 
 # Include file locations
-set(includes
-	src/rudp.h
+list(APPEND includes
+	src
 )
 
 # pico_stdlib included by default
-set(libraries
-	# pico libs
+list(APPEND libraries
 	hardware_spi
 	hardware_uart
 	pico_multicore
 	pico_rand
-
-	# our libs
-	rfm69_pico
 )
 
-set(definitions
+list(APPEND definitions
 	# Enables high power routines for RFM69
 	RFM69_HIGH_POWER
 

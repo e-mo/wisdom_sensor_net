@@ -19,11 +19,10 @@ if (PICO_SDK_VERSION_STRING VERSION_LESS "1.4.0")
   message(FATAL_ERROR "Raspberry Pi Pico SDK version 1.4.0 (or later) required. Your version is ${PICO_SDK_VERSION_STRING}")
 endif()
 
-include(../wisdom_config.cmake)
+include(wisdom_import.cmake)
+include(wisdom_config.cmake)
 
 # step back one level on includes and sources because we are hiding CMakeLists file
-list(TRANSFORM sources PREPEND "../")
-list(TRANSFORM includes PREPEND "../")
 
 project(${target} C CXX ASM)
 
@@ -38,6 +37,7 @@ pico_enable_stdio_uart(${target} ${stdio_uart_enable})
 pico_enable_stdio_usb(${target} ${stdio_usb_enable})
 
 # Add the standard library to the build
+target_link_libraries(${target} pico_stdlib)
 target_link_libraries(${target} ${libraries})
 
 target_compile_definitions(${target} PUBLIC ${definitions})

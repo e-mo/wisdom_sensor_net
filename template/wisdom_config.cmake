@@ -1,33 +1,36 @@
-# wisdom_config.cmake
-# Maintained by:
-#	Evan Morse
-#   emorse8686@gmail.com
-
-set(target "build_target")
+set(target "rudp_test")
 
 # Source files
-set(sources
+list(APPEND sources
 
 )
 
-# Include directories (for .h files)
-set(includes
+# Include file locations
+list(APPEND includes
 
 )
 
-# These can be left alone for the most part
-set(libraries
-		pico_stdlib
-		hardware_spi
-		hardware_uart
-		pico_multicore
-		pico_rand
+# pico_stdlib included by default
+list(APPEND libraries
+	hardware_spi
+	hardware_uart
+	pico_multicore
+	pico_rand
 )
 
-# HIGH_POWER def should be left
-# unless RFM69 radio is not used
-set(definitions
-		RFM69_HIGH_POWER
+list(APPEND definitions
+
+	## RFM69
+
+	# Enables high power routines for RFM69
+	#RFM69_HIGH_POWER
+
+	# RFM69 pin definitions
+	#RFM69_PIN_MISO=16	
+	#RFM69_PIN_MOSI=19
+	#RFM69_PIN_CS=17
+	#RFM69_PIN_SCK=18
+	#RFM69_PIN_RST=20
 )
 
 # Only one of these should be enabled
