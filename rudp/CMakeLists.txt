@@ -19,15 +19,12 @@ if (PICO_SDK_VERSION_STRING VERSION_LESS "1.4.0")
   message(FATAL_ERROR "Raspberry Pi Pico SDK version 1.4.0 (or later) required. Your version is ${PICO_SDK_VERSION_STRING}")
 endif()
 
-include(wisdom_import.cmake)
-include(wisdom_config.cmake)
-
-# step back one level on includes and sources because we are hiding CMakeLists file
-
-project(${target} C CXX ASM)
-
 # Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
+
+include(wisdom_import.cmake)
+
+project(${target} C CXX ASM)
 
 # Add executable. Default name is the project name, version 0.1
 

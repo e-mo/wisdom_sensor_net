@@ -17,6 +17,8 @@ list(APPEND libraries
 	hardware_uart
 	pico_multicore
 	pico_rand
+
+	rfm69_pico
 )
 
 list(APPEND definitions

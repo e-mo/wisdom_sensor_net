@@ -1,8 +1,14 @@
+# wisdom_config.cmake
+# Maintainer:
+#	Evan Morse
+#   emorse8686@gmail.com
+
+# DO NOT MODIFY THIS LINE
 set(target "rudp_test")
 
 # Source files
 list(APPEND sources
-
+	
 )
 
 # Include file locations
@@ -12,16 +18,17 @@ list(APPEND includes
 
 # pico_stdlib included by default
 list(APPEND libraries
-	hardware_spi
-	hardware_uart
-	pico_multicore
-	pico_rand
+	#hardware_spi
+	#hardware_i2c
+	#hardware_uart
+	#pico_multicore
+	#pico_rand
+
+	# Our rfm69 library
+	#rfm69_pico
 )
 
 list(APPEND definitions
-
-	## RFM69
-
 	# Enables high power routines for RFM69
 	#RFM69_HIGH_POWER
 
