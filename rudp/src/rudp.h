@@ -71,7 +71,7 @@ rudp_context_t *rfm69_rudp_create(void);
 // RUDP protocol transmit and receive functions.
 //
 // Rfm69 should be initialized before being passed to RUDP
-bool rfm69_rudp_init(rudp_context_t *context, Rfm69 *rfm);
+bool rfm69_rudp_init(rudp_context_t *context, rfm69_context_t *rfm);
 
 // Set transmission BAUD rate
 // RX and TX must have same BAUD settings
@@ -87,26 +87,26 @@ int rfm69_rudp_rx_timeout_get(const rudp_context_t *context);
 // Attempts to send payload to provided radio address
 bool rfm69_rudp_transmit(rudp_context_t *context, uint8_t address);
 
-static inline void _rudp_block_until_packet_sent(Rfm69 *rfm);
+static inline void _rudp_block_until_packet_sent(rfm69_context_t *rfm);
 
 bool rfm69_rudp_receive(rudp_context_t *context);
 
 // Internal ack rx logic
 static RUDP_RETURN _rudp_rx_ack(
-        Rfm69 *rfm,
+        rfm69_context_t *rfm,
         uint8_t seq_num,
         uint timeout
 );
 
 // Internal rack rx logic
 static RUDP_RETURN _rudp_rx_rack(
-        Rfm69 *rfm,
+        rfm69_context_t *rfm,
         uint8_t seq_num,
         uint timeout,
         uint8_t *header
 );
 
 // Internal polling block on payload ready flag
-static inline bool _rudp_is_payload_ready(Rfm69 *rfm);
+static inline bool _rudp_is_payload_ready(rfm69_context_t *rfm);
 
 #endif // RFM60_RUDP_H

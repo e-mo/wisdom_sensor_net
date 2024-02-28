@@ -10,9 +10,12 @@
 int main() {
     stdio_init_all(); // To be able to use printf
 
+	bool success = false;
 
-	Rfm69 *rfm = rfm69_create();
-	Rfm69Config config = {
+	rfm69_context_t *rfm = rfm69_create();
+	if (rfm == NULL) goto LOOP_BEGIN;
+
+	rfm69_config_t config = {
 		.spi      = spi0,
 		.pin_miso = RFM69_PIN_MISO,
 		.pin_cs   = RFM69_PIN_CS,
@@ -20,14 +23,24 @@ int main() {
 		.pin_mosi = RFM69_PIN_MOSI,
 	    .pin_rst  = RFM69_PIN_RST
 	};
+	if (rfm69_init(rfm, &config) == false)
+		goto LOOP_BEGIN;
 
-	bool success = rfm69_init(rfm, &config);
-	
+	rudp_context_t *rudp = rfm69_rudp_create();
+	if (rudp == NULL) goto LOOP_BEGIN;
+
+	if (rfm69_rudp_init(rudp, rfm) == false)
+		goto LOOP_BEGIN;
+
+	success = true;	
+LOOP_BEGIN: 
+
 	for(int i = 1;; i++) {
 		// Wait for USB serial connection
 		while (!tud_cdc_connected()) { sleep_ms(100); };
 
-		printf("%i: %i\n", i, success);
+		printf("%i: success=%s\n", i, success ? "true" : "false");
+
 		sleep_ms(1000);
 	}
     

@@ -10,7 +10,7 @@
 // and Rfm69 hardware
 
 struct rudp_context_ {
-	Rfm69 *rfm;
+	rfm69_context_t *rfm;
 	TrxReport *report;
 	uint8_t *buffer;
 	uint buffer_size;
@@ -44,7 +44,7 @@ rudp_context_t *rfm69_rudp_create() {
 	return malloc(sizeof (rudp_context_t));
 }
 
-bool rfm69_rudp_init(rudp_context_t *context, Rfm69 *rfm) {
+bool rfm69_rudp_init(rudp_context_t *context, rfm69_context_t *rfm) {
 	if (context == NULL) return false;
 	if (rfm == NULL) return false;
 
@@ -149,7 +149,7 @@ TrxReport * rfm69_rudp_report_get(rudp_context_t *context) {
 bool rfm69_rudp_transmit(rudp_context_t *context, uint8_t address) {
 
 	// Set locals with context
-	Rfm69 *rfm = context->rfm;
+	rfm69_context_t *rfm = context->rfm;
 	TrxReport *report = context->report;
 	uint8_t *payload = context->payload;
 	uint payload_size = context->payload_size;
@@ -374,7 +374,7 @@ CLEANUP:
 
 bool rfm69_rudp_receive(rudp_context_t *context) {
 	// Local variables to avoid refactoring
-	Rfm69 *rfm = context->rfm; 
+	rfm69_context_t *rfm = context->rfm; 
 	TrxReport *report = context->report;
 	uint8_t *payload = context->buffer;
     uint payload_buffer_size = context->buffer_size;
@@ -651,7 +651,7 @@ CLEANUP:
 }
 
 static RUDP_RETURN _rudp_rx_rack(
-        Rfm69 *rfm,
+        rfm69_context_t *rfm,
         uint8_t seq_num,
         uint timeout,
         uint8_t *packet
@@ -701,7 +701,7 @@ static RUDP_RETURN _rudp_rx_rack(
 }
 
 static RUDP_RETURN _rudp_rx_ack(
-        Rfm69 *rfm,
+        rfm69_context_t *rfm,
         uint8_t seq_num,
         uint timeout
 )
@@ -743,13 +743,13 @@ static RUDP_RETURN _rudp_rx_ack(
     return rval;
 }
 
-static inline bool _rudp_is_payload_ready(Rfm69 *rfm) {
+static inline bool _rudp_is_payload_ready(rfm69_context_t *rfm) {
     bool state;
     rfm69_irq2_flag_state(rfm, RFM69_IRQ2_FLAG_PAYLOAD_READY, &state);
     return state;
 }
 
-static inline void _rudp_block_until_packet_sent(Rfm69 *rfm) {
+static inline void _rudp_block_until_packet_sent(rfm69_context_t *rfm) {
     bool state = false;
     while (!state) {
         rfm69_irq2_flag_state(rfm, RFM69_IRQ2_FLAG_PACKET_SENT, &state);
