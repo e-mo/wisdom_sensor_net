@@ -3,8 +3,9 @@
 #	Evan Morse
 #   emorse8686@gmail.com
 
-# DO NOT MODIFY THIS LINE
-set(target "rudp_test")
+# DO NOT MODIFY THE FORMATTING OF THIS LINE
+# Only change the target name
+set(target "target_name")
 
 # Source files
 list(APPEND sources
@@ -24,7 +25,7 @@ list(APPEND libraries
 	#pico_multicore
 	#pico_rand
 
-	# Our rfm69 library
+	# Our libs
 	#rfm69_pico
 )
 

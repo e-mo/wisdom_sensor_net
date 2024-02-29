@@ -1,11 +1,9 @@
 #include <stdio.h>
 
 #include "pico/stdlib.h"
-#include "pico/multicore.h"
 
-#include "hardware/uart.h"
 #include "tusb.h"
-#include "rudp.h"
+#include "rfm69_pico.h"
 
 int main() {
     stdio_init_all(); // To be able to use printf

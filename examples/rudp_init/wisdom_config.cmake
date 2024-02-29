@@ -1,9 +1,8 @@
-set(target "rudp_test")
+set(target "example_rudp_init")
 
 # Source files
 list(APPEND sources
 	src/rudp_test.c
-	src/rudp.c
 )
 
 # Include file locations
@@ -13,13 +12,6 @@ list(APPEND includes
 
 # pico_stdlib included by default
 list(APPEND libraries
-	# Pico libs
-	hardware_spi
-	hardware_uart
-	pico_multicore
-	pico_rand
-
-	# Our libs
 	rfm69_pico
 )
 
