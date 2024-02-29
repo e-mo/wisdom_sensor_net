@@ -2,7 +2,7 @@ set(target "example_rudp_init")
 
 # Source files
 list(APPEND sources
-	src/rudp_test.c
+	src/rudp_init.c
 )
 
 # Include file locations
