@@ -33,7 +33,7 @@ int main() {
 		.pin_cs   = RFM69_PIN_CS,
 		.pin_sck  = RFM69_PIN_SCK,
 		.pin_mosi = RFM69_PIN_MOSI,
-	    .pin_rst  = RFM69_PIN_RST
+		.pin_rst  = RFM69_PIN_RST
 	};
 	// Initialize rfm69 context
 	if (rfm69_init(rfm, &config) == false) {
