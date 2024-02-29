@@ -22,7 +22,7 @@ to build code for the RP2040.
 
 ### Creating a New Subproject
 (from repo root)
-1. `cp -r template subproject_name`
+1. `cp -r template subproject_name ; cd subproject_name`
 2. Edit "target_name" in this line in wisdom_config.cmake (something more meaningful):
 ```CMake
 set(target "target_name")
