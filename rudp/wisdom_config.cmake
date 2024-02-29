@@ -13,11 +13,13 @@ list(APPEND includes
 
 # pico_stdlib included by default
 list(APPEND libraries
+	# Pico libs
 	hardware_spi
 	hardware_uart
 	pico_multicore
 	pico_rand
 
+	# Our libs
 	rfm69_pico
 )
 
