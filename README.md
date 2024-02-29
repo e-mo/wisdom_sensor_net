@@ -7,6 +7,7 @@ Maintainers:
 - Amelia Vlahogiannis (agv07030@vermontstate.edu)
 
 ## Cloning the Repo
+Repo should live at: ~/pico/wisdom_sensor_net
 Because we use submodules in our rep, you need to clone recursively:
 
 `git clone --recursive -j8 git@github.com:e-mo/wisdom_sensor_net.git`
