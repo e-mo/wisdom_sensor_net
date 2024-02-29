@@ -14,6 +14,16 @@
 #define READ_STOP_TIMEOUT_US (1000 * 10)
 #define MODEM_TCP_SEND_MAX 1459
 
+#define UART_PORT uart0
+#define UART_BAUD 115200
+#define UART_PIN_TX 0
+#define UART_PIN_RX 1
+
+#define MODEM_PIN_PWR 14
+#define MODEM_APN "iot.1nce.net"
+#define SERVER_URL "34.27.138.203"
+#define SERVER_PORT 8086
+
 // Modem state object
 typedef struct _modem {
 	uart_inst_t *uart;

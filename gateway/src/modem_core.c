@@ -63,7 +63,7 @@ void modem_core_main(void) {
 	multicore_fifo_clear_irq();
 	irq_set_exclusive_handler(SIO_IRQ_PROC1, fifo_irq_handler);
 
-	irq_set_enabled(SIO_IRQ_PROC1, true);
+	//irq_set_enabled(SIO_IRQ_PROC1, true);
 
 	for(ever) {
 		tight_loop_contents();

@@ -27,8 +27,6 @@ pico_sdk_init()
 
 add_executable(node 
 	node.c
-	../rfm69/rfm69.c
-  ../error/error_report.c
 )
 
 pico_enable_stdio_uart(node 0)
@@ -36,7 +34,8 @@ pico_enable_stdio_usb(node 1)
 
 # Add the standard library to the build
 target_link_libraries(node
-        pico_stdlib)
+        pico_stdlib
+)
 
 # Print error messages to UART
 target_compile_definitions(node PUBLIC ERROR_UART) 
@@ -51,14 +50,11 @@ target_compile_definitions(node PUBLIC RFM69_HIGH_POWER)
 target_include_directories(node PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}
   ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts or any other standard includes, if required
-  ../rfm69/
-  ../error/
 )
 
 # Add any user requested libraries
 target_link_libraries(node
-        hardware_spi
-        )
+)
 
 pico_add_extra_outputs(node)
 

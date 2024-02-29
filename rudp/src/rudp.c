@@ -1,47 +1,161 @@
+// rudp.c
+// maintainer: Evan Morse
+//			   emorse8686@gmail.com
+#include <stdlib.h>
 #include "rudp.h"
 #include "pico/rand.h"
 #include "string.h"
 
-bool rfm69_rudp_init(
-		Rfm69 *rfm,
-		spi_inst_t *spi,
-		uint pin_miso,
-		uint pin_mosi,
-		uint pin_cs,
-		uint pin_sck,
-		uint pin_rst,
-		uint pin_irq_0,
-		uint pin_irq_1
-) 
-{
-	Rfm69Config config = {
-		.spi      = spi0,
-		.pin_miso = 16,
-		.pin_cs   = 17,
-		.pin_sck  = 18,
-		.pin_mosi = 19,
-		.pin_rst  = 20,
-		.pin_irq0 = 21,
-		.pin_irq1 = 21
-	};
+// Context struct that handles internal data state of RUDP protocol
+// and Rfm69 hardware
 
-	if (!rfm69_init(rfm, &config)) return false;
-	if (!rfm69_packet_format_set(rfm, RFM69_PACKET_VARIABLE))	
-		return false;
+struct rudp_context_ {
+	rfm69_context_t *rfm;
+	TrxReport *report;
+	uint8_t *buffer;
+	uint buffer_size;
+	uint8_t *payload;
+	uint payload_size;
+	uint tx_timeout;
+	uint rx_timeout;
+	uint8_t tx_retries;
+	rudp_baud_t baud;
+};
+
+
+// BAUD SETTINGS
+// These delay settings correspond with a BAUD rate set by user 
+// Only one BAUD available currently: 57.6 KB/s
+
+typedef struct baud_settings {
+	uint fdev;
+	RFM69_MODEM_BITRATE bitrate;	
+	uint pp_delay; // per-packet delay us
+} baud_settings_t;
+
+const baud_settings_t BAUD_SETTINGS_LOOKUP[RUDP_BAUD_NUM] = {
+	{70000, RFM69_MODEM_BITRATE_57_6, 12000} // RUDP_BAUD_57_6, ~2 beta, 12000 us PPD
+};
+
+
+// FUNCS
+
+rudp_context_t *rfm69_rudp_create() {
+	return malloc(sizeof (rudp_context_t));
+}
+
+bool rfm69_rudp_init(rudp_context_t *context, rfm69_context_t *rfm) {
+	if (context == NULL) return false;
+	if (rfm == NULL) return false;
+
+	context->rfm = rfm;
+
+	context->report = calloc(1, sizeof *context->report);
+	if (context->report = NULL) return false;
+
+	// Default settings for rudp
+	context->buffer = NULL;
+	context->buffer_size = 0;
+	context->payload = NULL;
+	context->payload_size = 0;
+
+	context->tx_timeout = 100; // 100ms tx retry timeout default
+	context->rx_timeout = 3000; // 3s rx timeout
+
+	context->tx_retries = 5;
+	
+	if (!rfm69_rudp_baud_set(context, RUDP_BAUD_57_6)) return false;
+
+	// Some Rfm69 sane default settings
+	// Address and power level should be set directly through radio
+	// TODO: Add power level negotiation to protocol for first
+	// communication with external radio
+    rfm69_rxbw_set(rfm, RFM69_RXBW_MANTISSA_20, 2);
+    rfm69_dcfree_set(rfm, RFM69_DCFREE_WHITENING);
+	rfm69_mode_set(rfm, RFM69_OP_MODE_SLEEP);
+	rfm69_packet_format_set(rfm, RFM69_PACKET_VARIABLE);
 
 	return true;
 }
 
-bool rfm69_rudp_transmit(
-        Rfm69 *rfm, 
-		TrxReport *report,
-        uint8_t address,
-        uint8_t *payload, 
-        uint payload_size,
-        uint timeout,
-        uint8_t retries
+bool rfm69_rudp_baud_set(rudp_context_t *context, rudp_baud_t baud) {
+	if (baud < 0 || baud >= RUDP_BAUD_NUM) return false;
+
+	baud_settings_t bs = BAUD_SETTINGS_LOOKUP[context->baud];
+
+    if (!rfm69_fdev_set(context->rfm, bs.fdev)) return false;
+    if (!rfm69_bitrate_set(context->rfm, bs.bitrate)) return false;
+
+	context->baud = baud;
+
+	return true;
+}
+
+bool rfm69_rudp_tx_timeout_set(rudp_context_t *context, uint timeout) {
+	if (context == NULL) return false;
+	context->tx_timeout = timeout;
+	return true;
+}
+
+int rfm69_rudp_tx_timeout_get(const rudp_context_t *context) {
+	if (context == NULL) return -1;
+	return context->tx_timeout;
+}
+
+bool rfm69_rudp_rx_timeout_set(rudp_context_t *context, uint timeout) {
+	if (context == NULL) return false;
+	context->rx_timeout = timeout;
+	return true;
+}
+
+int rfm69_rudp_rx_timeout_get(const rudp_context_t *context) {
+	if (context == NULL) return -1;
+	return context->rx_timeout;
+}
+
+bool rfm69_rudp_rx_buffer_set(
+		rudp_context_t *context, 
+		void *buffer,
+		uint buffer_size
+) 
+{
+	if (context == NULL || buffer == NULL) return false;
+
+	context->buffer = (uint8_t *) buffer;
+	context->buffer_size = buffer_size;
+
+	return true;
+}
+
+bool rfm69_rudp_payload_set(
+		rudp_context_t *context,
+		void *payload,
+		uint payload_size
 )
 {
+	if (context == NULL || payload == NULL) return false;
+
+	context->payload = (uint8_t *) payload;
+	context->payload_size = payload_size;
+
+	return true;
+}
+
+TrxReport * rfm69_rudp_report_get(rudp_context_t *context) {
+	if (context == NULL) return NULL;
+	return context->report;
+}
+
+bool rfm69_rudp_transmit(rudp_context_t *context, uint8_t address) {
+
+	// Set locals with context
+	rfm69_context_t *rfm = context->rfm;
+	TrxReport *report = context->report;
+	uint8_t *payload = context->payload;
+	uint payload_size = context->payload_size;
+	uint timeout = context->tx_timeout;
+	uint8_t retries = context->tx_retries;
+
     // Cache previous op mode so it can be restored
     // after transmit.
     uint8_t previous_mode;
@@ -66,19 +180,16 @@ bool rfm69_rudp_transmit(
 	header[HEADER_TX_ADDRESS]  = tx_address;
 	header[HEADER_FLAGS]       = HEADER_FLAG_RBT;
 	header[HEADER_SEQ_NUMBER]  = seq_num;
-
 	// This count does not include the RBT packet
 	uint8_t num_packets = payload_size/PAYLOAD_MAX;
     if (payload_size % PAYLOAD_MAX) num_packets++;
 
-	if (report) {
-		// zero report struct
-		memset(report, 0x00, (sizeof *report));
-		report->tx_address = tx_address;
-		report->rx_address = address;
-		report->payload_size = payload_size;
-		report->return_status = RUDP_TIMEOUT;
-	}
+	// zero report struct
+	memset(report, 0x00, (sizeof *report));
+	report->tx_address = tx_address;
+	report->rx_address = address;
+	report->payload_size = payload_size;
+	report->return_status = RUDP_TIMEOUT;
 
     // This payload is too large and should be fplit into multiple transmissions
     if (num_packets > TX_PACKETS_MAX) {
@@ -114,7 +225,7 @@ bool rfm69_rudp_transmit(
         rfm69_mode_set(rfm, RFM69_OP_MODE_TX);
         _rudp_block_until_packet_sent(rfm);
 
-        // I emply "backoff" where the timout increases with each retry plus "jitter"
+        // I employ "backoff" where the timout increases with each retry plus "jitter"
         // This allows you to have a quick retry followed by successively slower retries
         // with some random deviation to avoid a certain class of timing bugs
         uint next_timeout = timeout + (retry * timeout) + (get_rand_32() % 100);
@@ -164,11 +275,10 @@ bool rfm69_rudp_transmit(
                 size
         );
 
-        sleep_ms(TX_INTER_PACKET_DELAY);
         rfm69_mode_set(rfm, RFM69_OP_MODE_TX);
         _rudp_block_until_packet_sent(rfm);
 
-        if (report) report->data_packets_sent++;
+        report->data_packets_sent++;
     }
 
     uint8_t message_size = num_packets;
@@ -195,11 +305,10 @@ bool rfm69_rudp_transmit(
                         HEADER_SIZE
                 );
 
-                sleep_ms(TX_INTER_PACKET_DELAY);
                 rfm69_mode_set(rfm, RFM69_OP_MODE_TX);
                 _rudp_block_until_packet_sent(rfm);
 
-                if (report) report->rack_requests_sent++;
+                report->rack_requests_sent++;
 
                 continue;
             }
@@ -209,7 +318,7 @@ bool rfm69_rudp_transmit(
         }
         if (is_ok || rack_timeout) break;
         
-        if (report) report->racks_received++;
+        report->racks_received++;
 
         message_size = ack_packet[HEADER_PACKET_SIZE] - HEADER_EFFECTIVE_SIZE; 
         for (int i = 0; i < message_size; i++) {
@@ -244,22 +353,17 @@ bool rfm69_rudp_transmit(
                     size
             );
 
-            sleep_ms(TX_INTER_PACKET_DELAY);
             rfm69_mode_set(rfm, RFM69_OP_MODE_TX);
 
             _rudp_block_until_packet_sent(rfm);
 			
-			if (report) {
-				report->data_packets_retransmitted++;
-				report->data_packets_sent++;
-			}
+			report->data_packets_retransmitted++;
+			report->data_packets_sent++;
         }
     }
 
-    if (report) {
-        if (is_ok) report->return_status = RUDP_OK;
-        else report->return_status = RUDP_OK_UNCONFIRMED;
-    }
+	if (is_ok) report->return_status = RUDP_OK;
+	else report->return_status = RUDP_OK_UNCONFIRMED;
 
     success = true;
 CLEANUP:
@@ -268,23 +372,19 @@ CLEANUP:
 }
 
 
-bool rfm69_rudp_receive(
-        Rfm69 *rfm, 
-        TrxReport *report,
-		uint8_t *address,
-        uint8_t *payload, 
-        uint *payload_size,
-        uint per_packet_timeout,
-        uint timeout
-)
-{
+bool rfm69_rudp_receive(rudp_context_t *context) {
+	// Local variables to avoid refactoring
+	rfm69_context_t *rfm = context->rfm; 
+	TrxReport *report = context->report;
+	uint8_t *payload = context->buffer;
+    uint payload_buffer_size = context->buffer_size;
+	uint per_packet_delay = BAUD_SETTINGS_LOOKUP[context->baud].pp_delay;
+	uint timeout = context->rx_timeout;
+
     // Cache previous op mode so it can be restored
     // after RX
     uint8_t previous_mode;
     rfm69_mode_get(rfm, &previous_mode);
-
-    uint payload_buffer_size = *payload_size;
-    *payload_size = 0;
 
     uint8_t rx_address;
     rfm69_node_address_get(rfm, &rx_address);
@@ -297,12 +397,10 @@ bool rfm69_rudp_receive(
     uint8_t is_rbt;
     uint8_t seq_num;
 
-    if (report) {
-		// Zero that stuff meow
-		memset(report, 0x00, (sizeof *report));
-        report->rx_address = rx_address;
-        report->return_status = RUDP_TIMEOUT;
-    }
+	// Zero that report meow
+	memset(report, 0x00, (sizeof *report));
+	report->rx_address = rx_address;
+	report->return_status = RUDP_TIMEOUT;
 
     bool success = false;
 
@@ -311,6 +409,8 @@ bool rfm69_rudp_receive(
 RESTART_RBT_LOOP: // This is to return to the RBT loop in case of a false
                   // start receiving the transmission
     tx_started = false;
+	uint payload_size = 0;
+	uint8_t tx_address;
     for (;;) {
         if (get_absolute_time() >= timeout_time) break;
 
@@ -344,20 +444,20 @@ RESTART_RBT_LOOP: // This is to return to the RBT loop in case of a false
         } 
 
         // Read expected payload size
-        uint8_t size_bytes[sizeof(*payload_size)];
+        uint8_t size_bytes[sizeof(payload_size)];
         rfm69_read(
                 rfm,
                 RFM69_REG_FIFO,
                 size_bytes,
-                sizeof(*payload_size) 
+                sizeof(payload_size) 
         );
 
-        for (int i = 0; i < sizeof(*payload_size); i++) 
-            *payload_size |= size_bytes[i] << (((sizeof(payload_size) - 1) * 8) - (i * 8));
+        for (int i = 0; i < sizeof(payload_size); i++) 
+            payload_size |= size_bytes[i] << (((sizeof(payload_size) - 1) * 8) - (i * 8));
 
 
         // Get the sender's node address
-        *address = packet[HEADER_TX_ADDRESS];
+        tx_address = packet[HEADER_TX_ADDRESS];
 
         
         // Increment the sequence
@@ -365,7 +465,7 @@ RESTART_RBT_LOOP: // This is to return to the RBT loop in case of a false
 
         // Build ACK packet header
         header[HEADER_PACKET_SIZE] = HEADER_EFFECTIVE_SIZE;
-        header[HEADER_RX_ADDRESS]  = *address;
+        header[HEADER_RX_ADDRESS]  = tx_address;
         header[HEADER_TX_ADDRESS]  = rx_address;
         header[HEADER_FLAGS]       = HEADER_FLAG_RBT | HEADER_FLAG_ACK;
         header[HEADER_SEQ_NUMBER]  = seq_num;
@@ -380,11 +480,9 @@ RESTART_RBT_LOOP: // This is to return to the RBT loop in case of a false
         rfm69_mode_set(rfm, RFM69_OP_MODE_TX);
         _rudp_block_until_packet_sent(rfm);
 
-        if (report) {
-            report->payload_size = *payload_size;
-            report->tx_address = *address;
-            report->acks_sent++;
-        } 
+		report->payload_size = payload_size;
+		report->tx_address = tx_address;
+		report->acks_sent++;
 
         tx_started = true;
         break;
@@ -394,8 +492,8 @@ RESTART_RBT_LOOP: // This is to return to the RBT loop in case of a false
     if (!tx_started) goto CLEANUP;
 
 
-	uint8_t num_packets_expected = *payload_size/PAYLOAD_MAX;
-    if (*payload_size % PAYLOAD_MAX) num_packets_expected++;
+	uint8_t num_packets_expected = payload_size/PAYLOAD_MAX;
+    if (payload_size % PAYLOAD_MAX) num_packets_expected++;
 
     // We have our first data packet waiting in the FIFO now
     // Set our data packet seq num bounds
@@ -411,7 +509,7 @@ RESTART_RBT_LOOP: // This is to return to the RBT loop in case of a false
     uint8_t packet_num;
     uint8_t is_req_rack;
 
-    absolute_time_t rack_timeout = make_timeout_time_us(per_packet_timeout * num_packets_missing);
+    absolute_time_t rack_timeout = make_timeout_time_us(per_packet_delay * num_packets_missing);
     absolute_time_t now;
     while (num_packets_missing) {
         now = get_absolute_time();
@@ -455,10 +553,10 @@ RESTART_RBT_LOOP: // This is to return to the RBT loop in case of a false
 
             rfm69_mode_set(rfm, RFM69_OP_MODE_TX);
 
-            rack_timeout = make_timeout_time_us(per_packet_timeout * num_packets_missing);
+            rack_timeout = make_timeout_time_us(per_packet_delay * num_packets_missing);
             _rudp_block_until_packet_sent(rfm);
 
-            if (report) report->racks_sent++;
+            report->racks_sent++;
         }
 
         // Make sure packet is sent before leaving TX
@@ -485,7 +583,7 @@ RESTART_RBT_LOOP: // This is to return to the RBT loop in case of a false
         );
 
 
-        if (*address != packet[HEADER_TX_ADDRESS]) continue;
+        if (tx_address != packet[HEADER_TX_ADDRESS]) continue;
 
         is_rbt = packet[HEADER_FLAGS] & HEADER_FLAG_RBT;
         if (is_rbt) goto RESTART_RBT_LOOP;
@@ -499,7 +597,7 @@ RESTART_RBT_LOOP: // This is to return to the RBT loop in case of a false
         // Check if this is a request Rack
         is_req_rack = packet[HEADER_FLAGS] & HEADER_FLAG_RACK;
         if (is_req_rack && packet_num == seq_num) {
-            if (report) report->rack_requests_received++;
+            report->rack_requests_received++;
             rack_timeout = 0;
             continue;
         }
@@ -511,12 +609,12 @@ RESTART_RBT_LOOP: // This is to return to the RBT loop in case of a false
         num_packets_missing--;
 
         payload_bytes_received += message_size;
-        if (report) {
-            report->data_packets_received++;
-            report->bytes_received = payload_bytes_received;
-        }
+
+		report->data_packets_received++;
+		report->bytes_received = payload_bytes_received;
+
         if (payload_bytes_received > payload_buffer_size) {
-            if (report) report->return_status = RUDP_BUFFER_OVERFLOW;
+            report->return_status = RUDP_BUFFER_OVERFLOW;
             goto CLEANUP;
         }
 
@@ -541,21 +639,19 @@ RESTART_RBT_LOOP: // This is to return to the RBT loop in case of a false
             HEADER_SIZE
     );
 
-    sleep_ms(TX_INTER_PACKET_DELAY);
     rfm69_mode_set(rfm, RFM69_OP_MODE_TX);
     _rudp_block_until_packet_sent(rfm);
 
-    if (report) report->return_status = RUDP_OK;
+    report->return_status = RUDP_OK;
     success = true;
 
 CLEANUP:
-    *payload_size = payload_bytes_received;
     rfm69_mode_set(rfm, previous_mode);
     return success;
 }
 
 static RUDP_RETURN _rudp_rx_rack(
-        Rfm69 *rfm,
+        rfm69_context_t *rfm,
         uint8_t seq_num,
         uint timeout,
         uint8_t *packet
@@ -605,7 +701,7 @@ static RUDP_RETURN _rudp_rx_rack(
 }
 
 static RUDP_RETURN _rudp_rx_ack(
-        Rfm69 *rfm,
+        rfm69_context_t *rfm,
         uint8_t seq_num,
         uint timeout
 )
@@ -647,13 +743,13 @@ static RUDP_RETURN _rudp_rx_ack(
     return rval;
 }
 
-static inline bool _rudp_is_payload_ready(Rfm69 *rfm) {
+static inline bool _rudp_is_payload_ready(rfm69_context_t *rfm) {
     bool state;
     rfm69_irq2_flag_state(rfm, RFM69_IRQ2_FLAG_PAYLOAD_READY, &state);
     return state;
 }
 
-static inline void _rudp_block_until_packet_sent(Rfm69 *rfm) {
+static inline void _rudp_block_until_packet_sent(rfm69_context_t *rfm) {
     bool state = false;
     while (!state) {
         rfm69_irq2_flag_state(rfm, RFM69_IRQ2_FLAG_PACKET_SENT, &state);
