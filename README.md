@@ -10,7 +10,7 @@ Maintainers:
 Repo should live at: ~/pico/wisdom_sensor_net  
 Because we use submodules in our rep, you need to clone recursively:
 
-`git clone --recursive -j8 git@github.com:e-mo/wisdom_sensor_net.git`
+`git clone --recursive -j8 git@github.com:VTC-WISDOM/wisdom_sensor_net.git`
 
 NOTE: You'll need proper SSH access to the repo before this will work properly.  
 Contact me (Evan Morse) or ping me on the team Discord to configure access.
