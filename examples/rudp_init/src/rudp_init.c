@@ -1,3 +1,10 @@
+// rudp_init.c
+// Example of Rfm69 RUDP initialization
+// Also great for testing if your radio is connected properly
+//
+// Prints success=true to serial every second if init was successful
+// Prints success=false otherwise
+
 #include <stdio.h>
 
 #include "pico/stdlib.h"
@@ -13,6 +20,7 @@ int main() {
 	rfm69_context_t *rfm = rfm69_create();
 	if (rfm == NULL) goto LOOP_BEGIN;
 
+	// Pin definitions from winsdom_config.cmake
 	rfm69_config_t config = {
 		.spi      = spi0,
 		.pin_miso = RFM69_PIN_MISO,
