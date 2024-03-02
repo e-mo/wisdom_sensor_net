@@ -41,10 +41,6 @@ int main() {
 		goto LOOP_BEGIN;
 	}
 	
-	// Since we are recieving, set our address to 1
-	rfm69_node_address_set(rfm, 1);
-	rfm69_frequency_set(rfm, 915);
-
 	// Create rudp context
 	rudp_context_t *rudp = rfm69_rudp_create();
 	if (rudp == NULL) {
@@ -52,26 +48,67 @@ int main() {
 		goto LOOP_BEGIN;
 	}
 	// Initialize rudp context
-	if (rfm69_rudp_init(rudp, rfm) == false) {
-		error = "rfm69_rudp_init failed";
-		goto LOOP_BEGIN;
-	}
+	//if (rfm69_rudp_init(rudp, rfm) == false) {
+	//		error = "rfm69_rudp_init failed";
+//		goto LOOP_BEGIN;
+//	}
+
+	rfm69_reset(rfm);
+
+	rfm69_mode_set(rfm, RFM69_OP_MODE_SLEEP);
+	rfm69_data_mode_set(rfm, RFM69_DATA_MODE_PACKET);
+	rfm69_node_address_set(rfm, 0x02);
+	rfm69_bitrate_set(rfm, RFM69_MODEM_BITRATE_2_4);
+	rfm69_fdev_set(rfm, 2400);
+	rfm69_frequency_set(rfm, 915);
+	rfm69_rxbw_set(rfm, RFM69_RXBW_MANTISSA_24, 6);
+	rfm69_dcfree_set(rfm, RFM69_DCFREE_WHITENING);
+	rfm69_power_level_set(rfm, 10);
+	rfm69_packet_format_set(rfm, RFM69_PACKET_FIXED);
+
+	rfm69_rssi_threshold_set(rfm, 0xE4);
+	rfm69_tx_start_condition_set(rfm, RFM69_TX_FIFO_NOT_EMPTY);
+	rfm69_broadcast_address_set(rfm, 0xFF); 
+	rfm69_address_filter_set(rfm, RFM69_FILTER_NODE_BROADCAST);
+
+	rfm69_dagc_set(rfm, RFM69_DAGC_IMPROVED_0);
+
+	//Set sync value (essentially functions as subnet)
+	uint8_t sync[3] = {0x01, 0x01, 0x01};
+	rfm69_sync_value_set(rfm, sync, 3);
+
+	rfm69_payload_length_set(rfm, 2);
+
+	rfm69_mode_set(rfm, RFM69_OP_MODE_STDBY);
 
 	success = true;	
+
 LOOP_BEGIN:; 
 
-	trx_report_t *trx = rfm69_rudp_report_get(rudp);
-
-	bool rx_success = false;
+	rfm69_mode_set(rfm, RFM69_OP_MODE_RX); 
 	for(;;) {
-		printf("Init succes=%s\n", success ? "true" : "false");
-		if (!success) printf("\t%s\n", error);
 
-		rx_success = rfm69_rudp_receive(rudp);
-		printf("RX success=%s\n", rx_success ? "true" : "false");
-		printf("%u\n", trx->return_status);	
 
-		sleep_ms(1000);
+		bool state = false;
+		while (!state) {
+			rfm69_irq2_flag_state(rfm, RFM69_IRQ2_FLAG_PAYLOAD_READY, &state);
+		}
+
+		printf("payload ready\n");
+		rfm69_mode_set(rfm, RFM69_OP_MODE_STDBY);
+
+		uint8_t buffer[2];
+		rfm69_read(
+				rfm,
+				RFM69_REG_FIFO,
+				buffer,
+				2
+		);
+
+		printf("data: %02X\n", buffer[0]);
+		printf("data: %02X\n", buffer[1]);
+
+		//rfm69_mode_set(rfm, RFM69_OP_MODE_RX); 
 	}
     
     return 0;
