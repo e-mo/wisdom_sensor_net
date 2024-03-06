@@ -98,17 +98,19 @@ LOOP_BEGIN:;
 	if (!success) error_loop(error);
 
 	// Set buffer
-	uint8_t buffer[100] = {0};	
+	char buffer[100] = {0};	
 	rfm69_rudp_rx_buffer_set(rudp, buffer, 100);
 
 	// Create pointer to trx_report
 	trx_report_t *report = rfm69_rudp_report_get(rudp);
 
 	bool rx_success = false;
+	uint loop = 1;
 	for (;;) {
 
 		// Wait for payload
 		rx_success = rfm69_rudp_receive(rudp);
+		printf("%u\n", loop++);
 		printf("rx success = %s\n", rx_success ? "true" : "false");
 
 		// trx_report printing helper function
@@ -116,10 +118,9 @@ LOOP_BEGIN:;
 
 		// Print buffer contents
 		printf("payload: \n");
-		for (int i = 0; i < report->bytes_received; i++)
-			printf("%02X ", buffer[i]);
+		printf("%s\n", buffer);
 
-		printf("\n\n");
+		printf("\n");
 	}
 
     return 0;

@@ -30,6 +30,7 @@
 //	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <stdio.h>
+#include <string.h>
 
 #include "pico/stdlib.h"
 
@@ -71,7 +72,7 @@ int main() {
 		error = "rfm69_init failed";
 		goto LOOP_BEGIN;
 	}
-
+	
 	// Create rudp context
 	rudp_context_t *rudp = rfm69_rudp_create();
 	if (rudp == NULL) {
@@ -86,8 +87,8 @@ int main() {
 	}
 
 	// Node address can now be set through the RUDP interface
-	// Set to address 0x01
-	if (rfm69_rudp_address_set(rudp, 0x01) == false) {
+	// Set to address 0x02
+	if (rfm69_rudp_address_set(rudp, 0x02) == false) {
 		error = "rfm69_rudp_address_set failed";
 		goto LOOP_BEGIN;
 	}
@@ -95,17 +96,22 @@ int main() {
 	success = true;	
 LOOP_BEGIN:;
 
-	if (!success) error_loop(error);
+	if (!success)
+		error_loop(error);
 	
 	// Set payload
-	uint8_t payload[4] = {0x00, 0x01, 0x02, 0x03};
-	rfm69_rudp_payload_set(rudp, payload, 4);
+	char *payload = "Hello, Receiver!";
+	uint payload_size = strlen(payload) + 1;
+
+	rfm69_rudp_payload_set(rudp, payload, payload_size);
 
 	// Create pointer to trx_report
 	trx_report_t *report = rfm69_rudp_report_get(rudp);
 
 	bool tx_success = false;
+	uint loop = 1;
 	for(;;) {
+		printf("%u\n", loop++);
 
 		// Send payload to node address 0x02
 		tx_success = rfm69_rudp_transmit(rudp, 0x02);
