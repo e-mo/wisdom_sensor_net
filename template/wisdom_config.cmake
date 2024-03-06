@@ -9,7 +9,7 @@ set(target "target_name")
 
 # Source files
 list(APPEND sources
-	src/main.c	
+	src/template_main.c	
 )
 
 # Include file locations
