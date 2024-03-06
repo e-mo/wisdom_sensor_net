@@ -12,6 +12,13 @@
 #include "tusb.h"
 #include "rfm69_pico.h"
 
+void error_loop(char *error) {
+	for (;;) {
+		printf("Init error: %s\n", error);
+		sleep_ms(3000);
+	}
+}
+
 int main() {
     stdio_init_all(); // To be able to use printf
 
@@ -47,69 +54,49 @@ int main() {
 		error = "rfm69_rudp_create returned NULL";
 		goto LOOP_BEGIN;
 	}
+
 	// Initialize rudp context
-	//if (rfm69_rudp_init(rudp, rfm) == false) {
-	//		error = "rfm69_rudp_init failed";
-//		goto LOOP_BEGIN;
-//	}
+	if (rfm69_rudp_init(rudp, rfm) == false) {
+		error = "rfm69_rudp_init failed";
+		goto LOOP_BEGIN;
+	}
 
-	rfm69_reset(rfm);
-
-	rfm69_mode_set(rfm, RFM69_OP_MODE_SLEEP);
-	rfm69_data_mode_set(rfm, RFM69_DATA_MODE_PACKET);
-	rfm69_node_address_set(rfm, 0x02);
-	rfm69_bitrate_set(rfm, RFM69_MODEM_BITRATE_2_4);
-	rfm69_fdev_set(rfm, 2400);
-	rfm69_frequency_set(rfm, 915);
-	rfm69_rxbw_set(rfm, RFM69_RXBW_MANTISSA_24, 6);
-	rfm69_dcfree_set(rfm, RFM69_DCFREE_WHITENING);
-	rfm69_power_level_set(rfm, 10);
-	rfm69_packet_format_set(rfm, RFM69_PACKET_FIXED);
-
-	rfm69_rssi_threshold_set(rfm, 0xE4);
-	rfm69_tx_start_condition_set(rfm, RFM69_TX_FIFO_NOT_EMPTY);
-	rfm69_broadcast_address_set(rfm, 0xFF); 
-	rfm69_address_filter_set(rfm, RFM69_FILTER_NODE_BROADCAST);
-
-	rfm69_dagc_set(rfm, RFM69_DAGC_IMPROVED_0);
-
-	//Set sync value (essentially functions as subnet)
-	uint8_t sync[3] = {0x01, 0x01, 0x01};
-	rfm69_sync_value_set(rfm, sync, 3);
-
-	rfm69_payload_length_set(rfm, 2);
-
-	rfm69_mode_set(rfm, RFM69_OP_MODE_STDBY);
+	// Node address can now be set through the RUDP interface
+	// Set to address 0x02
+	if (rfm69_rudp_address_set(rudp, 0x02) == false) {
+		error = "rfm69_rudp_address_set failed";
+		goto LOOP_BEGIN;
+	}
 
 	success = true;	
-
 LOOP_BEGIN:; 
 
-	rfm69_mode_set(rfm, RFM69_OP_MODE_RX); 
-	for(;;) {
+	if (!success) error_loop(error);
 
+	// Set buffer
+	uint8_t buffer[100] = {0};	
+	rfm69_rudp_rx_buffer_set(rudp, buffer, 100);
 
-		bool state = false;
-		while (!state) {
-			rfm69_irq2_flag_state(rfm, RFM69_IRQ2_FLAG_PAYLOAD_READY, &state);
-		}
+	// Create pointer to trx_report
+	trx_report_t *report = rfm69_rudp_report_get(rudp);
 
-		printf("payload ready\n");
-		rfm69_mode_set(rfm, RFM69_OP_MODE_STDBY);
+	bool rx_success = false;
+	for (;;) {
 
-		uint8_t buffer[2];
-		rfm69_read(
-				rfm,
-				RFM69_REG_FIFO,
-				buffer,
-				2
-		);
+		// Wait for payload
+		rx_success = rfm69_rudp_receive(rudp);
+		printf("rx success = %s\n", rx_success ? "true" : "false");
 
-		printf("data: %02X\n", buffer[0]);
-		printf("data: %02X\n", buffer[1]);
+		// trx_report printing helper function
+		rfm69_rudp_report_print(report);
 
-		//rfm69_mode_set(rfm, RFM69_OP_MODE_RX); 
+		// Print buffer contents
+		printf("payload: \n");
+		for (int i = 0; i < report->bytes_received; i++)
+			printf("%02X ", buffer[i]);
+
+		printf("\n\n");
 	}
-    
+
     return 0;
 }
