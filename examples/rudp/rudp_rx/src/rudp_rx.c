@@ -5,9 +5,6 @@
 // Prints success=true to serial every second if init was successful
 // Prints success=false otherwise
 
-// source.c
-// Brief description
-
 //	Copyright (C) 2024 
 //	Evan Morse
 //	Amelia Vlahogiannis
