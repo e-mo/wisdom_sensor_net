@@ -1,12 +1,16 @@
 MAKEFLAGS += --no-print-directory
-uf2 = build/gateway.uf2
+SHELL := /bin/bash
+
+# Pull in target from cmake config file
+target = ${shell cat wisdom_config.cmake | grep "set(target" | sed -E 's/.*"(.*)".*/\1/'}
+uf2 = build/$(target).uf2
 
 default:
 	@echo "Makefile: no default target"
 
-build:
+build: clean
 	mkdir -p build
-	cd build; cmake ..; $(MAKE)
+	cd build; cmake ..; $(MAKE) -j8
 
 load:
 	sudo picotool load $(uf2) -f

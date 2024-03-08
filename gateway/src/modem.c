@@ -116,7 +116,7 @@ static bool modem_config(Modem *modem, char *apn) {
 }
 
 void modem_write_blocking(
-		Modem modem[static 1],
+		Modem *modem,
 		const uint8_t src[],
 		size_t src_len
 )
@@ -149,7 +149,7 @@ bool modem_write_within_us(
 }
 
 
-void modem_cb_write_blocking(Modem modem[static 1], CommandBuffer cb[static 1]) {
+void modem_cb_write_blocking(Modem *modem, CommandBuffer cb[static 1]) {
 	modem_write_blocking(modem, cb_get_buffer(cb), cb_length(cb));
 }
 
@@ -180,7 +180,7 @@ uint32_t modem_read_within_us(
 	return modem_read_blocking(modem, dst, dst_len);
 }
 
-uint32_t modem_read_blocking(Modem modem[static 1], uint8_t *dst, size_t dst_len) {
+uint32_t modem_read_blocking(Modem *modem, uint8_t *dst, size_t dst_len) {
 	if (dst == NULL) {
 		dst = (uint8_t[RX_BUFFER_SIZE]) {0};
 		dst_len = RX_BUFFER_SIZE;
@@ -198,7 +198,7 @@ uint32_t modem_read_blocking(Modem modem[static 1], uint8_t *dst, size_t dst_len
 	return received;
 }
 
-bool modem_read_blocking_ok(Modem modem[static 1]) {
+bool modem_read_blocking_ok(Modem *modem) {
 
 	uint8_t read_buffer[RX_BUFFER_SIZE] = {0};
 	uint32_t received = modem_read_blocking(modem, read_buffer, RX_BUFFER_SIZE);
@@ -209,13 +209,13 @@ bool modem_read_blocking_ok(Modem modem[static 1]) {
 	return rp_contains_ok(rp);
 }
 
-bool modem_read_ok_within_us(Modem modem[static 1], uint64_t timeout) {
+bool modem_read_ok_within_us(Modem *modem, uint64_t timeout) {
 	if (!uart_is_readable_within_us(modem->uart, timeout)) return false;
 
 	return modem_read_blocking_ok(modem);
 }
 
-bool modem_is_ready(Modem modem[static 1]) {
+bool modem_is_ready(Modem *modem) {
 	
 	CommandBuffer *cb = cb_reset(&(CommandBuffer) {0});
 	cb_at_prefix_set(cb);
@@ -227,7 +227,7 @@ bool modem_is_ready(Modem modem[static 1]) {
 }
 
 
-bool modem_sim_ready(Modem modem[static 1]) {
+bool modem_sim_ready(Modem *modem) {
 	CommandBuffer *cb = cb_reset(&(CommandBuffer) {0});
 	ResponseParser *rp = rp_reset(&(ResponseParser) {0});
 
@@ -244,7 +244,7 @@ bool modem_sim_ready(Modem modem[static 1]) {
 }
 
 
-bool modem_cn_available(Modem modem[static 1]) {
+bool modem_cn_available(Modem *modem) {
 
 	CommandBuffer *cb = cb_reset(&(CommandBuffer) {0});
 
@@ -262,7 +262,7 @@ bool modem_cn_available(Modem modem[static 1]) {
 	return rp_contains(rp, "+COPS: 0,", 9, NULL);
 }
 
-bool modem_cn_is_active(Modem modem[static 1]) {
+bool modem_cn_is_active(Modem *modem) {
 	CommandBuffer *cb = cb_reset(&(CommandBuffer) {0});
 	cb_at_prefix_set(cb);
 	cb_write(cb, "+CNACT?", 7); 
@@ -278,7 +278,7 @@ bool modem_cn_is_active(Modem modem[static 1]) {
 	return rp_contains(rp, "+CNACT: 0,1", 11, NULL);
 }
 
-bool modem_cn_activate(Modem modem[static 1], bool activate) {
+bool modem_cn_activate(Modem *modem, bool activate) {
 	if (!modem_cn_available(modem)) return false;
 
 	// Avoid doing anything if we are already in the right state
@@ -310,7 +310,7 @@ bool modem_cn_activate(Modem modem[static 1], bool activate) {
 	return rp_contains(rp, "+APP PDP: 0,DEACTIVE", 20, NULL);
 }
 
-bool modem_ssl_enable(Modem modem[static 1], bool enable) {
+bool modem_ssl_enable(Modem *modem, bool enable) {
 	if (!modem_cn_is_active(modem)) return false;
 
 	CommandBuffer *cb = cb_reset(&(CommandBuffer) {0});
@@ -323,12 +323,12 @@ bool modem_ssl_enable(Modem modem[static 1], bool enable) {
 	return modem_read_blocking_ok(modem);
 }
 
-void modem_wait_for_cn(Modem modem[static 1]) {
+void modem_wait_for_cn(Modem *modem) {
 	while(!modem_cn_available(modem)) sleep_ms(1000);
 }
 
 bool modem_tcp_open(
-		Modem modem[static 1], 
+		Modem *modem, 
 		uint8_t url_len,  
 		uint8_t url[static url_len],
 		uint16_t port
@@ -364,7 +364,7 @@ bool modem_tcp_open(
 	return rp_contains(rp, "+CAOPEN: 0,0", 12, NULL);
 }
 
-bool modem_tcp_close(Modem modem[static 1]) {
+bool modem_tcp_close(Modem *modem) {
 	if (!modem_cn_is_active(modem)) return false;
 
 	CommandBuffer *cb = cb_reset(&(CommandBuffer) {0});
@@ -377,7 +377,7 @@ bool modem_tcp_close(Modem modem[static 1]) {
 }
 
 bool modem_tcp_send(
-		Modem modem[static 1],
+		Modem *modem,
 		size_t data_len,
 		uint8_t data[static data_len]
 )
@@ -437,7 +437,7 @@ bool modem_tcp_send(
 }
 
 size_t modem_tcp_recv(
-		Modem modem[static 1],
+		Modem *modem,
 		size_t dst_len,
 		uint8_t dst[dst_len]
 )
@@ -507,7 +507,7 @@ size_t modem_tcp_recv(
 }
 
 size_t modem_tcp_recv_within_us(
-		Modem modem[static 1],
+		Modem *modem,
 		size_t dst_len,
 		uint8_t dst[dst_len],
 		uint64_t timeout
@@ -526,7 +526,7 @@ size_t modem_tcp_recv_within_us(
 	return received;
 }
 
-bool modem_tcp_recv_ready_within_us(Modem modem[static 1], uint64_t timeout) {
+bool modem_tcp_recv_ready_within_us(Modem *modem, uint64_t timeout) {
 
 	ResponseParser *rp = &(ResponseParser) {0};
 
@@ -549,7 +549,7 @@ bool modem_tcp_recv_ready_within_us(Modem modem[static 1], uint64_t timeout) {
 	return success;
 }
 
-bool modem_tcp_is_open(Modem modem[static 1]) {
+bool modem_tcp_is_open(Modem *modem) {
 	CommandBuffer *cb = cb_reset(&(CommandBuffer) {0});
 	cb_at_prefix_set(cb);
 	cb_write(cb, "+CASTATE?", 9);
@@ -571,7 +571,7 @@ bool modem_tcp_is_open(Modem modem[static 1]) {
 	return rp_contains(rp, "+CASTATE: 0,1", 13, NULL);
 }
 
-void modem_read_to_null(Modem modem[static 1]) {
+void modem_read_to_null(Modem *modem) {
 	modem_read_within_us(modem, NULL, 0, 1000);
 }
 

@@ -58,7 +58,7 @@ Modem *modem_start(
 //
 // BLOCKING: will block until entire source buffer is written to UART
 void modem_write_blocking(
-		Modem modem[static 1],
+		Modem *modem,
 		const uint8_t src[],
 		size_t src_len
 );
@@ -95,16 +95,16 @@ bool modem_write_within_us (
 // data is available. Once data has been received, data will continue
 // to be read into the buffer until the buffer is full, or until new
 // data has not been received in > READ_STOP_TIMEOUT_US
-uint32_t modem_read_blocking(Modem modem[static 1], uint8_t *dst, size_t dst_len);
+uint32_t modem_read_blocking(Modem *modem, uint8_t *dst, size_t dst_len);
 
 // Reads from moding and checks if data contains OK message
 //
 // modem - Modem state object pointer
 //
 // return: true if read data contains OK message
-bool modem_read_blocking_ok(Modem modem[static 1]);
+bool modem_read_blocking_ok(Modem *modem);
 
-bool modem_read_ok_within_us(Modem modem[static 1], uint64_t timeout);
+bool modem_read_ok_within_us(Modem *modem, uint64_t timeout);
 
 // Reads from modem into buffer
 //
@@ -131,7 +131,7 @@ uint32_t modem_read_within_us(
 // return: # of bytes read to buffer
 //
 // BLOCKING: will block until entire CommandBuffer is written to UART
-void modem_cb_write_blocking(Modem modem[static 1], CommandBuffer cb[static 1]);
+void modem_cb_write_blocking(Modem *modem, CommandBuffer cb[static 1]);
 
 // Write to modem from CommandBuffer 
 //
@@ -153,7 +153,7 @@ bool modem_cb_write_within_us(
 //
 // return: true if modem is responsive
 //         false otherwise
-bool modem_is_ready(Modem modem[static 1]);
+bool modem_is_ready(Modem *modem);
 
 // Tests if sim card is ready
 //
@@ -161,7 +161,7 @@ bool modem_is_ready(Modem modem[static 1]);
 //
 // return: true if sim card status = READY
 //         false otherwise
-bool modem_sim_ready(Modem modem[static 1]);
+bool modem_sim_ready(Modem *modem);
 
 // Tests if a network is available 
 //
@@ -169,14 +169,14 @@ bool modem_sim_ready(Modem modem[static 1]);
 //
 // return: true if a network is detected
 // 		   false otherwise
-bool modem_cn_available(Modem modem[static 1]);
+bool modem_cn_available(Modem *modem);
 
 // Tests if a network connection is currently active
 //
 // modem - pointer to Modem state object
 //
 // return: true if a network connection is active
-bool modem_cn_is_active(Modem modem[static 1]);
+bool modem_cn_is_active(Modem *modem);
 
 // Activate/deactivate network connection
 //
@@ -186,19 +186,19 @@ bool modem_cn_is_active(Modem modem[static 1]);
 //
 // return: true if command was successful
 //         false if there was an error
-bool modem_cn_activate(Modem modem[static 1], bool activate);
+bool modem_cn_activate(Modem *modem, bool activate);
 
 // Enable/disable SSL
 //
 // modem  - pointer to Modem state object
 // enable - true to enable
 // 			false to disable
-bool modem_ssl_enable(Modem modem[static 1], bool enable);
+bool modem_ssl_enable(Modem *modem, bool enable);
 
 // Block until a network is available
 //
 // modem  - pointer to Modem state object
-void modem_wait_for_cn(Modem modem[static 1]);
+void modem_wait_for_cn(Modem *modem);
 
 // Opens a TCP connection with a remote server
 //
@@ -210,7 +210,7 @@ void modem_wait_for_cn(Modem modem[static 1]);
 // return: true if command was successful
 //         false if there was an error
 bool modem_tcp_open(
-		Modem modem[static 1], 
+		Modem *modem, 
 		uint8_t url_len,  
 		uint8_t url[static url_len],
 		uint16_t port
@@ -222,33 +222,33 @@ bool modem_tcp_open(
 //
 // return: true if command was successful
 //         false if there was an error
-bool modem_tcp_close(Modem modem[static 1]);
+bool modem_tcp_close(Modem *modem);
 
 
 bool modem_tcp_send(
-		Modem modem[static 1],
+		Modem *modem,
 		size_t data_len,
 		uint8_t data[static data_len]
 );
 
 size_t modem_tcp_recv(
-		Modem modem[static 1],
+		Modem *modem,
 		size_t dst_len,
 		uint8_t dst[dst_len]
 );
 
 size_t modem_tcp_recv_within_us(
-		Modem modem[static 1],
+		Modem *modem,
 		size_t dst_len,
 		uint8_t dst[dst_len],
 		uint64_t timeout
 );
 
-bool modem_tcp_recv_ready_within_us(Modem modem[static 1], uint64_t timeout);
+bool modem_tcp_recv_ready_within_us(Modem *modem, uint64_t timeout);
 
-bool modem_tcp_is_open(Modem modem[static 1]);
+bool modem_tcp_is_open(Modem *modem);
 
-void modem_read_to_null(Modem modem[static 1]);
+void modem_read_to_null(Modem *modem);
 
 bool modem_toggle_power(Modem *modem);
 
