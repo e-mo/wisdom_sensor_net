@@ -4,7 +4,7 @@
 	url = https://github.com/daschr/pico-ssd1306.git
 [submodule "rfm69"]
 	path = rfm69
-	url = git@github.com:e-mo/rfm69_pico.git
+	url = git@github.com:e-mo/rfm69_rp2040.git
 [submodule "server"]
 	path = server
 	url = git@github.com:e-mo/wisdom_server.git
