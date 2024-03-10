@@ -32,10 +32,34 @@
 //#include "rfm69_pico.h" 
 
 // SD card library
-//#include "sd_config.h"
+#include "sd_config.h"
+#include "f_util.h"
+
+void error_loop(char *error) {
+	for (;;) {
+		printf("SD error: %s\n", error);
+		sleep_ms(3000);
+	}
+}
 
 int main() {
     stdio_init_all(); // To be able to use printf
+
+	bool success = false;
+	char error[100] = "success";
+
+	// Get SD config (ref sd_config.c)  
+	sd_card_t *sd = sd_get_by_num(0);
+
+	FRESULT fr = f_mount(&sd->fatfs, sd->pcName, 1);
+	if (fr != FR_OK) {
+		sprintf(error, "f_mount: %s (%d)", FRESULT_str(fr), fr);
+		goto LOOP_BEGIN;
+	}
+
+	success = true;
+LOOP_BEGIN:
+	if (!success) error_loop(error);
 
 	int i = 1;
 	for(;;) {

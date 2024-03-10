@@ -91,10 +91,8 @@ int main() {
 	}
 
 	success = true;	
-LOOP_BEGIN:;
-
-	if (!success)
-		error_loop(error);
+LOOP_BEGIN:
+	if (!success) error_loop(error);
 	
 	// Set payload
 	char *payload = "Hello, Receiver!";

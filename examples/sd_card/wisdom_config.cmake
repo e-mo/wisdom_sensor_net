@@ -5,14 +5,14 @@
 
 # DO NOT MODIFY THE FORMATTING OF THIS LINE
 # Only change the target name
-set(target "target_name")
+set(target "sd_example")
 
 # Source files
 list(APPEND sources
-	src/template_main.c	
+	src/sd_example.c	
 	
 	# Uncomment if using FatFs_SPI (SD card) library
-	#src/sd_config.c
+	src/sd_config.c
 )
 
 # Include file locations
@@ -29,7 +29,7 @@ list(APPEND libraries
 	#pico_rand
 
 	# SD Library
-	#FatFs_SPI
+	FatFs_SPI
 
 	# Our libs
 	#rfm69_pico
@@ -52,11 +52,11 @@ list(APPEND definitions
 	## [FatFs_SPI] (SD Card)
 
 	# SD pin definitions
-	#SD_SPI=spi0
-	#SD_PIN_MISO=16
-	#SD_PIN_MOSI=19
-	#SD_PIN_CS=22
-	#SD_PIN_SCK=18
+	SD_SPI=spi0
+	SD_PIN_MISO=16
+	SD_PIN_MOSI=19
+	SD_PIN_CS=10
+	SD_PIN_SCK=18
 )
 
 # Only one of these should be enabled
