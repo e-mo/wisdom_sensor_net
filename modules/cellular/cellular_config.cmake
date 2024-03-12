@@ -5,12 +5,11 @@
 
 # DO NOT MODIFY THE FORMATTING OF THIS LINE
 # Only change the target name
-set(target "radio_module")
+set(target "cellular_module")
 
 # Source files
 list(APPEND sources
-	src/radio_rfm69.c
-	src/radio_error.c
+
 )
 
 list(APPEND includes
@@ -18,7 +17,7 @@ list(APPEND includes
 )
 
 list(APPEND libraries
-	rfm69_pico
+	pico_stdlib
 )
 
 list(APPEND definitions
