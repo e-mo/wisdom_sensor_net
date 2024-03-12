@@ -10,5 +10,4 @@ target_link_libraries(${target} ${libraries})
 
 target_compile_definitions(${target} PUBLIC ${definitions})
 
-# Add the standard include files to the build
 target_include_directories(${target} PUBLIC ${includes})
