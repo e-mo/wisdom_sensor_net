@@ -31,7 +31,7 @@
 #include "pico/stdlib.h"
 
 #include "tusb.h"
-#include "rfm69_pico.h"
+#include "rfm69_rp2040.h"
 
 int main() {
     stdio_init_all(); // To be able to use printf
