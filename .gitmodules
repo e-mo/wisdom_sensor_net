@@ -1,15 +1,13 @@
-[submodule "pico-ssd1306"]
-	path = drivers/pico-ssd1306
-	url = git@github.com:daschr/pico-ssd1306.git
-	url = https://github.com/daschr/pico-ssd1306.git
-[submodule "rfm69"]
-	path = drivers/rfm69_rp2040
-	url = git@github.com:e-mo/rfm69_rp2040.git
-	url = https://github.com/e-mo/rfm69_rp2040.git
 [submodule "server"]
 	path = server
 	url = git@github.com:e-mo/wisdom_server.git
 	url = https://github.com/e-mo/wisdom_server.git
-[submodule "no-OS-FatFS-SD-SPI-RPi-Pico"]
+[submodule "drivers/rfm69_rp2040"]
+	path = drivers/rfm69_rp2040
+	url = https://github.com/e-mo/rfm69_rp2040.git
+[submodule "drivers/no-OS-FatFS-SD-SPI-RPi-Pico"]
 	path = drivers/no-OS-FatFS-SD-SPI-RPi-Pico
 	url = https://github.com/carlk3/no-OS-FatFS-SD-SPI-RPi-Pico.git
+[submodule "drivers/pico-ssd1306"]
+	path = drivers/pico-ssd1306
+	url = https://github.com/daschr/pico-ssd1306.git
