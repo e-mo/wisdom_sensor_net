@@ -6,7 +6,7 @@
 #include "pico/time.h"
 #include "hardware/gpio.h"
 
-#include "modem.h"
+#include "sim7080g_pico.h"
 
 #define MODEM_RETRY_DELAY_MS 1000
 #define MODEM_START_RETRIES 50 

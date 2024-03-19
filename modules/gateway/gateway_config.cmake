@@ -10,7 +10,6 @@ set(target "gateway_module")
 # Source files
 list(APPEND sources
 	src/gateway.c
-	src/gateway_core.c
 )
 
 list(APPEND includes
@@ -19,6 +18,7 @@ list(APPEND includes
 
 list(APPEND libraries
 	pico_stdlib
+	pico_multicore
 	sim7080g_pico
 )
 

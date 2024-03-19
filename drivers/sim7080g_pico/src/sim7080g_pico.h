@@ -5,7 +5,6 @@
 
 #include "hardware/uart.h"
 
-#include "modem_core.h"
 #include "command_buffer.h"
 #include "response_parser.h"
 

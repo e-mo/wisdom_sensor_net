@@ -4,7 +4,7 @@ set(target sim7080g_pico)
 project(${target} C CXX ASM)
 
 add_library(${target} 
-	src/modem.c
+	src/sim7080g_pico.c
 	src/command_buffer.c
 	src/response_parser.c
 )

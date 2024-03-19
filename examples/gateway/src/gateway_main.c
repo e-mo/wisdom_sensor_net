@@ -25,14 +25,7 @@
 #include "pico/stdlib.h"
 #include "tusb.h"
 
-// OPTIONAL INCLUDES
-// Uncomment depending on libraries used
-
-// RFM69 library
-//#include "rfm69_pico.h" 
-
-// SD card library
-//#include "sd_config.h"
+#include "gateway_module.h"
 
 int main() {
     stdio_init_all(); // To be able to use printf

@@ -4,7 +4,7 @@ set(WISDOM_PROJECT_PATH ${WISDOM_PROJECT_PATH} CACHE PATH "Root of Wisdom Repo" 
 set(WISDOM_DRIVERS_PATH "${WISDOM_PROJECT_PATH}/drivers")
 
 # SIM7080G
-message("wisdom_init: building rfm69_pico library")
+message("wisdom_init: building sim7080g_pico drivers")
 add_subdirectory(${WISDOM_DRIVERS_PATH}/sim7080g_pico sim7080g_pico)
 
 # Load local config
