@@ -24,12 +24,12 @@
 #define SERVER_PORT 8086
 
 // Modem state object
-typedef struct _modem {
+typedef struct _sim7080g_context {
 	uart_inst_t *uart;
 	uint pin_tx;
 	uint pin_rx;
 	uint pin_power;
-} Modem;
+} sim7080g_context_t;
 
 // Powers on and configures modem
 //
@@ -41,7 +41,7 @@ typedef struct _modem {
 //
 // return: pointer to Modem state object singleton if modem started successfully
 // 		   NULL pointer returned otherwise
-Modem *modem_start(
+sim7080g_context_t *sim7080g_start(
 		char *apn,
 		uart_inst_t *uart,	
 		uint pin_tx,
@@ -56,8 +56,8 @@ Modem *modem_start(
 // src_len - Length of source buffer
 //
 // BLOCKING: will block until entire source buffer is written to UART
-void modem_write_blocking(
-		Modem *modem,
+void sim7080g_write_blocking(
+		sim7080g_context_t *context,
 		const uint8_t src[],
 		size_t src_len
 );
@@ -73,8 +73,8 @@ void modem_write_blocking(
 // 		   false if operation times out
 //
 // NON-BLOCKING: Will not block for > (timeout + WRITE_TIMEOUT_RESOLUTION_US)
-bool modem_write_within_us (
-		Modem *modem, 
+bool sim7080g_write_within_us (
+		sim7080g_context_t *context, 
 		const uint8_t *src, 
 		size_t src_len, 
 		uint64_t timeout
@@ -94,16 +94,16 @@ bool modem_write_within_us (
 // data is available. Once data has been received, data will continue
 // to be read into the buffer until the buffer is full, or until new
 // data has not been received in > READ_STOP_TIMEOUT_US
-uint32_t modem_read_blocking(Modem *modem, uint8_t *dst, size_t dst_len);
+uint32_t sim7080g_read_blocking(sim7080g_context_t *context, uint8_t *dst, size_t dst_len);
 
 // Reads from moding and checks if data contains OK message
 //
 // modem - Modem state object pointer
 //
 // return: true if read data contains OK message
-bool modem_read_blocking_ok(Modem *modem);
+bool sim7080g_read_blocking_ok(sim7080g_context_t *context);
 
-bool modem_read_ok_within_us(Modem *modem, uint64_t timeout);
+bool sim7080g_read_ok_within_us(sim7080g_context_t *context, uint64_t timeout);
 
 // Reads from modem into buffer
 //
@@ -115,8 +115,8 @@ bool modem_read_ok_within_us(Modem *modem, uint64_t timeout);
 // return: # of bytes read to buffer
 //
 // NON-BLOCKING: Will not block for > (timout + READ_STOP_TIMOUT_US) 
-uint32_t modem_read_within_us(
-		Modem *modem, 
+uint32_t sim7080g_read_within_us(
+		sim7080g_context_t *context, 
 		uint8_t *dst, 
 		size_t dst_len,
 		uint64_t timeout
@@ -130,7 +130,7 @@ uint32_t modem_read_within_us(
 // return: # of bytes read to buffer
 //
 // BLOCKING: will block until entire CommandBuffer is written to UART
-void modem_cb_write_blocking(Modem *modem, CommandBuffer cb[static 1]);
+void sim7080g_cb_write_blocking(sim7080g_context_t *context, CommandBuffer cb[static 1]);
 
 // Write to modem from CommandBuffer 
 //
@@ -139,8 +139,8 @@ void modem_cb_write_blocking(Modem *modem, CommandBuffer cb[static 1]);
 // timeout - Timout time in micro-seconds
 //
 // NON-BLOCKING: Will not block for > (timeout + WRITE_TIMEOUT_RESOLUTION_US)
-bool modem_cb_write_within_us(
-		Modem *modem, 
+bool sim7080g_cb_write_within_us(
+		sim7080g_context_t *context, 
 		CommandBuffer *cb,
 		uint64_t timeout	
 );
@@ -152,7 +152,7 @@ bool modem_cb_write_within_us(
 //
 // return: true if modem is responsive
 //         false otherwise
-bool modem_is_ready(Modem *modem);
+bool sim7080g_is_ready(sim7080g_context_t *context);
 
 // Tests if sim card is ready
 //
@@ -160,7 +160,7 @@ bool modem_is_ready(Modem *modem);
 //
 // return: true if sim card status = READY
 //         false otherwise
-bool modem_sim_ready(Modem *modem);
+bool sim7080g_sim_ready(sim7080g_context_t *context);
 
 // Tests if a network is available 
 //
@@ -168,14 +168,14 @@ bool modem_sim_ready(Modem *modem);
 //
 // return: true if a network is detected
 // 		   false otherwise
-bool modem_cn_available(Modem *modem);
+bool sim7080g_cn_available(sim7080g_context_t *context);
 
 // Tests if a network connection is currently active
 //
 // modem - pointer to Modem state object
 //
 // return: true if a network connection is active
-bool modem_cn_is_active(Modem *modem);
+bool sim7080g_cn_is_active(sim7080g_context_t *context);
 
 // Activate/deactivate network connection
 //
@@ -185,19 +185,19 @@ bool modem_cn_is_active(Modem *modem);
 //
 // return: true if command was successful
 //         false if there was an error
-bool modem_cn_activate(Modem *modem, bool activate);
+bool sim7080g_cn_activate(sim7080g_context_t *context, bool activate);
 
 // Enable/disable SSL
 //
 // modem  - pointer to Modem state object
 // enable - true to enable
 // 			false to disable
-bool modem_ssl_enable(Modem *modem, bool enable);
+bool sim7080g_ssl_enable(sim7080g_context_t *context, bool enable);
 
 // Block until a network is available
 //
 // modem  - pointer to Modem state object
-void modem_wait_for_cn(Modem *modem);
+void sim7080g_wait_for_cn(sim7080g_context_t *context);
 
 // Opens a TCP connection with a remote server
 //
@@ -208,8 +208,8 @@ void modem_wait_for_cn(Modem *modem);
 //
 // return: true if command was successful
 //         false if there was an error
-bool modem_tcp_open(
-		Modem *modem, 
+bool sim7080g_tcp_open(
+		sim7080g_context_t *context, 
 		uint8_t url_len,  
 		uint8_t url[static url_len],
 		uint16_t port
@@ -221,36 +221,36 @@ bool modem_tcp_open(
 //
 // return: true if command was successful
 //         false if there was an error
-bool modem_tcp_close(Modem *modem);
+bool sim7080g_tcp_close(sim7080g_context_t *context);
 
 
-bool modem_tcp_send(
-		Modem *modem,
+bool sim7080g_tcp_send(
+		sim7080g_context_t *context,
 		size_t data_len,
 		uint8_t data[static data_len]
 );
 
-size_t modem_tcp_recv(
-		Modem *modem,
+size_t sim7080g_tcp_recv(
+		sim7080g_context_t *context,
 		size_t dst_len,
 		uint8_t dst[dst_len]
 );
 
-size_t modem_tcp_recv_within_us(
-		Modem *modem,
+size_t sim7080g_tcp_recv_within_us(
+		sim7080g_context_t *context,
 		size_t dst_len,
 		uint8_t dst[dst_len],
 		uint64_t timeout
 );
 
-bool modem_tcp_recv_ready_within_us(Modem *modem, uint64_t timeout);
+bool sim7080g_tcp_recv_ready_within_us(sim7080g_context_t *context, uint64_t timeout);
 
-bool modem_tcp_is_open(Modem *modem);
+bool sim7080g_tcp_is_open(sim7080g_context_t *context);
 
-void modem_read_to_null(Modem *modem);
+void sim7080g_read_to_null(sim7080g_context_t *context);
 
-bool modem_toggle_power(Modem *modem);
+bool sim7080g_toggle_power(sim7080g_context_t *context);
 
-bool modem_power_down(Modem *modem);
+bool sim7080g_power_down(sim7080g_context_t *context);
 
 #endif // WISDOM_MODEM_H
