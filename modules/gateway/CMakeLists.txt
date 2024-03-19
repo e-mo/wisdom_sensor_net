@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.13)
 
-include(radio_import.cmake)
+include(gateway_import.cmake)
+include(gateway_config.cmake)
 
 project(${target} C CXX ASM)
 
