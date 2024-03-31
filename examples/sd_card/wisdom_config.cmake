@@ -55,7 +55,7 @@ list(APPEND definitions
 	SD_SPI=spi0
 	SD_PIN_MISO=16
 	SD_PIN_MOSI=19
-	SD_PIN_CS=10
+	SD_PIN_CS=21
 	SD_PIN_SCK=18
 )
 

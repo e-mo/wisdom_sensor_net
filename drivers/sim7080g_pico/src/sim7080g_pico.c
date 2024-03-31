@@ -8,41 +8,47 @@
 
 #include "sim7080g_pico.h"
 
-#define MODEM_RETRY_DELAY_MS 1000
-#define MODEM_START_RETRIES 50 
+#define MODEM_RETRY_DELAY_MS 100
+#define MODEM_START_RETRIES 100
 #define UART_BAUD 115200
 #define RX_BUFFER_SIZE 1024
 
-static bool sim7080g_config(sim7080g_context_t *context, char *apn);
+struct _sim7080g_context {
+	const char *apn;
+	uart_inst_t *uart;
+	uint pin_tx;
+	uint pin_rx;
+	uint pin_power;
+};
 
-static sim7080g_context_t MODEM;
-static bool MODEM_STARTED = false;
+bool sim7080g_config(sim7080g_context_t *context);
 
-sim7080g_context_t *sim7080g_start(
-	char *apn,
-	uart_inst_t *uart,	
-	uint pin_tx,
-	uint pin_rx,
-	uint pin_power
-)
-{
-	if (MODEM_STARTED) return &MODEM;
+sim7080g_context_t * sim7080g_create(void) {
+	return malloc(sizeof (sim7080g_context_t));
+}
+void sim7080g_destroy(sim7080g_context_t *context) {
+	free(context);
+}
 
-	MODEM = (sim7080g_context_t) {0};
-	static sim7080g_context_t *context = &MODEM;
-	
-	// Because you can actually check if uart is initialized
-	// the function can accept a uart instance in any state
+void sim7080g_init(
+		sim7080g_context_t *context,
+		const char *apn,
+		uart_inst_t *uart,	
+		uint pin_tx,
+		uint pin_rx,
+		uint pin_power
+) {
 	if (!uart_is_enabled(uart)) 
 		uart_init(uart, UART_BAUD); 
 
-	// Disable hardware flow completely
-	uart_set_hw_flow(uart, false, false);
-
+	context->apn = apn;
 	context->uart = uart;
 	context->pin_tx = pin_tx;
 	context->pin_rx = pin_rx;
 	context->pin_power = pin_power;
+
+	// Disable hardware flow completely
+	uart_set_hw_flow(uart, false, false);
 
 	// gpio stuff
 	gpio_init(context->pin_power);
@@ -50,8 +56,10 @@ sim7080g_context_t *sim7080g_start(
 	gpio_put(context->pin_power, 0);
 	gpio_set_function(context->pin_tx, GPIO_FUNC_UART);
 	gpio_set_function(context->pin_rx, GPIO_FUNC_UART);
+}
 
-	bool success = true;
+bool sim7080g_start(sim7080g_context_t *context) {
+	bool success = false;
 	bool power_toggled = false;
 	uint8_t read_buffer[RX_BUFFER_SIZE] = {0};
 	for (int tries = 0; tries < MODEM_START_RETRIES; tries++) {
@@ -71,20 +79,18 @@ sim7080g_context_t *sim7080g_start(
 	}
 
 	// This is how we fail
-	if (!success) return NULL;
-	if (!sim7080g_config(context, apn)) return NULL;
+	if (!success) return false;
+	if (!sim7080g_config(context)) return false;
 
 	// Wait until network is connected
 	// Blocks until connected since the modem
 	// is worth nothing without a network
-	sim7080g_wait_for_cn(context);
+	// sim7080g_wait_for_cn(context);
 
-	MODEM_STARTED = true;
-
-	return context;
+	return success;
 }
 
-static bool sim7080g_config(sim7080g_context_t *context, char *apn) {
+bool sim7080g_config(sim7080g_context_t *context) {
 
 	if (!sim7080g_sim_ready(context)) return false;
 
@@ -101,7 +107,7 @@ static bool sim7080g_config(sim7080g_context_t *context, char *apn) {
 	CommandBuffer *cb = cb_reset(&(CommandBuffer) {0});
 	cb_at_prefix_set(cb);
 	cb_write(cb, command, strlen(command));
-	cb_write(cb, apn, strlen(apn));
+	cb_write(cb, (uint8_t *)context->apn, strlen(context->apn));
 	cb_write(cb, "\"", 1);
 
 	sim7080g_cb_write_blocking(context, cb);
@@ -188,7 +194,6 @@ uint32_t sim7080g_read_blocking(sim7080g_context_t *context, uint8_t *dst, size_
 
 	uint8_t received = 0;
 	for (uint8_t *p = dst; p - dst < dst_len; p++, received++) {
-		printf("reading blocking\n");
 		uart_read_blocking(context->uart, p, 1);
 
 		if (!uart_is_readable_within_us(context->uart, READ_STOP_TIMEOUT_US)) 
@@ -353,8 +358,11 @@ bool sim7080g_tcp_open(
 	uint32_t received = 0;
 	for (;;) {
 
+		printf("here\n");
 		received = sim7080g_read_blocking(context, read_buffer, RX_BUFFER_SIZE);
+		printf("maybe\n");
 		rp_parse(rp, read_buffer, received);
+		printf("not_here\n");
 
 		if (rp_contains_ok_or_err(rp)) break;
 
@@ -408,13 +416,9 @@ bool sim7080g_tcp_send(
 		cb_at_prefix_set(cb);
 		cb_write(cb, command, command_len);
 
-		printf("writing\n");
 		sim7080g_cb_write_blocking(context, cb);
-		printf("writing done\n");
 
-		printf("reading\n");
 		received = sim7080g_read_blocking(context, read_buffer, RX_BUFFER_SIZE);
-		printf("reading done\n");
 
 		rp_reset(rp);
 		rp_parse(rp, read_buffer, received);
@@ -593,5 +597,6 @@ bool sim7080g_power_down(sim7080g_context_t *context) {
 	uint32_t received = sim7080g_read_blocking(context, read_buffer, RX_BUFFER_SIZE);
 	rp_parse(rp, read_buffer, received);
 
-	return rp_contains(rp, "NORMAL POWER DOWN", 17, NULL);
+	bool success = rp_contains(rp, "NORMAL POWER DOWN", 17, NULL);
+	return success;
 }

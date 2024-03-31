@@ -22,23 +22,22 @@
 //	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <stdio.h>
+
 #include "pico/stdlib.h"
 #include "tusb.h"
 
-#include "gateway_module.h"
+#include "gateway.h"
 
 int main() {
     stdio_init_all(); // To be able to use printf
+	
+	//while (!tud_cdc_connected()) { sleep_ms(100); };
+	gateway_init();
 
 	int i = 1;
+	gateway_start();
 	for(;;) {
-		// Wait for USB serial connection
-		while (!tud_cdc_connected()) { sleep_ms(100); };
-
-		printf("%i: Hello, world!", i);
-
-		i++;
-		sleep_ms(1000);
+		sleep_ms(5000);
 	}
     
     return 0;

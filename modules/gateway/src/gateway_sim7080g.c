@@ -3,21 +3,41 @@
 #include "pico/stdlib.h"
 #include "pico/multicore.h"
 
-#include "sim7080g_pico.h"
+#include "gateway_interface.h"
+#include "gateway_queue.h"
+#include "gateway_error.h"
+#include "gw_core.h"
+#include "gw_core_error.h"
 
-// SPI Defines
-// We are going to use SPI 0, and allocate it to the following GPIO pins
-// Pins can be changed, see the GPIO function select table in the datasheet for information on GPIO assignments
+#include "gateway_codes.h" // Communication codes
 
-#define BUF_SIZE 4096
-#define SPI_PORT spi0
-#define PIN_MISO 16
-#define PIN_CS   20
-#define PIN_SCK  18
-#define PIN_MOSI 19
-#define PIN_RST  21
-#define PIN_IRQ_0  21
-#define PIN_IRQ_1  21
+
+void gateway_init(void) {
+	gw_queue_init();
+
+	multicore_launch_core1(gw_core_entry);
+}
+
+void gateway_start(void) {
+
+	uint32_t command[2];
+	command[0] = GATEWAY_COMMAND;
+	command[1] = GATEWAY_START;
+	gw_queue_main_send((uint8_t *)command, (sizeof (uint32_t)) * 2);
+
+}
+
+void gateway_stop(void) {
+	uint32_t command[2];
+	command[0] = GATEWAY_COMMAND;
+	command[1] = GATEWAY_STOP;
+	gw_queue_main_send((uint8_t *)command, (sizeof (uint32_t)) * 2);
+}
+
+void gateway_send(void *data, uint size) {
+	
+}
+
 
 int test_gateway() {
 	return 1;

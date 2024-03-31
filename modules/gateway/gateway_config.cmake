@@ -9,7 +9,11 @@ set(target "gateway_module")
 
 # Source files
 list(APPEND sources
-	src/gateway.c
+	src/gateway_sim7080g.c
+	src/gateway_error.c
+	src/gw_core.c
+	src/gw_core_error.c
+	src/gateway_queue.c
 )
 
 list(APPEND includes
@@ -22,5 +26,10 @@ list(APPEND libraries
 	sim7080g_pico
 )
 
-#list(APPEND definitions
-#)
+list(APPEND definitions
+	GATEWAY_UART=uart0
+	GATEWAY_APN="iot.1nce.net"
+	GATEWAY_PIN_TX=0
+	GATEWAY_PIN_RX=1
+	GATEWAY_PIN_PWR=14
+)

@@ -43,13 +43,18 @@ void error_loop(char *error) {
 }
 
 int main() {
-    stdio_init_all(); // To be able to use printf
+    stdio_init_all(); // To be able to use print
 
 	bool success = false;
 	char error[100] = "success";
 
+	while (!tud_cdc_connected()) { sleep_ms(100); };
 	// Get SD config (ref sd_config.c)  
 	sd_card_t *sd = sd_get_by_num(0);
+	if (sd == NULL) {
+		sprintf(error, "sd_get_by_num returned NULL");
+		goto LOOP_BEGIN;
+	}
 
 	FRESULT fr = f_mount(&sd->fatfs, sd->pcName, 1);
 	if (fr != FR_OK) {
@@ -64,7 +69,6 @@ LOOP_BEGIN:
 	int i = 1;
 	for(;;) {
 		// Wait for USB serial connection
-		while (!tud_cdc_connected()) { sleep_ms(100); };
 
 		printf("%i: Hello, world!", i);
 

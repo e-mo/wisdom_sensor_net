@@ -24,14 +24,12 @@
 #define SERVER_PORT 8086
 
 // Modem state object
-typedef struct _sim7080g_context {
-	uart_inst_t *uart;
-	uint pin_tx;
-	uint pin_rx;
-	uint pin_power;
-} sim7080g_context_t;
+typedef struct _sim7080g_context sim7080g_context_t;
 
-// Powers on and configures modem
+sim7080g_context_t * sim7080g_create(void);
+void sim7080g_destroy(sim7080g_context_t *context);
+
+// Initializes and configures modem
 //
 // apn		 - sim provider APN string
 // uart		 - UART hardware instance
@@ -41,13 +39,17 @@ typedef struct _sim7080g_context {
 //
 // return: pointer to Modem state object singleton if modem started successfully
 // 		   NULL pointer returned otherwise
-sim7080g_context_t *sim7080g_start(
-		char *apn,
+void sim7080g_init(
+		sim7080g_context_t *context,
+		const char *apn,
 		uart_inst_t *uart,	
 		uint pin_tx,
 		uint pin_rx,
 		uint pin_power
 );
+
+bool sim7080g_start(sim7080g_context_t *context);
+bool sim7080g_config(sim7080g_context_t *context);
 
 // Writes to modem over UART
 //
