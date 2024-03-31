@@ -4,7 +4,7 @@ WISDOM team RPi Pico based sensor network codebase
 
 Maintainers:
 - Evan Morse (emm08060@vermontstate.edu OR emorse@tech.dev)
-- Amelia Vlahogiannis (agv07030@vermontstate.edu)
+- Amelia Vlahogiannis (agv07030@vermontstate.edu or amelia@ag2v.com)
 
 ## Cloning the Repo
 Repo should live at: ~/pico/wisdom_sensor_net  
