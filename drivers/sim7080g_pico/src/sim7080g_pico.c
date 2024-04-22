@@ -358,11 +358,8 @@ bool sim7080g_tcp_open(
 	uint32_t received = 0;
 	for (;;) {
 
-		printf("here\n");
 		received = sim7080g_read_blocking(context, read_buffer, RX_BUFFER_SIZE);
-		printf("maybe\n");
 		rp_parse(rp, read_buffer, received);
-		printf("not_here\n");
 
 		if (rp_contains_ok_or_err(rp)) break;
 

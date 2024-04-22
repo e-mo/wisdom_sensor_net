@@ -6,6 +6,7 @@
 #include "pico/multicore.h"
 
 #include "sim7080g_pico.h"
+#include "cbuffer.h"
 
 #include "gw_core_error.h"
 #include "gateway_codes.h"
@@ -37,16 +38,12 @@ static bool _start_command_issued = false;
 
 // Data output buffer
 #define MODEM_BUFFER_OUT_SIZE (1024 * 10) // 10 KB
-static uint8_t _modem_buffer_out[MODEM_BUFFER_OUT_SIZE] = {0};
-static uint8_t *_buffer_out_end = &_modem_buffer_out[MODEM_BUFFER_OUT_SIZE];
-static uint8_t *_buffer_out_p = _modem_buffer_out;
+static cbuffer_t *_modem_buffer_out = NULL;
 
 // Command buffer
 // Should only need to hold several commands at a time
 #define MODEM_BUFFER_COMMAND_SIZE (sizeof (uint32_t) * 100)
-static uint8_t _modem_buffer_command[MODEM_BUFFER_COMMAND_SIZE];
-static uint8_t *_buffer_command_end = &_modem_buffer_command[MODEM_BUFFER_COMMAND_SIZE];
-static uint8_t *_buffer_command_p = _modem_buffer_command;
+static cbuffer_t *_modem_buffer_command = NULL;
 
 // Internal func prototypes
 static bool _modem_cn_available(void);
@@ -66,7 +63,7 @@ uint16_t htons(uint16_t num) {
 uint32_t htonl(uint32_t num) {
 	uint32_t output = 0;
 	for (int i = 0; i < 32; i += 8)
-		output |= ((num >> i) & 0xFF) << (16 - 8 - i);	
+		output |= ((num >> i) & 0xFF) << (32 - 8 - i);	
 	return output;
 };
 
@@ -82,6 +79,14 @@ void gw_core_entry(void) {
 
 	bool success = false;
 	char *error = "ok";
+
+	_modem_buffer_out = cbuffer_create(MODEM_BUFFER_OUT_SIZE);
+	_modem_buffer_command = cbuffer_create(MODEM_BUFFER_COMMAND_SIZE);
+
+	if (!_modem_buffer_out || !_modem_buffer_command) {
+		error = "cbuffer_create returned NULL";
+		goto LOOP_BEGIN;
+	}
 
 	_gateway = sim7080g_create();
 	if (_gateway == NULL) {
@@ -161,13 +166,6 @@ LOOP_BEGIN:
 		}
 		printf("end\n");
 
-
-//	if (modem_tcp_open(modem, strlen(SERVER_URL), SERVER_URL, SERVER_PORT)) {
-//		printf("TCP connection opened\n");
-//	}
-//
-//	uint8_t *msg = "PING";
-//	if (modem_tcp_send(modem, strlen(msg), msg)) printf("Data sent!\n");
 
 		printf("cn available: %s\n",
 				_modem_cn_available() ? "true" : "false");
