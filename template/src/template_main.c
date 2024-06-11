@@ -42,7 +42,7 @@ int main() {
 		// Wait for USB serial connection
 		while (!tud_cdc_connected()) { sleep_ms(100); };
 
-		printf("%i: Hello, world!", i);
+		printf("%i: Hello, world!\n", i);
 
 		i++;
 		sleep_ms(1000);
