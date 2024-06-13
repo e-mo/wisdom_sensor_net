@@ -176,10 +176,6 @@ LOOP_CONTINUE:
 	}
 }
 
-uint gw_core_buffer_out_remaining(void) {
-	return _buffer_out_end - _buffer_out_p;
-}
-
 static bool _modem_cn_available(void) {
 	if (_modem_state ==  MODEM_UNINITIALIZED || _modem_state == MODEM_STOPPED)
 		return false;
