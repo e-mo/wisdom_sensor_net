@@ -30,6 +30,14 @@ target_sources(${target} INTERFACE
 
 )
 
+target_compile_definitions(${target} INTERFACE
+
+	# SHT30 (temp/humidity sensor)
+	SHT30_I2C=i2c0,
+	SHT30_SCL=5,
+	SHT30_SDA=4
+)
+
 # Add the standard include files to the build
 target_include_directories(${target} INTERFACE
 	src	
