@@ -1,0 +1,6 @@
+#ifndef PCF8523_I2C_GENERIC_H
+#define PCF8523_I2C_GENERIC_H
+
+
+
+#endif // PCF8523_I2C_GENERIC_H
