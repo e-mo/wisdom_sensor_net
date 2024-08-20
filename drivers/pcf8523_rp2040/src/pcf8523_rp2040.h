@@ -1,7 +1,7 @@
 #ifndef PCF8523_RP2040_H
 #define PCF8523_RP2040_H
 
-#include "src/pcf8523_generic.h"
+#include "pcf8523_generic.h"
 
 // rp2040 specific header stuff here
 

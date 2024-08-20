@@ -2,8 +2,9 @@
 #define PCF8523_INTERFACE_GENERIC_H
 
 #include <stdbool.h>
+#include <stdint.h>
 
-typedef unsigned uint;
+#include "pcf8523_definitions.h"
 
 // All functions return true if i2c communication was successful
 // and return false if i2c communication failed or was unreliable.
@@ -11,8 +12,8 @@ typedef unsigned uint;
 bool pcf8523_control_get_all(uint i2c_inst, uint8_t dst[3]);
 bool pcf8523_control_set_all(uint i2c_inst, uint8_t src[3]);
 
-bool pcf8523_contol_get(uint i2c_inst, uint reg, uint8_t *dst);
-bool pcf8523_contol_set(uint i2c_inst, uint reg, uint8_t *src);
+bool pcf8523_control_get(uint i2c_inst, uint reg, uint8_t *dst);
+bool pcf8523_control_set(uint i2c_inst, uint reg, uint8_t *src);
 
 // CONTROL_1
 
@@ -29,8 +30,12 @@ bool pcf8523_cap_sel_get(uint i2c_inst, uint *cap_sel_mode);
 bool pcf8523_cap_sel_set(uint i2c_inst, CAP_SEL_MODE_T cap_sel_mode);
 
 bool pcf8523_time_circuit_is_running(uint i2c_inst, bool *is_running);
-bool pcf8523_time_circuit_start(uint i2c_inst);
-bool pcf8523_time_circuit_stop(uint i2c_inst);
+// This bit apparently can't be set? Trying to confirm this. Seems like there is
+// a way to stop the clock by holding one of the crystal pins low. I'm also not
+// sure why I would NEED to stop the clock rather than just set it. There is a
+// standby mode that I can look into as well.
+//bool pcf8523_time_circuit_start(uint i2c_inst);
+//bool pcf8523_time_circuit_stop(uint i2c_inst);
 
 bool pcf8523_software_reset_initiate(uint i2c_inst);
 
@@ -135,14 +140,14 @@ bool pcf8523_minutes_set(uint i2c_inst, uint minutes);
 bool pcf8523_hours_get(uint i2c_inst, uint *hours);
 bool pcf8523_hours_set(uint i2c_inst, uint hours);
 
-enum _AM_PM_E {
+typedef enum _AM_PM_E {
 	AM = 0,
 	PM = 1
 } AM_PM_T;
 bool pcf8523_am_pm_get(uint i2c_inst, uint *am_pm);
 bool pcf8523_am_pm_set(uint i2c_inst, AM_PM_T am_pm);
 
-enum _WEEKDAY_E {
+typedef enum _WEEKDAY_E {
 	SUNDAY,
 	MONDAY,
 	TUESDAY,
@@ -154,7 +159,7 @@ enum _WEEKDAY_E {
 bool pcf8523_weekday_get(uint i2c_inst, uint *weekday);
 bool pcf8523_weekday_set(uint i2c_inst, WEEKDAY_T weekday);
 
-enum _MONTH_E {
+typedef enum _MONTH_E {
 	JANUARY,
 	FEBRUARY,
 	MARCH,
@@ -211,5 +216,7 @@ bool pcf8523_offset_mode_get(uint i2c_inst, uint *mode);
 bool pcf8523_offset_mode_set(uint i2c_inst, OFFSET_MODE_T mode);
 // [-64:63]
 bool pcf8523_offset_set(uint i2c_inst, int offset);
+
+// TODO: Add timer functions.
 
 #endif // PCF8523_INTERFACE_GENERIC_H
