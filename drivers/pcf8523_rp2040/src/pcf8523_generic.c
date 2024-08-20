@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include "pcf8523_generic.h"
 #include "pcf8523_i2c_generic.h"
 
@@ -101,10 +103,12 @@ RETURN:
 bool pcf8523_cap_sel_get(uint i2c_inst, uint *cap_sel_mode) {
 	bool success = false;
 
-	if (!pcf8523_control_get(i2c_inst, 1, (uint8_t *)cap_sel_mode))	
+	uint8_t buf;
+	if (!pcf8523_control_get(i2c_inst, 1, &buf))	
 		goto RETURN;
 
-	*cap_sel_mode = (*cap_sel_mode & 0x80) >> 7;
+	buf = (buf & 0x80) >> 7;
+	*cap_sel_mode = buf;
 
 	success = true;
 RETURN:
@@ -119,7 +123,6 @@ bool pcf8523_cap_sel_set(uint i2c_inst, CAP_SEL_MODE_T cap_sel_mode) {
 	if (!pcf8523_control_get(i2c_inst, 1, &buf))	
 		goto RETURN;
 
-	// Clear CAP_SEL bit
 	buf &= ~0x80;
 	buf |= cap_sel_mode << 7;
 
@@ -203,6 +206,13 @@ RETURN:
 bool pcf8523_hour_mode_get(uint i2c_inst, uint *hour_mode) {
 	bool success = false;
 
+	uint8_t buf;
+	if (!pcf8523_control_get(i2c_inst, 1, &buf))	
+		goto RETURN;
+
+	buf = (buf & 0x08) >> 3;
+	*hour_mode = buf;
+
 	success = true;
 RETURN:
 	return success;
@@ -211,6 +221,172 @@ RETURN:
 
 bool pcf8523_hour_mode_set(uint i2c_inst, HOUR_MODE_T hour_mode) {
 	bool success = false;
+
+	uint8_t buf;
+	if (!pcf8523_control_get(i2c_inst, 1, &buf))	
+		goto RETURN;
+
+	buf &= ~0x08;
+	buf |= hour_mode << 3;
+
+	if (!pcf8523_control_set(i2c_inst, 1, &buf))	
+		goto RETURN;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+
+bool pcf8523_second_int_is_enabled(uint i2c_inst, bool *is_enabled) {
+	bool success = false;
+
+	uint8_t buf;
+	if (!pcf8523_control_get(i2c_inst, 1, &buf))	
+		goto RETURN;
+
+	*is_enabled = !!(buf & 0x04);
+
+	success = true;
+RETURN:
+	return success;
+}
+
+
+bool pcf8523_second_int_enable(uint i2c_inst) {
+	bool success = false;
+
+	uint8_t buf;
+	if (!pcf8523_control_get(i2c_inst, 1, &buf))	
+		goto RETURN;
+
+	buf |= 0x04;
+
+	if (!pcf8523_control_set(i2c_inst, 1, &buf))	
+		goto RETURN;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+
+bool pcf8523_second_int_disable(uint i2c_inst) {
+	bool success = false;
+
+	uint8_t buf;
+	if (!pcf8523_control_get(i2c_inst, 1, &buf))	
+		goto RETURN;
+
+	buf &= ~0x04;
+
+	if (!pcf8523_control_set(i2c_inst, 1, &buf))	
+		goto RETURN;
+
+
+	success = true;
+RETURN:
+	return success;
+}
+
+
+bool pcf8523_alarm_int_is_enabled(uint i2c_inst, bool *is_enabled) {
+	bool success = false;
+
+	uint8_t buf;
+	if (!pcf8523_control_get(i2c_inst, 1, &buf))	
+		goto RETURN;
+
+	*is_enabled = !!(buf & 0x02);
+
+	success = true;
+RETURN:
+	return success;
+}
+
+
+bool pcf8523_alarm_int_enable(uint i2c_inst) {
+	bool success = false;
+
+	uint8_t buf;
+	if (!pcf8523_control_get(i2c_inst, 1, &buf))	
+		goto RETURN;
+
+	buf |= 0x02;
+
+	if (!pcf8523_control_set(i2c_inst, 1, &buf))	
+		goto RETURN;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+
+bool pcf8523_alarm_int_disable(uint i2c_inst) {
+	bool success = false;
+
+	uint8_t buf;
+	if (!pcf8523_control_get(i2c_inst, 1, &buf))	
+		goto RETURN;
+
+	buf &= ~0x02;
+
+	if (!pcf8523_control_set(i2c_inst, 1, &buf))	
+		goto RETURN;
+
+
+	success = true;
+RETURN:
+	return success;
+}
+
+
+bool pcf8523_correction_int_is_enabled(uint i2c_inst, bool *is_enabled) {
+	bool success = false;
+
+	uint8_t buf;
+	if (!pcf8523_control_get(i2c_inst, 1, &buf))	
+		goto RETURN;
+
+	*is_enabled = !!(buf & 0x01);
+
+	success = true;
+RETURN:
+	return success;
+}
+
+
+bool pcf8523_correction_int_enable(uint i2c_inst) {
+	bool success = false;
+
+	uint8_t buf;
+	if (!pcf8523_control_get(i2c_inst, 1, &buf))	
+		goto RETURN;
+
+	buf |= 0x01;
+
+	if (!pcf8523_control_set(i2c_inst, 1, &buf))	
+		goto RETURN;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+
+bool pcf8523_correction_int_disable(uint i2c_inst) {
+	bool success = false;
+
+	uint8_t buf;
+	if (!pcf8523_control_get(i2c_inst, 1, &buf))	
+		goto RETURN;
+
+	buf &= ~0x01;
+
+	if (!pcf8523_control_set(i2c_inst, 1, &buf))	
+		goto RETURN;
+
 
 	success = true;
 RETURN:
