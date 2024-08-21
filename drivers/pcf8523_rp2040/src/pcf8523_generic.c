@@ -387,6 +387,41 @@ bool pcf8523_correction_int_disable(uint i2c_inst) {
 	if (!pcf8523_control_set(i2c_inst, 1, &buf))	
 		goto RETURN;
 
+	success = true;
+RETURN:
+	return success;
+}
+
+
+bool pcf8523_watchdog_timer_int_flag_is_set(uint i2c_inst, bool *is_set) {
+	bool success = false;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+
+bool pcf8523_watchdog_timer_int_is_enabled(uint i2c_inst, bool *is_enabled) {
+	bool success = false;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+
+bool pcf8523_watchdog_timer_int_enable(uint i2c_inst) {
+	bool success = false;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+
+bool pcf8523_watchdog_timer_int_disable(uint i2c_inst) {
+	bool success = false;
 
 	success = true;
 RETURN:
