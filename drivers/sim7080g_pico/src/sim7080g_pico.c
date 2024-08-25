@@ -83,8 +83,6 @@ bool sim7080g_start(sim7080g_context_t *context) {
 	if (!sim7080g_config(context)) return false;
 
 	// Wait until network is connected
-	// Blocks until connected since the modem
-	// is worth nothing without a network
 	// sim7080g_wait_for_cn(context);
 
 	return success;
