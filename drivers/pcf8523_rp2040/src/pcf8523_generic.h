@@ -60,7 +60,7 @@ bool pcf8523_correction_int_disable(uint i2c_inst);
 
 // CONTROL_2
 
-bool pcf8523_watchdog_timer_int_flag_get(uint i2c_inst, bool *flag);
+bool pcf8523_watchdog_timer_int_flag_is_set(uint i2c_inst, bool *flag);
 
 bool pcf8523_watchdog_timer_int_is_enabled(uint i2c_inst, bool *is_enabled);
 bool pcf8523_watchdog_timer_int_enable(uint i2c_inst);
@@ -70,17 +70,17 @@ typedef enum _COUNTDOWN_TIME_E {
 	COUNTDOWN_TIMER_A,
 	COUNTDOWN_TIMER_B
 } COUNTDOWN_TIMER_T;
-bool pcf8523_countdown_timer_int_flag_get(uint i2c_inst, COUNTDOWN_TIMER_T timer, bool *flag);
+bool pcf8523_countdown_timer_int_flag_is_set(uint i2c_inst, COUNTDOWN_TIMER_T timer, bool *flag);
 bool pcf8523_countdown_timer_int_flag_clear(uint i2c_inst, COUNTDOWN_TIMER_T timer);
 
 bool pcf8523_countdown_timer_int_is_enabled(uint i2c_inst, COUNTDOWN_TIMER_T timer, bool *is_enabled);
 bool pcf8523_countdown_timer_int_enable(uint i2c_inst, COUNTDOWN_TIMER_T timer);
 bool pcf8523_countdown_timer_int_disable(uint i2c_inst, COUNTDOWN_TIMER_T timer);
 
-bool pcf8523_second_int_flag_get(uint i2c_inst, bool *flag);
+bool pcf8523_second_int_flag_is_set(uint i2c_inst, bool *flag);
 bool pcf8523_second_int_flag_clear(uint i2c_inst);
 
-bool pcf8523_alarm_int_flag_get(uint i2c_inst, bool *flag);
+bool pcf8523_alarm_int_flag_is_set(uint i2c_inst, bool *flag);
 bool pcf8523_alarm_int_flag_clear(uint i2c_inst);
 
 // CONTROL_3
