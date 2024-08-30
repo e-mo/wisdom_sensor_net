@@ -9,7 +9,7 @@ set(target "radio_module")
 
 # Source files
 list(APPEND sources
-	src/radio_rfm69hcw.c
+	src/radio_rfm69.c
 	src/radio_error.c
 )
 
@@ -18,7 +18,7 @@ list(APPEND includes
 )
 
 list(APPEND libraries
-	rfm69_pico
+	rfm69_rp2040
 )
 
 list(APPEND definitions
