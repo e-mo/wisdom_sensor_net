@@ -32,6 +32,10 @@ bool radio_init(void) {
 		goto RETURN;
 	}
 
+	// Max out power level by default for now
+	// TODO: evaluate this
+	rfm69_power_level_set(&_rfm, 20);
+
 	if (rfm69_rudp_init(&_rudp, &_rfm) == false) {
 		radio_error_set(RADIO_HW_FAILURE);
 		goto RETURN;

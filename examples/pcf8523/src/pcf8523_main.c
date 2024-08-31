@@ -6,8 +6,8 @@
 #include "pcf8523_rp2040.h"
 
 #define I2C_INST (i2c0)
-#define PIN_SCL  (9)
-#define PIN_SDA  (8)
+#define PIN_SCL  (5)
+#define PIN_SDA  (4)
 
 #define ever ;;
 
@@ -17,6 +17,8 @@ void main() {
 	i2c_init(I2C_INST, 500 * 1000);
 	gpio_set_function(PIN_SCL, GPIO_FUNC_I2C);
 	gpio_set_function(PIN_SDA, GPIO_FUNC_I2C);
+	gpio_pull_up(PIN_SCL);
+	gpio_pull_up(PIN_SDA);
 
 	uint index = I2C_NUM(I2C_INST);
 

@@ -22,7 +22,7 @@ list(APPEND libraries
 )
 
 list(APPEND definitions
-	# Enables high power routines for RFM69
+	# Enables high power routines for RFM69H series
 	RFM69_HIGH_POWER
 
 	# RFM69 pin definitions 
