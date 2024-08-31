@@ -53,7 +53,7 @@ void sim7080g_init(
 	// gpio stuff
 	gpio_init(context->pin_power);
 	gpio_set_dir(context->pin_power, GPIO_OUT);
-	gpio_put(context->pin_power, 0);
+	gpio_put(context->pin_power, 1);
 	gpio_set_function(context->pin_tx, GPIO_FUNC_UART);
 	gpio_set_function(context->pin_rx, GPIO_FUNC_UART);
 }
@@ -575,9 +575,9 @@ void sim7080g_read_to_null(sim7080g_context_t *context) {
 }
 
 bool sim7080g_toggle_power(sim7080g_context_t *context) {
-	gpio_put(context->pin_power, 1);
-	sleep_ms(2500);
 	gpio_put(context->pin_power, 0);
+	sleep_ms(2500);
+	gpio_put(context->pin_power, 1);
 }
 
 bool sim7080g_power_down(sim7080g_context_t *context) {

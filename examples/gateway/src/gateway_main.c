@@ -39,7 +39,7 @@ int main() {
 	uint32_t i = 69;
 
 	gateway_start();
-	gateway_send(&i, 4);
+	//gateway_send(&i, 4);
 
 	for(;;) {
 		sleep_ms(5000);

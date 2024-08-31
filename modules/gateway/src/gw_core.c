@@ -134,7 +134,7 @@ LOOP_BEGIN:
 				_modem_power_toggled = true;
 			}
 		} 
-		else if (_start_command_issued) _start_command_issued = false;
+		//else if (_start_command_issued) _start_command_issued = false;
 		else if (_modem_state == MODEM_STARTED)
 			if (sim7080g_is_ready(_gateway) == false)
 				_modem_state = MODEM_STOPPED;
@@ -286,8 +286,10 @@ static void _command_buffer_execute(void) {
 			new_command = true;
 			break;
 		case GATEWAY_STOP:
-			printf("here stopping\n");
-			if (sim7080g_power_down(_gateway)) _modem_state = MODEM_STOPPED;
+			if (sim7080g_power_down(_gateway)) {
+				_modem_state = MODEM_STOPPED;
+				_start_command_issued = false;
+			}
 			new_command = true;
 			break;	
 		}
