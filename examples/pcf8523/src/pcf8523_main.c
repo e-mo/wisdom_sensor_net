@@ -26,23 +26,17 @@ void main() {
 
 	pcf8523_software_reset_initiate(index);
 
-	pcf8523_cap_sel_set(index, CAP_SEL_12_5_PF);
-	pcf8523_correction_int_enable(index);
-	//pcf8523_correction_int_disable(index);
+
+	pcf8523_ci_warning_flag_clear(index);
 
 	for(ever) {
 
-		uint8_t buf = 0x00;
-		if (!pcf8523_control_get(index, 1, &buf))
+		uint8_t buf = 0;
+		if (!pcf8523_seconds_reg_get(index, &buf))
 			printf("Unabled to read\n");
 
-		printf("buf: %02X\n", buf);
-
-		bool is_enabled = true;
-		if (!pcf8523_correction_int_is_enabled(index, &is_enabled))
-			printf("Unabled to read\n");
-
-		printf("%s\n", is_enabled ? "true" : "false");
+		printf("buf: %0X\n", buf);
+		pcf8523_ci_warning_flag_clear(index);
 
 		sleep_ms(1000);
 

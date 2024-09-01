@@ -9,11 +9,14 @@
 // All functions return true if i2c communication was successful
 // and return false if i2c communication failed or was unreliable.
 
+bool pcf8523_reg_get(uint i2c_inst, uint8_t reg, uint8_t *dst);
+bool pcf8523_reg_set(uint i2c_inst, uint8_t reg, uint8_t src);
+
 bool pcf8523_control_get_all(uint i2c_inst, uint8_t dst[3]);
 bool pcf8523_control_set_all(uint i2c_inst, uint8_t src[3]);
 
-bool pcf8523_control_get(uint i2c_inst, uint reg, uint8_t *dst);
-bool pcf8523_control_set(uint i2c_inst, uint reg, uint8_t *src);
+bool pcf8523_control_reg_get(uint i2c_inst, uint reg, uint8_t *dst);
+bool pcf8523_control_reg_set(uint i2c_inst, uint reg, uint8_t src);
 
 // CONTROL_1
 
@@ -60,22 +63,22 @@ bool pcf8523_correction_int_disable(uint i2c_inst);
 
 // CONTROL_2
 
-bool pcf8523_watchdog_timer_int_flag_is_set(uint i2c_inst, bool *flag);
+bool pcf8523_wtimer_int_flag_is_set(uint i2c_inst, bool *flag);
 
-bool pcf8523_watchdog_timer_int_is_enabled(uint i2c_inst, bool *is_enabled);
-bool pcf8523_watchdog_timer_int_enable(uint i2c_inst);
-bool pcf8523_watchdog_timer_int_disable(uint i2c_inst);
+bool pcf8523_wtimer_int_is_enabled(uint i2c_inst, bool *is_enabled);
+bool pcf8523_wtimer_int_enable(uint i2c_inst);
+bool pcf8523_wtimer_int_disable(uint i2c_inst);
 
 typedef enum _COUNTDOWN_TIME_E {
 	COUNTDOWN_TIMER_A,
 	COUNTDOWN_TIMER_B
 } COUNTDOWN_TIMER_T;
-bool pcf8523_countdown_timer_int_flag_is_set(uint i2c_inst, COUNTDOWN_TIMER_T timer, bool *flag);
-bool pcf8523_countdown_timer_int_flag_clear(uint i2c_inst, COUNTDOWN_TIMER_T timer);
+bool pcf8523_ctimer_int_flag_is_set(uint i2c_inst, COUNTDOWN_TIMER_T timer, bool *flag);
+bool pcf8523_ctimer_int_flag_clear(uint i2c_inst, COUNTDOWN_TIMER_T timer);
 
-bool pcf8523_countdown_timer_int_is_enabled(uint i2c_inst, COUNTDOWN_TIMER_T timer, bool *is_enabled);
-bool pcf8523_countdown_timer_int_enable(uint i2c_inst, COUNTDOWN_TIMER_T timer);
-bool pcf8523_countdown_timer_int_disable(uint i2c_inst, COUNTDOWN_TIMER_T timer);
+bool pcf8523_ctimer_int_is_enabled(uint i2c_inst, COUNTDOWN_TIMER_T timer, bool *is_enabled);
+bool pcf8523_ctimer_int_enable(uint i2c_inst, COUNTDOWN_TIMER_T timer);
+bool pcf8523_ctimer_int_disable(uint i2c_inst, COUNTDOWN_TIMER_T timer);
 
 bool pcf8523_second_int_flag_is_set(uint i2c_inst, bool *flag);
 bool pcf8523_second_int_flag_clear(uint i2c_inst);
@@ -97,28 +100,24 @@ typedef enum _PM_FUNCTION_E {
 bool pcf8523_pm_function_get(uint i2c_inst, uint *pm_function);
 bool pcf8523_pm_function_set(uint i2c_inst, PM_FUNCTION_T pm_function);
 
-bool pcf8523_battery_so_int_flag_get(uint i2c_inst, bool *flag);
-bool pcf8523_battery_so_int_flag_clear(uint i2c_inst);
+bool pcf8523_bso_flag_is_set(uint i2c_inst, bool *is_set);
+bool pcf8523_bso_flag_clear(uint i2c_inst);
 
-enum _BATTERY_STATUS_E {
-	BATTERY_LOW = 0,
-	BATTERY_OK  = 1
-};
-bool pcf8523_battery_status_get(uint i2c_inst, uint *status);
+bool pcf8523_bl_flag_is_set(uint i2c_inst, bool *is_set);
 
-bool pcf8523_battery_so_int_is_enabled(uint i2c_inst, bool *is_enabled);
-bool pcf8523_battery_so_timer_int_enable(uint i2c_inst);
-bool pcf8523_battery_so_timer_int_disable(uint i2c_inst);
+bool pcf8523_bso_int_is_enabled(uint i2c_inst, bool *is_enabled);
+bool pcf8523_bso_int_enable(uint i2c_inst);
+bool pcf8523_bso_int_disable(uint i2c_inst);
 
-bool pcf8523_battery_low_int_is_enabled(uint i2c_inst, bool *is_enabled);
-bool pcf8523_battery_low_timer_int_enable(uint i2c_inst);
-bool pcf8523_battery_low_timer_int_disable(uint i2c_inst);
+bool pcf8523_bl_int_is_enabled(uint i2c_inst, bool *is_enabled);
+bool pcf8523_bl_int_enable(uint i2c_inst);
+bool pcf8523_bl_int_disable(uint i2c_inst);
 
 // MISC CONTROL
 // Technically a control bit, but resides in seconds register
 
-bool pcf8523_clock_integrity_warning_flag_get(uint i2c_inst, bool *flag);
-bool pcf8523_clock_integrity_warning_flag_clear(uint i2c_inst);
+bool pcf8523_ci_warning_flag_is_set(uint i2c_inst, bool *is_set);
+bool pcf8523_ci_warning_flag_clear(uint i2c_inst);
 
 // TIME DATE
 
@@ -131,11 +130,20 @@ bool pcf8523_time_set_all(uint i2c_inst, uint8_t src[3]);
 bool pcf8523_date_get_all(uint i2c_inst, uint8_t dest[4]);
 bool pcf8523_date_set_all(uint i2c_inst, uint8_t src[4]);
 
+bool pcf8523_seconds_reg_get(uint i2c_inst, uint8_t *reg);
+bool pcf8523_seconds_reg_set(uint i2c_inst, uint8_t reg);
+
 bool pcf8523_seconds_get(uint i2c_inst, uint *seconds);
 bool pcf8523_seconds_set(uint i2c_inst, uint seconds);
 
+bool pcf8523_minutes_reg_get(uint i2c_inst, uint8_t *reg);
+bool pcf8523_minutes_reg_set(uint i2c_inst, uint8_t reg);
+
 bool pcf8523_minutes_get(uint i2c_inst, uint *minutes);
 bool pcf8523_minutes_set(uint i2c_inst, uint minutes);
+
+bool pcf8523_hours_reg_get(uint i2c_inst, uint8_t *reg);
+bool pcf8523_hours_reg_set(uint i2c_inst, uint8_t reg);
 
 bool pcf8523_hours_get(uint i2c_inst, uint *hours);
 bool pcf8523_hours_set(uint i2c_inst, uint hours);
