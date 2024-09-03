@@ -223,7 +223,7 @@ RETURN:
 //	 	HOUR_MODE_24 = 0, // 0-23 hour mode
 //	 	HOUR_MODE_12 = 1  // 1-12 hour mode with AM/PM flag
 //	} HOUR_MODE_T;
-bool pcf8523_hour_mode_get(uint i2c_inst, uint *hour_mode) {
+bool pcf8523_hour_mode_get(uint i2c_inst, HOUR_MODE_T *hour_mode) {
 	bool success = false;
 
 	uint8_t buf;
@@ -881,7 +881,66 @@ bool pcf8523_ci_warning_flag_clear(uint i2c_inst) {
 	success = true;
 RETURN:
 	return success;
+}
 
+bool pcf8523_time_date_reg_get_all(uint i2c_inst, uint8_t dst[7]) {
+	bool success = false;
+
+	uint8_t reg = PCF8523_REG_SECONDS;
+	if (!pcf8523_i2c_write(i2c_inst, &reg, 1))
+		goto RETURN;	
+
+	if (!pcf8523_i2c_read(i2c_inst, dst, 7))
+		goto RETURN;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_time_date_reg_set_all(uint i2c_inst, uint8_t src[7]) {
+	bool success = false;
+
+	uint8_t buf[8] = {PCF8523_REG_SECONDS};
+	for (int i = 0; i < 7; i++)
+		buf[i+1] = src[i];
+
+	if (!pcf8523_i2c_write(i2c_inst, buf, 8))
+		goto RETURN;	
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_time_reg_get_all(uint i2c_inst, uint8_t dst[3]) {
+	bool success = false;
+
+	uint8_t reg = PCF8523_REG_SECONDS;
+	if (!pcf8523_i2c_write(i2c_inst, &reg, 1))
+		goto RETURN;	
+
+	if (!pcf8523_i2c_read(i2c_inst, dst, 3))
+		goto RETURN;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_time_reg_set_all(uint i2c_inst, uint8_t src[3]) {
+	bool success = false;
+
+	uint8_t buf[8] = {PCF8523_REG_SECONDS};
+	for (int i = 0; i < 3; i++)
+		buf[i+1] = src[i];
+
+	if (!pcf8523_i2c_write(i2c_inst, buf, 3))
+		goto RETURN;	
+
+	success = true;
+RETURN:
+	return success;
 }
 
 bool pcf8523_seconds_reg_get(uint i2c_inst, uint8_t *dst) {
@@ -900,6 +959,509 @@ bool pcf8523_seconds_reg_set(uint i2c_inst, uint8_t reg) {
 
 	if (!pcf8523_reg_set(i2c_inst, PCF8523_REG_SECONDS, reg))
 		goto RETURN;	
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_seconds_get(uint i2c_inst, uint *seconds) {
+	bool success = false;
+
+	uint8_t buf = 0;
+	if (!pcf8523_seconds_reg_get(i2c_inst, &buf))
+		goto RETURN;	
+
+	*seconds = 0;
+	*seconds += buf & 0x0F;
+	*seconds += ((buf & 0x70) >> 4) * 10;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_seconds_set(uint i2c_inst, uint seconds) {
+	bool success = false;
+
+	uint8_t buf = 0;
+	if (!pcf8523_seconds_reg_get(i2c_inst, &buf))
+		goto RETURN;	
+
+	// Clear all but ci flag
+	buf &= 0x80;
+	buf |= seconds % 10;
+	buf |= ((seconds / 10) << 4) & 0x70;
+
+	if (!pcf8523_seconds_reg_set(i2c_inst, buf))
+		goto RETURN;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_minutes_reg_get(uint i2c_inst, uint8_t *reg) {
+	bool success = false;
+
+	if (!pcf8523_reg_get(i2c_inst, PCF8523_REG_MINUTES, reg))
+		goto RETURN;	
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_minutes_reg_set(uint i2c_inst, uint8_t reg) {
+	bool success = false;
+
+	if (!pcf8523_reg_set(i2c_inst, PCF8523_REG_MINUTES, reg))
+		goto RETURN;	
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_minutes_get(uint i2c_inst, uint *minutes) {
+	bool success = false;
+
+	uint8_t buf = 0;
+	if (!pcf8523_minutes_reg_get(i2c_inst, &buf))
+		goto RETURN;	
+
+	*minutes = 0;
+	*minutes += buf & 0x0F;
+	*minutes += ((buf & 0x70) >> 4) * 10;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_minutes_set(uint i2c_inst, uint minutes) {
+	bool success = false;
+
+	uint8_t buf = 0;
+	if (!pcf8523_minutes_reg_get(i2c_inst, &buf))
+		goto RETURN;	
+
+	buf &= 0x80;
+	buf |= minutes % 10;
+	buf |= ((minutes / 10) << 4) & 0x70;
+
+	if (!pcf8523_minutes_reg_set(i2c_inst, buf))
+		goto RETURN;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_hours_reg_get(uint i2c_inst, uint8_t *reg) {
+	bool success = false;
+
+	if (!pcf8523_reg_get(i2c_inst, PCF8523_REG_HOURS, reg))
+		goto RETURN;	
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_hours_reg_set(uint i2c_inst, uint8_t reg) {
+	bool success = false;
+
+	if (!pcf8523_reg_set(i2c_inst, PCF8523_REG_HOURS, reg))
+		goto RETURN;	
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_hours_get(uint i2c_inst, uint *hours) {
+	bool success = false;
+
+	HOUR_MODE_T hm;
+	if (!pcf8523_hour_mode_get(i2c_inst, &hm))
+		goto RETURN;
+
+	uint8_t buf = 0;
+	if (!pcf8523_hours_reg_get(i2c_inst, &buf))
+		goto RETURN;
+
+	*hours = 0;
+	*hours += buf & 0x0F;
+
+	switch (hm) {
+	case HOUR_MODE_24:
+		*hours += ((buf & 0x30) >> 4) * 10;
+		break;
+	case HOUR_MODE_12:
+		*hours += ((buf & 0x10) >> 4) * 10;
+		break;
+	}
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_hours_set(uint i2c_inst, uint hours) {
+	bool success = false;
+
+	HOUR_MODE_T hm;
+	if (!pcf8523_hour_mode_get(i2c_inst, &hm))
+		goto RETURN;
+
+	uint8_t buf = 0;
+	if (!pcf8523_hours_reg_get(i2c_inst, &buf))
+		goto RETURN;
+
+	switch (hm) {
+	case HOUR_MODE_24:
+		buf &= ~0x3F;
+		buf |= ((hours / 10) << 4) & 0x30;
+		break;
+	case HOUR_MODE_12:
+		buf &= ~0x1F;
+		buf |= ((hours / 10) << 4) & 0x10;
+		break;
+	}
+
+	buf |= hours % 10;
+
+	if (!pcf8523_hours_reg_set(i2c_inst, buf))
+		goto RETURN;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+// typedef enum _AM_PM_E {
+// 	AM = 0,
+// 	PM = 1
+// } AM_PM_T;
+bool pcf8523_am_pm_get(uint i2c_inst, AM_PM_T *am_pm) {
+	bool success = false;
+
+	HOUR_MODE_T hm;
+	if (!pcf8523_hour_mode_get(i2c_inst, &hm))
+		goto RETURN;
+
+	switch (hm) {
+	case HOUR_MODE_24:
+		uint hours;
+		if (!pcf8523_hours_get(i2c_inst, &hours))
+			goto RETURN;
+
+		if (hours < 12) *am_pm = AM;
+		else *am_pm = PM;
+
+		break;
+
+	case HOUR_MODE_12:
+		uint8_t buf = 0;
+		if (!pcf8523_hours_reg_get(i2c_inst, &buf))
+			goto RETURN;
+
+		if (buf & 0x20) *am_pm = PM;
+		else *am_pm = AM;
+
+		break;
+	}
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_am_pm_set(uint i2c_inst, AM_PM_T am_pm) {
+	bool success = false;
+
+	HOUR_MODE_T hm;
+	if (!pcf8523_hour_mode_get(i2c_inst, &hm))
+		goto RETURN;
+
+	switch (hm) {
+	case HOUR_MODE_24:
+		uint hours;
+		if (!pcf8523_hours_get(i2c_inst, &hours))
+			goto RETURN;
+
+		if (am_pm == AM && hours >= 12)
+			hours -= 12;
+		else if (am_pm == PM && hours < 12)
+			hours += 12;
+
+		if (!pcf8523_hours_set(i2c_inst, hours))
+			goto RETURN;
+
+		break;
+
+	case HOUR_MODE_12:
+		uint8_t buf = 0;
+		if (!pcf8523_hours_reg_get(i2c_inst, &buf))
+			goto RETURN;
+
+		buf &= ~0x20;
+		buf |= (am_pm & 0x01) << 5;
+
+		if (!pcf8523_hours_reg_set(i2c_inst, buf))
+			goto RETURN;
+
+		break;
+	}
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_days_reg_get(uint i2c_inst, uint8_t *reg) {
+	bool success = false;
+
+	if (!pcf8523_reg_get(i2c_inst, PCF8523_REG_DAYS, reg))
+		goto RETURN;	
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_days_reg_set(uint i2c_inst, uint8_t reg) {
+	bool success = false;
+
+	if (!pcf8523_reg_set(i2c_inst, PCF8523_REG_DAYS, reg))
+		goto RETURN;	
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_days_get(uint i2c_inst, uint *days) {
+	bool success = false;
+
+	uint8_t buf = 0;
+	if (!pcf8523_days_reg_get(i2c_inst, &buf))
+		goto RETURN;	
+
+	*days = 0;
+	*days += buf & 0x0F;
+	*days += ((buf & 0x30) >> 4) * 10;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_days_set(uint i2c_inst, uint days) {
+	bool success = false;
+
+	uint8_t buf = 0;
+	if (!pcf8523_days_reg_get(i2c_inst, &buf))
+		goto RETURN;	
+
+	buf &= ~0x3F;
+	buf |= days % 10;
+	buf |= ((days / 10) << 4) & 0x30;
+
+	if (!pcf8523_days_reg_set(i2c_inst, buf))
+		goto RETURN;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+// typedef enum _WEEKDAY_E {
+// 	SUNDAY,
+// 	MONDAY,
+// 	TUESDAY,
+// 	WEDNESDAY,
+// 	THURSDAY,
+// 	FRIDAY,
+// 	SATURDAY
+// } WEEKDAY_T;
+bool pcf8523_weekdays_reg_get(uint i2c_inst, uint8_t *reg) {
+	bool success = false;
+
+	if (!pcf8523_reg_get(i2c_inst, PCF8523_REG_WEEKDAYS, reg))
+		goto RETURN;	
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_weekdays_reg_set(uint i2c_inst, uint8_t reg) {
+	bool success = false;
+
+	if (!pcf8523_reg_set(i2c_inst, PCF8523_REG_WEEKDAYS, reg))
+		goto RETURN;	
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_weekdays_get(uint i2c_inst, WEEKDAY_T *weekday) {
+	bool success = false;
+
+	uint8_t buf = 0;
+	if (!pcf8523_weekdays_reg_get(i2c_inst, &buf))
+		goto RETURN;	
+
+	*weekday = 0;
+	*weekday += buf & 0x07;
+
+	success = true;
+RETURN:
+	return success;
+}
+	
+bool pcf8523_weekdays_set(uint i2c_inst, WEEKDAY_T weekday) {
+	bool success = false;
+
+	uint8_t buf = 0;
+	if (!pcf8523_weekdays_reg_get(i2c_inst, &buf))
+		goto RETURN;	
+
+	buf &= ~0x07;
+	buf |= weekday & 0x07;
+
+	if (!pcf8523_weekdays_reg_set(i2c_inst, buf))
+		goto RETURN;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+// typedef enum _MONTH_E {
+// 	JANUARY,
+// 	FEBRUARY,
+// 	MARCH,
+// 	APRIL,
+// 	MAY,
+// 	JUNE,
+// 	JULY,
+// 	AUGUST,
+// 	SEPTEMBER,
+// 	OCTOBER,
+// 	NOVEMBER,
+// 	DECEMBER
+// } MONTH_T;
+bool pcf8523_months_reg_get(uint i2c_inst, uint8_t *reg) {
+	bool success = false;
+
+	if (!pcf8523_reg_get(i2c_inst, PCF8523_REG_MONTHS, reg))
+		goto RETURN;	
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_months_reg_set(uint i2c_inst, uint8_t reg) {
+	bool success = false;
+
+	if (!pcf8523_reg_set(i2c_inst, PCF8523_REG_MONTHS, reg))
+		goto RETURN;	
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_months_get(uint i2c_inst, MONTH_T *month) {
+	bool success = false;
+
+	uint8_t buf = 0;
+	if (!pcf8523_months_reg_get(i2c_inst, &buf))
+		goto RETURN;	
+
+	*month = 0;
+	*month += buf & 0x0F;
+	*month += ((buf & 0x10) >> 4) * 10;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_months_set(uint i2c_inst, MONTH_T month) {
+	bool success = false;
+
+	uint8_t buf = 0;
+	if (!pcf8523_months_reg_get(i2c_inst, &buf))
+		goto RETURN;	
+
+	buf &= ~0x3F;
+	buf |= month % 10;
+	buf |= ((month / 10) << 4) & 0x10;
+
+	if (!pcf8523_months_reg_set(i2c_inst, buf))
+		goto RETURN;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_years_reg_get(uint i2c_inst, uint8_t *reg) {
+	bool success = false;
+
+	if (!pcf8523_reg_get(i2c_inst, PCF8523_REG_YEARS, reg))
+		goto RETURN;	
+
+	success = true;
+RETURN:
+	return success;
+}
+bool pcf8523_years_reg_set(uint i2c_inst, uint8_t reg) {
+	bool success = false;
+
+	if (!pcf8523_reg_set(i2c_inst, PCF8523_REG_YEARS, reg))
+		goto RETURN;	
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_years_get(uint i2c_inst, uint *years) {
+	bool success = false;
+
+	uint8_t buf = 0;
+	if (!pcf8523_years_reg_get(i2c_inst, &buf))
+		goto RETURN;	
+
+	*years = 0;
+	*years += buf & 0x0F;
+	*years += ((buf & 0xF0) >> 4) * 10;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_years_set(uint i2c_inst, uint years) {
+	bool success = false;
+
+	uint8_t buf = 0;
+	if (!pcf8523_years_reg_get(i2c_inst, &buf))
+		goto RETURN;	
+
+	buf &= 0x00;
+	buf |= years % 10;
+	buf |= ((years / 10) << 4) & 0xF0;
+
+	if (!pcf8523_years_reg_set(i2c_inst, buf))
+		goto RETURN;
 
 	success = true;
 RETURN:
