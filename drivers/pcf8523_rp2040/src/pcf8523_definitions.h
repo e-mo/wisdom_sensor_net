@@ -23,6 +23,8 @@ typedef unsigned uint;
 
 #define PCF8523_REG_OFFSET		  (0x0E)
 
+#define PCF8523_REG_TMR_CLKOUT_CTRL (0x0F)
+
 // TODO: Add timer constants
 
 #endif // PCF8523_DEFINITIONS_H

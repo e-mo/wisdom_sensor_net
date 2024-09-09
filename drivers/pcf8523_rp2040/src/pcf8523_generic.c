@@ -3,6 +3,9 @@
 #include "pcf8523_generic.h"
 #include "pcf8523_i2c_generic.h"
 
+// TODO: Go through all functions and lightly sanitize input where it makes
+// sense.
+
 bool pcf8523_reg_get(uint i2c_inst, uint8_t reg, uint8_t *dst) {
 	bool success = false;
 
@@ -169,41 +172,41 @@ RETURN:
 	return success;
 }
 
+bool pcf8523_time_circuit_start(uint i2c_inst) {
+	bool success = false;
 
-//bool pcf8523_time_circuit_start(uint i2c_inst) {
-//	bool success = false;
-//
-//	uint8_t buf;
-//	if (!pcf8523_control_reg_get(i2c_inst, 1, &buf))	
-//		goto RETURN;
-//
-//	// Set STOP bit
-//	buf |= 0x20;
-//
-//	if (!pcf8523_control_reg_set(i2c_inst, 1, &buf))
-//		goto RETURN;
-//
-//	success = true;
-//RETURN:
-//	return success;
-//}
-//bool pcf8523_time_circuit_stop(uint i2c_inst) {
-//	bool success = false;
-//
-//	uint8_t buf;
-//	if (!pcf8523_control_reg_get(i2c_inst, 1, &buf))	
-//		goto RETURN;
-//
-//	// Clear STOP bit
-//	buf &= ~0x20;
-//
-//	if (!pcf8523_control_reg_set(i2c_inst, 1, &buf))
-//		goto RETURN;
-//
-//	success = true;
-//RETURN:
-//	return success;
-//}
+	uint8_t buf;
+	if (!pcf8523_control_reg_get(i2c_inst, 1, &buf))	
+		goto RETURN;
+
+	// Clear STOP bit (start clock)
+	buf &= ~0x20;
+
+	if (!pcf8523_control_reg_set(i2c_inst, 1, buf))
+		goto RETURN;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_time_circuit_stop(uint i2c_inst) {
+	bool success = false;
+
+	uint8_t buf;
+	if (!pcf8523_control_reg_get(i2c_inst, 1, &buf))	
+		goto RETURN;
+
+	// Set STOP bit (stop clock)
+	buf |= 0x20;
+
+	if (!pcf8523_control_reg_set(i2c_inst, 1, buf))
+		goto RETURN;
+
+	success = true;
+RETURN:
+	return success;
+}
 
 
 bool pcf8523_software_reset_initiate(uint i2c_inst) {
@@ -1119,12 +1122,22 @@ bool pcf8523_hours_set(uint i2c_inst, uint hours) {
 	if (!pcf8523_hours_reg_get(i2c_inst, &buf))
 		goto RETURN;
 
+	// Inputs sanitized based on hour mode.
+	// TODO: document this behavior.
 	switch (hm) {
 	case HOUR_MODE_24:
+		if (hours > 23)
+			hours %= 24;
+
 		buf &= ~0x3F;
 		buf |= ((hours / 10) << 4) & 0x30;
 		break;
 	case HOUR_MODE_12:
+		if (hours > 12)
+			hours %= 12;
+		if (hours == 0) 
+			hours = 12;
+
 		buf &= ~0x1F;
 		buf |= ((hours / 10) << 4) & 0x10;
 		break;
@@ -1152,6 +1165,8 @@ bool pcf8523_am_pm_get(uint i2c_inst, AM_PM_T *am_pm) {
 		goto RETURN;
 
 	switch (hm) {
+	// If in 24 hour mode, am_pm is just based on the time
+	// of day.
 	case HOUR_MODE_24:
 		uint hours;
 		if (!pcf8523_hours_get(i2c_inst, &hours))
@@ -1186,6 +1201,9 @@ bool pcf8523_am_pm_set(uint i2c_inst, AM_PM_T am_pm) {
 		goto RETURN;
 
 	switch (hm) {
+	// If am_pm is set in 24 hour mode, time is automatically
+	// adjusted. (23h set to AM == 11h). Nothing happens if am_pm
+	// isn't actually changing.
 	case HOUR_MODE_24:
 		uint hours;
 		if (!pcf8523_hours_get(i2c_inst, &hours))
@@ -1462,6 +1480,549 @@ bool pcf8523_years_set(uint i2c_inst, uint years) {
 
 	if (!pcf8523_years_reg_set(i2c_inst, buf))
 		goto RETURN;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+// Minute alarm
+
+bool pcf8523_minute_alarm_reg_get(uint i2c_inst, uint8_t *reg) {
+	bool success = false;
+
+	if (!pcf8523_reg_get(i2c_inst, PCF8523_REG_MINUTE_ALARM, reg))
+		goto RETURN;	
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_minute_alarm_reg_set(uint i2c_inst, uint8_t reg) {
+	bool success = false;
+
+	if (!pcf8523_reg_set(i2c_inst, PCF8523_REG_MINUTE_ALARM, reg))
+		goto RETURN;	
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_minute_alarm_is_enabled(uint i2c_inst, bool *is_enabled) {
+	bool success = false;
+
+	uint8_t buf;
+	if (!pcf8523_minute_alarm_reg_get(i2c_inst, &buf))	
+		goto RETURN;
+
+	*is_enabled = !(buf & 0x80);
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_minute_alarm_enable(uint i2c_inst) {
+	bool success = false;
+
+	uint8_t buf;
+	if (!pcf8523_minute_alarm_reg_get(i2c_inst, &buf))	
+		goto RETURN;
+
+	buf &= ~0x80;
+
+	if (!pcf8523_minute_alarm_reg_set(i2c_inst, buf))	
+		goto RETURN;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_minute_alarm_disable(uint i2c_inst) {
+	bool success = false;
+
+	uint8_t buf;
+	if (!pcf8523_minute_alarm_reg_get(i2c_inst, &buf))	
+		goto RETURN;
+
+	buf |= 0x80;
+
+	if (!pcf8523_minute_alarm_reg_set(i2c_inst, buf))	
+		goto RETURN;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+
+bool pcf8523_minute_alarm_get(uint i2c_inst, uint *minute) {
+	bool success = false;
+
+	uint8_t buf;
+	if (!pcf8523_minute_alarm_reg_get(i2c_inst, &buf))	
+		goto RETURN;
+
+	*minute = 0;
+	*minute += buf & 0x0F;
+	*minute += ((buf & 0x70) >> 4) * 10;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_minute_alarm_set(uint i2c_inst, uint minute) {
+	bool success = false;
+
+	uint8_t buf;
+	if (!pcf8523_minute_alarm_reg_get(i2c_inst, &buf))	
+		goto RETURN;
+
+	buf &= 0x80;
+	buf |= minute % 10;
+	buf |= ((minute / 10) << 4) & 0x70;
+
+	if (!pcf8523_minute_alarm_reg_set(i2c_inst, buf))	
+		goto RETURN;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+// Hour alarm
+
+bool pcf8523_hour_alarm_reg_get(uint i2c_inst, uint8_t *reg) {
+	bool success = false;
+
+	if (!pcf8523_reg_get(i2c_inst, PCF8523_REG_HOUR_ALARM, reg))
+		goto RETURN;	
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_hour_alarm_reg_set(uint i2c_inst, uint8_t reg) {
+	bool success = false;
+
+	if (!pcf8523_reg_set(i2c_inst, PCF8523_REG_HOUR_ALARM, reg))
+		goto RETURN;	
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_hour_alarm_is_enabled(uint i2c_inst, bool *is_enabled) {
+	bool success = false;
+
+	uint8_t buf;
+	if (!pcf8523_hour_alarm_reg_get(i2c_inst, &buf))	
+		goto RETURN;
+
+	*is_enabled = !(buf & 0x80);
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_hour_alarm_enable(uint i2c_inst) {
+	bool success = false;
+
+	uint8_t buf;
+	if (!pcf8523_hour_alarm_reg_get(i2c_inst, &buf))	
+		goto RETURN;
+
+	buf &= ~0x80;
+
+	if (!pcf8523_hour_alarm_reg_set(i2c_inst, buf))	
+		goto RETURN;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_hour_alarm_disable(uint i2c_inst) {
+	bool success = false;
+
+	uint8_t buf;
+	if (!pcf8523_hour_alarm_reg_get(i2c_inst, &buf))	
+		goto RETURN;
+
+	buf |= 0x80;
+
+	if (!pcf8523_hour_alarm_reg_set(i2c_inst, buf))	
+		goto RETURN;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_hour_alarm_get(uint i2c_inst, uint *hour) {
+	bool success = false;
+
+	HOUR_MODE_T hm;
+	if (!pcf8523_hour_mode_get(i2c_inst, &hm))
+		goto RETURN;
+
+	uint8_t buf;
+	if (!pcf8523_hour_alarm_reg_get(i2c_inst, &buf))	
+		goto RETURN;
+
+	*hour = 0;
+	*hour += buf & 0x0F;
+
+	switch (hm) {
+	case HOUR_MODE_24:
+		*hour += ((buf & 0x30) >> 4) * 10;
+		break;
+	case HOUR_MODE_12:
+		*hour += ((buf & 0x10) >> 4) * 10;
+		if (buf & 0x20) *hour += 12;
+		break;
+	}
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_hour_alarm_set(uint i2c_inst, uint hour) {
+	bool success = false;
+
+	HOUR_MODE_T hm;
+	if (!pcf8523_hour_mode_get(i2c_inst, &hm))
+		goto RETURN;
+
+	uint8_t buf;
+	if (!pcf8523_hour_alarm_reg_get(i2c_inst, &buf))	
+		goto RETURN;
+
+	// Sanitize input
+	if (hour > 23)
+		hour %= 24;
+
+	switch (hm) {
+	case HOUR_MODE_24:
+		buf &= ~0x3F;
+		buf |= ((hour / 10) << 4) & 0x30;
+		break;
+
+	case HOUR_MODE_12:
+		if (hour >= 12) {
+			if (hour > 12) hour %= 12;
+			// Set PM
+			buf |= 0x20;
+		} else
+			// Set AM
+			buf &= ~0x20;
+		
+		if (hour == 0) 
+			hour = 12;
+
+		buf &= ~0x1F;
+		buf |= ((hour / 10) << 4) & 0x10;
+		break;
+	}
+
+	buf |= hour % 10;
+
+	if (!pcf8523_hour_alarm_reg_set(i2c_inst, buf))	
+		goto RETURN;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+// Day alarm
+
+bool pcf8523_day_alarm_reg_get(uint i2c_inst, uint8_t *reg) {
+	bool success = false;
+
+	if (!pcf8523_reg_get(i2c_inst, PCF8523_REG_DAY_ALARM, reg))
+		goto RETURN;	
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_day_alarm_reg_set(uint i2c_inst, uint8_t reg) {
+	bool success = false;
+
+	if (!pcf8523_reg_set(i2c_inst, PCF8523_REG_DAY_ALARM, reg))
+		goto RETURN;	
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_day_alarm_is_enabled(uint i2c_inst, bool *is_enabled) {
+	bool success = false;
+
+	uint8_t buf;
+	if (!pcf8523_day_alarm_reg_get(i2c_inst, &buf))
+		goto RETURN;
+
+	*is_enabled = !(buf & 0x80);
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_day_alarm_enable(uint i2c_inst) {
+	bool success = false;
+
+	uint8_t buf;
+	if (!pcf8523_day_alarm_reg_get(i2c_inst, &buf))
+		goto RETURN;
+
+	buf &= ~0x80;
+
+	if (!pcf8523_day_alarm_reg_set(i2c_inst, buf))
+		goto RETURN;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_day_alarm_disable(uint i2c_inst) {
+	bool success = false;
+
+	uint8_t buf;
+	if (!pcf8523_day_alarm_reg_get(i2c_inst, &buf))	
+		goto RETURN;
+
+	buf |= 0x80;
+
+	if (!pcf8523_day_alarm_reg_set(i2c_inst, buf))	
+		goto RETURN;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_day_alarm_get(uint i2c_inst, uint *day) {
+	bool success = false;
+
+	uint8_t buf;
+	if (!pcf8523_day_alarm_reg_get(i2c_inst, &buf))
+		goto RETURN;
+
+	*day = buf & 0x0F;
+	*day += ((buf & 0x30) >> 4) * 10;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_day_alarm_set(uint i2c_inst, uint day) {
+	bool success = false;
+
+	uint8_t buf;
+	if (!pcf8523_day_alarm_reg_get(i2c_inst, &buf))
+		goto RETURN;
+
+	buf &= 0x80;
+	buf |= day % 10;
+	buf |= ((day / 10) << 4) & 0x30;
+
+	if (!pcf8523_day_alarm_reg_set(i2c_inst, buf))
+		goto RETURN;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+// Weekday alarm
+bool pcf8523_weekday_alarm_reg_get(uint i2c_inst, uint8_t *reg) {
+	bool success = false;
+
+	if (!pcf8523_reg_get(i2c_inst, PCF8523_REG_WEEKDAY_ALARM, reg))
+		goto RETURN;	
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_weekday_alarm_reg_set(uint i2c_inst, uint8_t reg) {
+	bool success = false;
+
+	if (!pcf8523_reg_set(i2c_inst, PCF8523_REG_WEEKDAY_ALARM, reg))
+		goto RETURN;	
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_weekday_alarm_is_enabled(uint i2c_inst, bool *is_enabled) {
+	bool success = false;
+
+	uint8_t buf;
+	if (!pcf8523_weekday_alarm_reg_get(i2c_inst, &buf))
+		goto RETURN;
+
+	*is_enabled = !(buf & 0x80);
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_weekday_alarm_enable(uint i2c_inst) {
+	bool success = false;
+
+	uint8_t buf;
+	if (!pcf8523_weekday_alarm_reg_get(i2c_inst, &buf))
+		goto RETURN;
+
+	buf &= ~0x80;
+
+	if (!pcf8523_weekday_alarm_reg_set(i2c_inst, buf))
+		goto RETURN;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_weekday_alarm_disable(uint i2c_inst) {
+	bool success = false;
+
+	uint8_t buf;
+	if (!pcf8523_weekday_alarm_reg_get(i2c_inst, &buf))	
+		goto RETURN;
+
+	buf |= 0x80;
+
+	if (!pcf8523_weekday_alarm_reg_set(i2c_inst, buf))	
+		goto RETURN;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_weekday_alarm_get(uint i2c_inst, WEEKDAY_T *weekday) {
+	bool success = false;
+
+	uint8_t buf;
+	if (!pcf8523_weekday_alarm_reg_get(i2c_inst, &buf))
+		goto RETURN;
+
+	*weekday = buf & 0x07;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_weekday_alarm_set(uint i2c_inst, WEEKDAY_T weekday) {
+	bool success = false;
+
+	uint8_t buf;
+	if (!pcf8523_weekday_alarm_reg_get(i2c_inst, &buf))
+		goto RETURN;
+
+	buf &= 0x80;
+	buf |= weekday & 0x07;
+
+	if (!pcf8523_weekday_alarm_reg_set(i2c_inst, buf))
+		goto RETURN;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+// Offset
+
+// typedef enum _OFFSET_MODE_E {
+// 	OFFSET_EVERY_2_HOURS = 0,
+// 	OFFSET_EVERY_MINUTE  = 1
+// } OFFSET_MODE_T;
+bool pcf8523_offset_mode_get(uint i2c_inst, uint *mode);
+bool pcf8523_offset_mode_set(uint i2c_inst, OFFSET_MODE_T mode);
+// [-64:63]
+bool pcf8523_offset_set(uint i2c_inst, int offset);
+
+// Timer register
+
+bool pcf8523_tmr_clkout_ctrl_reg_get(uint i2c_inst, uint8_t *reg) {
+	bool success = false;
+
+	if (!pcf8523_reg_get(i2c_inst, PCF8523_REG_TMR_CLKOUT_CTRL, reg))
+		goto RETURN;	
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_tmr_clkout_ctrl_reg_set(uint i2c_inst, uint8_t reg) {
+	bool success = false;
+
+	if (!pcf8523_reg_set(i2c_inst, PCF8523_REG_TMR_CLKOUT_CTRL, reg))
+		goto RETURN;	
+
+	success = true;
+RETURN:
+	return success;
+}
+
+// typedef enum _CLOCKOUT_FREQ_E {
+// 	CLOCKOUT_FREQ_32_768_HZ = 0x00,
+// 	CLOCKOUT_FREQ_16_384_HZ = 0x01,
+// 	CLOCKOUT_FREQ_8_192_HZ  = 0x02,
+// 	CLOCKOUT_FREQ_1_024_HZ  = 0x04,
+// 	CLOCKOUT_FREQ_32_HZ		= 0x05,
+// 	CLOCKOUT_FREQ_1_HZ		= 0x06,
+// 	CLOCKOUT_DISABLED		= 0x07
+// } CLOCKOUT_FREQ_T;
+
+bool pcf8523_clockout_freq_get(uint i2c_inst, CLOCKOUT_FREQ_T *clockout) {
+	bool success = false;
+
+	uint8_t buf;	
+	if (!pcf8523_tmr_clkout_ctrl_reg_get(i2c_inst, &buf))
+		goto RETURN;	
+
+	*clockout = (buf & 0x38) >> 3;
+
+	success = true;
+RETURN:
+	return success;
+}
+
+bool pcf8523_clockout_freq_set(uint i2c_inst, CLOCKOUT_FREQ_T clockout) {
+	bool success = false;
+
+	uint8_t buf;	
+	if (!pcf8523_tmr_clkout_ctrl_reg_get(i2c_inst, &buf))
+		goto RETURN;	
+
+	buf &= ~0x38;
+	buf |= (clockout & 0x07) << 3;
+
+	if (!pcf8523_tmr_clkout_ctrl_reg_set(i2c_inst, buf))
+		goto RETURN;	
 
 	success = true;
 RETURN:

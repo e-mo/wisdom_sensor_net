@@ -33,12 +33,10 @@ bool pcf8523_cap_sel_get(uint i2c_inst, uint *cap_sel_mode);
 bool pcf8523_cap_sel_set(uint i2c_inst, CAP_SEL_MODE_T cap_sel_mode);
 
 bool pcf8523_time_circuit_is_running(uint i2c_inst, bool *is_running);
-// This bit apparently can't be set? Trying to confirm this. Seems like there is
-// a way to stop the clock by holding one of the crystal pins low. I'm also not
-// sure why I would NEED to stop the clock rather than just set it. There is a
-// standby mode that I can look into as well.
-//bool pcf8523_time_circuit_start(uint i2c_inst);
-//bool pcf8523_time_circuit_stop(uint i2c_inst);
+
+// Haha! Bit can be set. I'm just dumb.
+bool pcf8523_time_circuit_start(uint i2c_inst);
+bool pcf8523_time_circuit_stop(uint i2c_inst);
 
 bool pcf8523_software_reset_initiate(uint i2c_inst);
 
@@ -230,6 +228,9 @@ bool pcf8523_years_get(uint i2c_inst, uint *years);
 bool pcf8523_years_set(uint i2c_inst, uint years);
 
 // Minute alarm
+bool pcf8523_minute_alarm_reg_get(uint i2c_inst, uint8_t *reg);
+bool pcf8523_minute_alarm_reg_set(uint i2c_inst, uint8_t reg);
+
 bool pcf8523_minute_alarm_is_enabled(uint i2c_inst, bool *is_enabled);
 bool pcf8523_minute_alarm_enable(uint i2c_inst);
 bool pcf8523_minute_alarm_disable(uint i2c_inst);
@@ -237,6 +238,9 @@ bool pcf8523_minute_alarm_get(uint i2c_inst, uint *minute);
 bool pcf8523_minute_alarm_set(uint i2c_inst, uint minute);
 
 // Hour alarm
+bool pcf8523_hour_alarm_reg_get(uint i2c_inst, uint8_t *reg);
+bool pcf8523_hour_alarm_reg_set(uint i2c_inst, uint8_t reg);
+
 bool pcf8523_hour_alarm_is_enabled(uint i2c_inst, bool *is_enabled);
 bool pcf8523_hour_alarm_enable(uint i2c_inst);
 bool pcf8523_hour_alarm_disable(uint i2c_inst);
@@ -244,6 +248,9 @@ bool pcf8523_hour_alarm_get(uint i2c_inst, uint *hour);
 bool pcf8523_hour_alarm_set(uint i2c_inst, uint hour);
 
 // Day alarm
+bool pcf8523_day_alarm_reg_get(uint i2c_inst, uint8_t *reg);
+bool pcf8523_day_alarm_reg_set(uint i2c_inst, uint8_t reg);
+
 bool pcf8523_day_alarm_is_enabled(uint i2c_inst, bool *is_enabled);
 bool pcf8523_day_alarm_enable(uint i2c_inst);
 bool pcf8523_day_alarm_disable(uint i2c_inst);
@@ -251,10 +258,13 @@ bool pcf8523_day_alarm_get(uint i2c_inst, uint *day);
 bool pcf8523_day_alarm_set(uint i2c_inst, uint day);
 
 // Weekday alarm
+bool pcf8523_weekday_alarm_reg_get(uint i2c_inst, uint8_t *reg);
+bool pcf8523_weekday_alarm_reg_set(uint i2c_inst, uint8_t reg);
+
 bool pcf8523_weekday_alarm_is_enabled(uint i2c_inst, bool *is_enabled);
 bool pcf8523_weekday_alarm_enable(uint i2c_inst);
 bool pcf8523_weekday_alarm_disable(uint i2c_inst);
-bool pcf8523_weekday_alarm_get(uint i2c_inst, uint *weekday);
+bool pcf8523_weekday_alarm_get(uint i2c_inst, WEEKDAY_T *weekday);
 bool pcf8523_weekday_alarm_set(uint i2c_inst, WEEKDAY_T weekday);
 
 // Offset
@@ -267,6 +277,22 @@ bool pcf8523_offset_mode_set(uint i2c_inst, OFFSET_MODE_T mode);
 // [-64:63]
 bool pcf8523_offset_set(uint i2c_inst, int offset);
 
-// TODO: Add timer functions.
+// Timer register
+
+bool pcf8523_tmr_clkout_ctrl_reg_get(uint i2c_inst, uint8_t *reg);
+bool pcf8523_tmr_clkout_ctrl_reg_set(uint i2c_inst, uint8_t reg);
+
+typedef enum _CLOCKOUT_FREQ_E {
+	CLOCKOUT_FREQ_32_768_HZ = 0x00,
+	CLOCKOUT_FREQ_16_384_HZ = 0x01,
+	CLOCKOUT_FREQ_8_192_HZ  = 0x02,
+	CLOCKOUT_FREQ_4_096_HZ  = 0x03,
+	CLOCKOUT_FREQ_1_024_HZ  = 0x04,
+	CLOCKOUT_FREQ_32_HZ		= 0x05,
+	CLOCKOUT_FREQ_1_HZ		= 0x06,
+	CLOCKOUT_DISABLED		= 0x07
+} CLOCKOUT_FREQ_T;
+bool pcf8523_clockout_freq_get(uint i2c_inst, CLOCKOUT_FREQ_T *clockout);
+bool pcf8523_clockout_freq_set(uint i2c_inst, CLOCKOUT_FREQ_T clockout);
 
 #endif // PCF8523_INTERFACE_GENERIC_H
