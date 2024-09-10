@@ -53,7 +53,9 @@ void sim7080g_init(
 	// gpio stuff
 	gpio_init(context->pin_power);
 	gpio_set_dir(context->pin_power, GPIO_OUT);
+	gpio_pull_up(context->pin_power);
 	gpio_put(context->pin_power, 1);
+
 	gpio_set_function(context->pin_tx, GPIO_FUNC_UART);
 	gpio_set_function(context->pin_rx, GPIO_FUNC_UART);
 }
