@@ -8,6 +8,8 @@ set(CMAKE_CXX_STANDARD 17)
 # Initialise pico_sdk from installed location
 # (note this can come from environment, CMake cache etc)
 set(PICO_SDK_PATH "~/pico/pico-sdk")
+# Need to have pico-extras installed for a few of the clock functions
+# set(PICO_EXTRAS_PATH "~/pico/pico-extras")
 
 #set(PICO_BOARD pico CACHE STRING "Board type")
 
