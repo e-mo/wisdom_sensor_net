@@ -3,8 +3,8 @@
 #include "radio_interface.h"
 #include "rfm69_rp2040.h"
 
-static rfm69_context_t _rfm;
-static rudp_context_t _rudp;
+static rfm69_context_t _rfm = {0};
+static rudp_context_t _rudp = {0};
 static bool _radio_init = false;
 
 bool radio_init(void) {
@@ -34,12 +34,14 @@ bool radio_init(void) {
 
 	// Max out power level by default for now
 	// TODO: evaluate this
-	rfm69_power_level_set(&_rfm, 20);
+	//rfm69_power_level_set(&_rfm, 20);
 
 	if (rfm69_rudp_init(&_rudp, &_rfm) == false) {
 		radio_error_set(RADIO_HW_FAILURE);
 		goto RETURN;
 	}
+
+	rfm69_frequency_set(&_rfm, 915);
 
 	_radio_init = true;
 	radio_error_set(RADIO_OK);

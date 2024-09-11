@@ -3,6 +3,10 @@ get_filename_component(WISDOM_PROJECT_PATH "${WISDOM_PROJECT_PATH}" REALPATH BAS
 set(WISDOM_PROJECT_PATH ${WISDOM_PROJECT_PATH} CACHE PATH "Root of Wisdom Repo" FORCE)
 
 # Radio
+message("wisdom_init: initializing radio module")
+add_subdirectory(${WISDOM_PROJECT_PATH}/modules/radio modules/radio)
+
+# RTC
 message("wisdom_init: initializing pcf8523 driver")
 add_subdirectory(${WISDOM_PROJECT_PATH}/drivers/pcf8523_rp2040 drivers/pcf8523_rp2040)
 

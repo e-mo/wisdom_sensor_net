@@ -20,15 +20,17 @@ list(APPEND includes
 
 # pico_stdlib included by default
 list(APPEND libraries
+	radio_module
+	pcf8523_rp2040
 	hardware_clocks
 	hardware_rosc
 	hardware_rtc
+	hardware_i2c
 )
 
 list(APPEND definitions
-
 )
 
 # Only one of these should be enabled
 set(stdio_uart_enable 0)
-set(stdio_usb_enable 1)
+set(stdio_usb_enable 0)
