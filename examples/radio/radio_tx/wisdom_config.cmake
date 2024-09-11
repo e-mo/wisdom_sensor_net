@@ -23,7 +23,7 @@ list(APPEND libraries
 )
 
 list(APPEND definitions
-
+	RFM69_HIGH_POWER
 )
 
 # Only one of these should be enabled
