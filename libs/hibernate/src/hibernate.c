@@ -10,6 +10,8 @@
 
 #include "hibernate.h"
 
+bool usb_clock_stopped = false;
+
 #if PICO_RP2040
 // The RTC clock frequency is 48MHz divided by power of 2 (to ensure an integer
 // division ratio will be used in the clocks block).  A divisor of 1024 generates

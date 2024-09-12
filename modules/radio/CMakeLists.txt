@@ -4,10 +4,12 @@ include(radio_import.cmake)
 
 project(${target} C CXX ASM)
 
-add_library(${target} ${sources})
+add_library(${target} INTERFACE)
 
-target_link_libraries(${target} ${libraries})
+target_sources(${target} INTERFACE ${sources})
 
-target_compile_definitions(${target} PUBLIC ${definitions})
+target_link_libraries(${target} INTERFACE ${libraries})
 
-target_include_directories(${target} PUBLIC ${includes})
+target_compile_definitions(${target} INTERFACE ${definitions})
+
+target_include_directories(${target} INTERFACE ${includes})

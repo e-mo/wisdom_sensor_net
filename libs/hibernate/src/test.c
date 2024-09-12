@@ -14,6 +14,8 @@
 #define PIN_SCL  (5)
 #define PIN_SDA  (4)
 
+extern bool usb_clock_stopped;
+
 void gpio_callback_alarm(uint pin, uint32_t event) {
 	printf("event!\n");
 }
@@ -23,8 +25,6 @@ int main() {
 	radio_init();	
 	radio_address_set(0x01);
 
-	char *payload = "Hello, Receiver!";
-	uint payload_len = strlen(payload) + 1;
 
 	// Setup RTC to send interrupt soon
 	i2c_init(I2C_INST, 500 * 1000);
@@ -60,6 +60,9 @@ int main() {
 
 		// Configure clocks to go dormant
 		hibernate_run_from_dormant_source(DORMANT_SOURCE_XOSC);
+		char payload[6];
+		snprintf(message, 6, "%s", usb_clock_stopped ? "true" : "false"); 
+		uint payload_len = strlen(payload) + 1;
 
 		// Go dormant until falling edge of active low signal
 		//gpio_set_irq_enabled_with_callback(2, GPIO_IRQ_EDGE_FALL, true, &gpio_callback_alarm);

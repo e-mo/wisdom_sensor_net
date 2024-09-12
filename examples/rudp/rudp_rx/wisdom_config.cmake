@@ -16,9 +16,6 @@ list(APPEND libraries
 )
 
 list(APPEND definitions
-	# Enables high power routines for RFM69
-	RFM69_HIGH_POWER
-
 	# RFM69 pin definitions
 	RFM69_PIN_MISO=16	
 	RFM69_PIN_MOSI=19
