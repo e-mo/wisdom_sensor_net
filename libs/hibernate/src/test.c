@@ -14,16 +14,14 @@
 #define PIN_SCL  (5)
 #define PIN_SDA  (4)
 
-extern bool usb_clock_stopped;
-
-void gpio_callback_alarm(uint pin, uint32_t event) {
-	printf("event!\n");
-}
+//void gpio_callback_alarm(uint pin, uint32_t event) {
+//	printf("event!\n");
+//}
 
 int main() {
 	// Radio
 	radio_init();	
-	radio_address_set(0x01);
+	radio_address_set(0x03);
 
 
 	// Setup RTC to send interrupt soon
@@ -32,7 +30,6 @@ int main() {
 	gpio_set_function(PIN_SDA, GPIO_FUNC_I2C);
 	gpio_pull_up(PIN_SCL);
 	gpio_pull_up(PIN_SDA);
-	gpio_pull_up(2); // Pull up irq pin
 
 	uint index = I2C_NUM(I2C_INST);
 
@@ -58,12 +55,13 @@ int main() {
 		uint clock0_orig = clocks_hw->sleep_en0;
 		uint clock1_orig = clocks_hw->sleep_en1;
 
+		char payload[6];
+		snprintf(payload, 6, "%s", "meow"); 
+		uint payload_len = strlen(payload) + 1;
+		
+		// Do nothing between these two calls
 		// Configure clocks to go dormant
 		hibernate_run_from_dormant_source(DORMANT_SOURCE_XOSC);
-		char payload[6];
-		snprintf(message, 6, "%s", usb_clock_stopped ? "true" : "false"); 
-		uint payload_len = strlen(payload) + 1;
-
 		// Go dormant until falling edge of active low signal
 		//gpio_set_irq_enabled_with_callback(2, GPIO_IRQ_EDGE_FALL, true, &gpio_callback_alarm);
 		hibernate_goto_dormant_until_pin(2, true, false);
@@ -73,11 +71,6 @@ int main() {
 
 		radio_send(payload, payload_len, 0x02);
 
-		//uint seconds;
-		//pcf8523_seconds_get(index, &seconds);	
-		//printf("%u\n", seconds);
-		//printf("hello\n");
 		sleep_ms(1000);
-
 	}
 }

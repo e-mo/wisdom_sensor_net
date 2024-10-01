@@ -4,13 +4,13 @@
 #include "sht30_rp2040.h"
 #include "sensor_interface.h"
 
-typdef struct _sht30_wsi_s {
+typedef struct _sht30_wsi_s {
 	struct _sensor_generic header;
-	sht30_rp2040_t *reading;
+	uint i2c_index;
+	struct sht30_rp2040_reading_s reading;
 } sht30_wsi_t;
 
-sht30_wsi_t * sht30_wsi_create(void);
-void * sht30_wsi_destroy(sht30_wsi_t *sensor);
+void sht30_wsi_init(sht30_wsi_t *sensor, uint i2c_index);
 
 int sht30_wsi_pack(
 		struct _sensor_generic *sensor,
@@ -19,6 +19,6 @@ int sht30_wsi_pack(
 );
 
 bool sht30_wsi_read(struct _sensor_generic *sensor);
-struct _sensor_generic * sht30_wsi_unpack(uint8_t *buffer);
+struct _sensor_generic *sht30_wsi_unpack(uint8_t *buffer);
 
 #endif // SHT30_WSI_H

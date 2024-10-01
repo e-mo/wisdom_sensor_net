@@ -9,7 +9,6 @@
 
 struct _sensor_generic *
 (*sensor_unpack_table[SENSOR_TYPE_MAX])(uint8_t *buffer) = {
-	[TEST] = &test_sensor_unpack,
 	[SHT30] = &sht30_wsi_unpack
 };
 

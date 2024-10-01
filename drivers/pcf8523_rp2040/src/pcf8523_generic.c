@@ -123,7 +123,7 @@ RETURN:
 // 	CAP_SEL_7_PF    = 0, // 7pF load capacitance
 // 	CAP_SEL_12_5_PF = 1  // 12.5pF load capacitance
 // } CAP_SEL_MODE_T;
-bool pcf8523_cap_sel_get(uint i2c_inst, uint *cap_sel_mode) {
+bool pcf8523_cap_sel_get(uint i2c_inst, CAP_SEL_MODE_T *cap_sel_mode) {
 	bool success = false;
 
 	uint8_t buf;
@@ -168,7 +168,7 @@ bool pcf8523_time_circuit_is_running(uint i2c_inst, bool *is_running) {
 	*is_running = !(buf & 0x20);
 
 	success = true;
-RETURN:
+RETURN: 
 	return success;
 }
 

@@ -73,7 +73,6 @@ LOOP_BEGIN:;
 			printf("message received (%u B): %s\n\n", received, buffer);
 		
 		i++;
-		sleep_ms(1000);
 	}
     
     return 0;

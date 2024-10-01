@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 # SHT30
 message("wisdom_init: initializing SHT30 sensor interface")
-add_subdirectory(${WISDOM_PROJECT_PATH}/drivers/sht30_rp2040)
+add_subdirectory(${WISDOM_PROJECT_PATH}/drivers/sht30_rp2040 drivers/sht30_rp2040)
 
 set(target "wisdom_sensor_interface")
 project(${target} C CXX ASM)
@@ -21,9 +21,6 @@ target_sources(${target} INTERFACE
 	# Base template
 	src/wisdom_sensors.c
 	src/sensor_interface.c
-
-	# Test sensor
-	src/sensors/test/test_sensor.c
 
 	# SHT30 (temp/humidity sensor)
 	src/sensors/sht30/sht30_wsi.c

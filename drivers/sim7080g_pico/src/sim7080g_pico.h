@@ -26,6 +26,14 @@
 // Modem state object
 typedef struct _sim7080g_context sim7080g_context_t;
 
+struct _sim7080g_context {
+	const char *apn;
+	uart_inst_t *uart;
+	uint pin_tx;
+	uint pin_rx;
+	uint pin_power;
+};
+
 sim7080g_context_t * sim7080g_create(void);
 void sim7080g_destroy(sim7080g_context_t *context);
 

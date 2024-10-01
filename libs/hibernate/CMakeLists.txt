@@ -2,50 +2,19 @@
 
 cmake_minimum_required(VERSION 3.13)
 
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_CXX_STANDARD 17)
-
-# Initialise pico_sdk from installed location
-# (note this can come from environment, CMake cache etc)
-set(PICO_SDK_PATH "~/pico/pico-sdk")
-# Need to have pico-extras installed for a few of the clock functions
-# set(PICO_EXTRAS_PATH "~/pico/pico-extras")
-
-#set(PICO_BOARD pico CACHE STRING "Board type")
-
-# Pull in Raspberry Pi Pico SDK (must be before project)
-
-include(pico_sdk_import.cmake)
-include(pico_extras_import.cmake)
-
-if (PICO_SDK_VERSION_STRING VERSION_LESS "2.0.0")
-  message(FATAL_ERROR "Raspberry Pi Pico SDK version 2.0.0 (or later) required. Your version is ${PICO_SDK_VERSION_STRING}")
-endif()
-
-include(wisdom_import.cmake)
-include(wisdom_config.cmake)
-
-# step back one level on includes and sources because we are hiding CMakeLists file
-
+set(target "wisdom_hibernate")
 project(${target} C CXX ASM)
+add_library(${target} INTERFACE)
 
-# Initialise the Raspberry Pi Pico SDK
-pico_sdk_init()
+target_sources(${target} INTERFACE src/hibernate.c)
 
-# Add executable. Default name is the project name, version 0.1
+target_include_directories(${target} INTERFACE src)
 
-add_executable(${target} ${sources})
-
-pico_enable_stdio_uart(${target} ${stdio_uart_enable})
-pico_enable_stdio_usb(${target} ${stdio_usb_enable})
-
-# Add the standard library to the build
-target_link_libraries(${target} pico_stdlib)
-target_link_libraries(${target} ${libraries})
-
-target_compile_definitions(${target} PUBLIC ${definitions})
-
-# Add the standard include files to the build
-target_include_directories(${target} PRIVATE ${includes})
-
-pico_add_extra_outputs(${target})
+target_link_libraries(${target} INTERFACE
+	pico_stdlib
+	pcf8523_rp2040
+	hardware_clocks
+	hardware_rosc
+	hardware_rtc
+	hardware_i2c
+)

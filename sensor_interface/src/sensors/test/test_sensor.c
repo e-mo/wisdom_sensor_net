@@ -49,6 +49,7 @@ bool test_sensor_read(struct _sensor_generic *sensor) {
 	return true;
 }
 
+// Server side
 struct _sensor_generic * test_sensor_unpack(uint8_t *buffer) {
 	test_sensor_t *sensor = test_sensor_create();
 	if (sensor == NULL) return NULL;

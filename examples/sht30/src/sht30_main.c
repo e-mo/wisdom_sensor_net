@@ -28,9 +28,8 @@
 
 #include "sht30_rp2040.h"
 
-#define I2C_ADDRESS 0x44
-#define PIN_SCL 29
-#define PIN_SDA 28
+#define PIN_SCL (5)
+#define PIN_SDA (4)
 
 int main() {
     stdio_init_all(); // To be able to use printf
@@ -42,26 +41,13 @@ int main() {
 	gpio_pull_up(PIN_SCL);
 	gpio_pull_up(PIN_SDA);
 
-	sht30_rp2040_t *sht30 = sht30_rp2040_create();
-	if (!sht30) goto ERROR_LOOP;
-
-	struct sht30_rp2040_config_s config = {
-		i2c0,
-		I2C_ADDRESS,
-		PIN_SCL,
-		PIN_SDA
-	};
-
-	if (!sht30_rp2040_init(sht30, config)) 
-		goto ERROR_LOOP;
-
 	struct sht30_rp2040_reading_s reading = {0};	
 
 	for(;;) {
 		// Wait for USB serial connection
 		while (!tud_cdc_connected()) { sleep_ms(100); };
 		
-		sht30_rp2040_read(sht30, &reading);
+		sht30_rp2040_read(0, &reading);
 
 		printf("Temp: %f\nHumidity: %f\n",
 				reading.temperature, reading.humidity);

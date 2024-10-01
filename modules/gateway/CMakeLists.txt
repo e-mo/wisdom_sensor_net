@@ -3,8 +3,6 @@ cmake_minimum_required(VERSION 3.13)
 include(gateway_import.cmake)
 include(gateway_config.cmake)
 
-project(${target} C CXX ASM)
-
 add_library(${target} ${sources})
 
 target_link_libraries(${target} ${libraries})

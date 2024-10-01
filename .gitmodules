@@ -10,3 +10,6 @@
 [submodule "drivers/pico-ssd1306"]
 	path = drivers/pico-ssd1306
 	url = https://github.com/daschr/pico-ssd1306.git
+[submodule "libs/rp2x_serial"]
+	path = libs/rp2x_serial
+	url = https://github.com/e-mo/rp2x_serial

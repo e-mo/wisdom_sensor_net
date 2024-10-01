@@ -24,6 +24,6 @@ void sensor_data_init(
 	bool (*read_func)(struct _sensor_generic *)
 );
 
-struct _sensor_generic * si_dispatch_unpack(uint8_t *buffer);
+struct _sensor_generic *si_dispatch_unpack(uint8_t *buffer);
 
 #endif // WISDOM_SENSOR_INTERFACE_H

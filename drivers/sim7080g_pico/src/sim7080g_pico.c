@@ -13,13 +13,6 @@
 #define UART_BAUD 115200
 #define RX_BUFFER_SIZE 1024
 
-struct _sim7080g_context {
-	const char *apn;
-	uart_inst_t *uart;
-	uint pin_tx;
-	uint pin_rx;
-	uint pin_power;
-};
 
 bool sim7080g_config(sim7080g_context_t *context);
 

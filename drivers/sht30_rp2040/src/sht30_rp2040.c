@@ -1,7 +1,11 @@
 #include <stdlib.h>
 
+#include "hardware/i2c.h"
+
 #include "sht30_rp2040.h"
 #include "sht30_constants.h"
+
+#define SHT30_I2C_ADDRESS (0x44)
 
 const uint8_t sht30_command_lookup[SHT30_COMMANDS_MAX][2] = {
 	[SHT30_SSDA_CS_HIGH] = {0x2C, 0x06},
@@ -12,42 +16,15 @@ const uint8_t sht30_command_lookup[SHT30_COMMANDS_MAX][2] = {
 	[SHT30_SSDA_LOW] = {0x24, 0x16},
 };
 
-struct _sht30_rp2040_s {
-	i2c_inst_t *i2c;
-	uint address;
-	uint pin_scl;	
-	uint pin_sda;
-};
-
-sht30_rp2040_t * sht30_rp2040_create(void) {
-	return malloc(sizeof (struct _sht30_rp2040_s));
-}
-
-void sht30_rp2040_destroy(sht30_rp2040_t *sht30) {
-	free(sht30);
-}
-
-bool sht30_rp2040_init(sht30_rp2040_t *sht30, struct sht30_rp2040_config_s config) {
-	if (!sht30) return false; // Return 0 if sht30 pointer is NULL
-
-	sht30->i2c = config.i2c;
-	sht30->address = config.address;
-	sht30->pin_scl = config.pin_scl;
-	sht30->pin_sda = config.pin_sda;
-
-	return true;
-}
-
-bool sht30_rp2040_read(sht30_rp2040_t *sht30, struct sht30_rp2040_reading_s *reading) {
-	if (!sht30 || !reading) return false;
+bool sht30_rp2040_read(uint i2c_index, struct sht30_rp2040_reading_s *reading) {
 
 	uint8_t read_buffer[SHT30_READING_SIZE] = {0x00};
 
-	int rval = i2c_write_blocking(sht30->i2c, sht30->address, 
+	int rval = i2c_write_blocking(I2C_INSTANCE(i2c_index), SHT30_I2C_ADDRESS, 
 			sht30_command_lookup[SHT30_SSDA_CS_HIGH], SHT30_COMMAND_SIZE, false);
 	if (rval != SHT30_COMMAND_SIZE) return false;
 	
-	rval = i2c_read_blocking(sht30->i2c, sht30->address, read_buffer, 
+	rval = i2c_read_blocking(I2C_INSTANCE(i2c_index), SHT30_I2C_ADDRESS, read_buffer, 
 			SHT30_READING_SIZE, false);
 	if (rval != SHT30_READING_SIZE) return false;
 

@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include "pcf8523_definitions.h"
+#include "date_time.h"
 
 // All functions return true if i2c communication was successful
 // and return false if i2c communication failed or was unreliable.
@@ -29,7 +30,7 @@ typedef enum _CAP_SEL_MODE_E {
 	CAP_SEL_12_5_PF = 1  // 12.5pF load capacitance
 } CAP_SEL_MODE_T;
 
-bool pcf8523_cap_sel_get(uint i2c_inst, uint *cap_sel_mode);
+bool pcf8523_cap_sel_get(uint i2c_inst, CAP_SEL_MODE_T *cap_sel_mode);
 bool pcf8523_cap_sel_set(uint i2c_inst, CAP_SEL_MODE_T cap_sel_mode);
 
 bool pcf8523_time_circuit_is_running(uint i2c_inst, bool *is_running);
@@ -201,20 +202,6 @@ bool pcf8523_weekdays_reg_set(uint i2c_inst, uint8_t reg);
 bool pcf8523_weekdays_get(uint i2c_inst, WEEKDAY_T *weekday);
 bool pcf8523_weekdays_set(uint i2c_inst, WEEKDAY_T weekday);
 
-typedef enum _MONTH_E {
-	JANUARY = 1,
-	FEBRUARY,
-	MARCH,
-	APRIL,
-	MAY,
-	JUNE,
-	JULY,
-	AUGUST,
-	SEPTEMBER,
-	OCTOBER,
-	NOVEMBER,
-	DECEMBER
-} MONTH_T;
 bool pcf8523_months_reg_get(uint i2c_inst, uint8_t *reg);
 bool pcf8523_months_reg_set(uint i2c_inst, uint8_t reg);
 

@@ -20,8 +20,6 @@ void sensor_data_init(
 	bool (*read_func)(struct _sensor_generic *)
 )
 {
-	// TODO: add error handling to this function
-	if (sd == NULL) return;
 
 	sd->type = type;	
 	sd->pack_func = pack_func;
@@ -29,11 +27,8 @@ void sensor_data_init(
 	sd->has_reading = false;
 }
 
-struct _sensor_generic * si_dispatch_unpack(uint8_t *buffer) {
-	if (buffer == NULL) return NULL;
+struct _sensor_generic *si_dispatch_unpack(uint8_t *buffer) {
 
 	SENSOR_TYPE type = si_packed_sensor_type(buffer);
-	if (type < 0 || type > SENSOR_TYPE_MAX) return NULL;
-
 	return (sensor_unpack_table[type])(buffer);
 }

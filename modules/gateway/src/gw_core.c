@@ -19,7 +19,7 @@
 #define COMMAND_BUFFER_FULL (-1)
 #define COMMAND_UNRECOGNIZED (-2)
 
-#define SERVER_IP "34.69.199.172"
+#define SERVER_IP "73.149.88.183"
 
 typedef enum _modem_state {
 	MODEM_UNINITIALIZED,
@@ -31,7 +31,9 @@ typedef enum _modem_state {
 
 static sim7080g_context_t *_gateway = NULL;
 static MODEM_STATE_T _modem_state = MODEM_UNINITIALIZED;
+
 static bool _modem_power_toggled = false;
+static bool _modem_ssl_configured = false;
 
 // Command flags
 static bool _start_command_issued = false;
@@ -97,6 +99,7 @@ void gw_core_entry(void) {
 	sim7080g_init(
 			_gateway,
 			GATEWAY_APN,
+		
 			GATEWAY_UART,
 			GATEWAY_PIN_TX,
 			GATEWAY_PIN_RX,
@@ -111,8 +114,8 @@ LOOP_BEGIN:
 		// Errors at this point are unrecoverable	
 		// so we send our error to the main process
 		// and then go into a dead loop.
-		printf("Error: %s\n", error);
-
+		for (;;) 
+			printf("Error: %s\n", error);
 	}
 
 	printf("Heading into main loop\n");
@@ -122,53 +125,74 @@ LOOP_BEGIN:
 		_message_queue_process();
 		_command_buffer_execute();
 
-		// If the modem is off and we have been issued a 
-		if (_start_command_issued && _modem_state == MODEM_STOPPED) {
-			if (sim7080g_is_ready(_gateway) && sim7080g_config(_gateway)) {
-				_modem_state = MODEM_STARTED;
-				printf("modem started\n");
+		switch (_modem_state) {
+		case MODEM_STOPPED:
+			// If we are stopped and have nothing to do
+			if (!_start_command_issued) {
+				sleep_ms(10);
+				break;
 			}
-			else if (_modem_power_toggled == false) {
-				printf("togging power\n");
-				sim7080g_toggle_power(_gateway);
-				_modem_power_toggled = true;
+			
+			// Try to start
+			if (!sim7080g_is_ready(_gateway) || !sim7080g_config(_gateway)) {
+				if (_modem_power_toggled == false) {
+					printf("toggling power\n");
+					sim7080g_toggle_power(_gateway);
+					_modem_power_toggled = true;
+				}
+
+				break;
 			}
-		} 
-		//else if (_start_command_issued) _start_command_issued = false;
-		else if (_modem_state == MODEM_STARTED)
-			if (sim7080g_is_ready(_gateway) == false)
+
+			_modem_state = MODEM_STARTED;
+			break;
+
+		case MODEM_STARTED:
+			if (!sim7080g_is_ready(_gateway)) {
 				_modem_state = MODEM_STOPPED;
-
-		// If we are in a powered on state and a CN is available
-		// activate it
-		if (_modem_state == MODEM_STARTED && _modem_cn_available()) {
-			printf("trying to activate\n");
-			if (sim7080g_cn_activate(_gateway, true)) {
-				_modem_state = MODEM_CN_ACTIVE;
-				printf("cn activated\n");
+				break;
 			}
-		}
-		// It the CN is active, connect to server
-		else if (_modem_state == MODEM_CN_ACTIVE)
-			if (sim7080g_cn_is_active(_gateway) == false)
+
+			if (!_modem_cn_available())
+				break;
+
+			if (!sim7080g_cn_activate(_gateway, true))
+				break;
+
+			_modem_state = MODEM_CN_ACTIVE;
+			break;
+
+		case MODEM_CN_ACTIVE:
+			if (!sim7080g_cn_is_active(_gateway)) {
 				_modem_state = MODEM_STARTED;
+				break;
+			}
 
+			if (!sim7080g_tcp_open(_gateway, strlen(SERVER_IP), SERVER_IP, 8086))
+				break;
 
-		if (_modem_state == MODEM_CN_ACTIVE && sim7080g_ssl_enable(_gateway,false)) {
-			sleep_ms(1000);
-			if (sim7080g_tcp_open(_gateway, strlen(SERVER_IP), SERVER_IP, 8086))
-				_modem_state = MODEM_SERVER_CONNECTED;
-		}
+			sim7080g_ssl_enable(_gateway,false);
 
-		else if (_modem_state == MODEM_SERVER_CONNECTED) {
+			_modem_state = MODEM_SERVER_CONNECTED;
+			break;
+
+		case MODEM_SERVER_CONNECTED:
+			if (!sim7080g_tcp_is_open(_gateway)) {
+				_modem_state = MODEM_CN_ACTIVE;
+				sim7080g_tcp_close(_gateway);
+			}
+
+			// send data
 			char *message = "Hello!";
 			uint16_t packet[10] = {[0] = htons(0), [1] = htons(strlen(message))};
 			memcpy(&packet[2], message, strlen(message));
-			sim7080g_tcp_send(_gateway, strlen(message) + (sizeof (uint16_t) * 2), (uint8_t *)packet);
-			printf("sent\n");
+			sim7080g_tcp_send(_gateway, 
+					strlen(message) + (sizeof (uint16_t) * 2), (uint8_t *)packet);
+			
+			break;
 		}
 
-		printf("state: %u\n", _modem_state);
+		printf("\nstate: %u\n", _modem_state);
 
 LOOP_CONTINUE:
 		sleep_ms(1000);
@@ -288,7 +312,11 @@ static void _command_buffer_execute(void) {
 		case GATEWAY_STOP:
 			if (sim7080g_power_down(_gateway)) {
 				_modem_state = MODEM_STOPPED;
+
+				// Reset all state flags on shutdown
 				_start_command_issued = false;
+				_modem_power_toggled = false;
+				_modem_ssl_configured = false;
 			}
 			new_command = true;
 			break;	
