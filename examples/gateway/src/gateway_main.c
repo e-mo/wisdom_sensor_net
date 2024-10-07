@@ -5,7 +5,7 @@
 //	Amelia Vlahogiannis
 //	Noelle Steil
 //	Jordan Allen
-//	Sam Colwell
+//	Sam Cowan
 //	Rachel Cleminson
 
 //	This program is free software: you can redistribute it and/or modify
@@ -36,13 +36,13 @@ int main() {
 
 	gateway_init();
 
-	uint32_t i = 69;
-
-	gateway_start();
-	//gateway_send(&i, 4);
+	char *message = "Hello!";
+	uint16_t packet[10] = {[0] = htons(0), [1] = htons(strlen(message))};
+	memcpy(&packet[2], message, strlen(message));
 
 	for(;;) {
-		sleep_ms(5000);
+		gateway_send(&packet, 10);
+		sleep_ms(30000);
 	}
     
     return 0;

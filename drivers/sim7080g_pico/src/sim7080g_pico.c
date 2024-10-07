@@ -44,9 +44,9 @@ void sim7080g_init(
 	uart_set_hw_flow(uart, false, false);
 
 	// gpio stuff
+	gpio_pull_up(context->pin_power);
 	gpio_init(context->pin_power);
 	gpio_set_dir(context->pin_power, GPIO_OUT);
-	gpio_pull_up(context->pin_power);
 	gpio_put(context->pin_power, 1);
 
 	gpio_set_function(context->pin_tx, GPIO_FUNC_UART);
@@ -55,18 +55,12 @@ void sim7080g_init(
 
 bool sim7080g_start(sim7080g_context_t *context) {
 	bool success = false;
-	bool power_toggled = false;
 	uint8_t read_buffer[RX_BUFFER_SIZE] = {0};
 	for (int tries = 0; tries < MODEM_START_RETRIES; tries++) {
 
 		if (sim7080g_is_ready(context)) {
 			success = true;
 			break;
-		}
-
-		if (!power_toggled) {
-			sim7080g_toggle_power(context);
-			power_toggled = true;
 		}
 
 		sleep_ms(MODEM_RETRY_DELAY_MS);

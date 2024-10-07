@@ -16,13 +16,17 @@
 
 #define COMMAND_DISPATCHED (0)
 #define COMMAND_INCOMPLETE (1)
-#define COMMAND_BUFFER_FULL (-1)
-#define COMMAND_UNRECOGNIZED (-2)
+#define COMMAND_BUFFER_FULL (2)
+#define COMMAND_UNRECOGNIZED (3)
+
+#define PACKED_INCOMPLETE (0)
+#define PACKED_COMPLETE (1)
 
 #define SERVER_IP "73.149.88.183"
 
 typedef enum _modem_state {
 	MODEM_UNINITIALIZED,
+	MODEM_POWERED_DOWN,
 	MODEM_STOPPED,
 	MODEM_STARTED,
 	MODEM_CN_ACTIVE,
@@ -32,8 +36,10 @@ typedef enum _modem_state {
 static sim7080g_context_t *_gateway = NULL;
 static MODEM_STATE_T _modem_state = MODEM_UNINITIALIZED;
 
+static bool _modem_power_down = false;
 static bool _modem_power_toggled = false;
 static bool _modem_ssl_configured = false;
+static bool _modem_send_incomplete = false;
 
 // Command flags
 static bool _start_command_issued = false;
@@ -45,15 +51,16 @@ static cbuffer_t *_modem_buffer_out = NULL;
 // Command buffer
 // Should only need to hold several commands at a time
 #define MODEM_BUFFER_COMMAND_SIZE (sizeof (uint32_t) * 100)
-static cbuffer_t *_modem_buffer_command = NULL;
-
-// Internal func prototypes
+static cbuffer_t *_modem_buffer_command = NULL; // Internal func prototypes
 static bool _modem_cn_available(void);
 static int _message_queue_process(void);
 static void _dispatch_message_buffer(uint32_t buffer);
 static int _build_command(uint32_t buffer);
+static int _build_packed(uint32_t buffer);
 static bool _command_buffer_push(void *command, uint size);
+static bool _modem_buffer_push(void *buffer, uint size);
 static void _command_buffer_execute(void);
+static bool _modem_buffer_send(void);
 
 uint16_t htons(uint16_t num) {
 	uint16_t output = 0;
@@ -106,17 +113,13 @@ void gw_core_entry(void) {
 			GATEWAY_PIN_PWR
 	);
 
-	_modem_state = MODEM_STOPPED;
+	uint _last_state = MODEM_STOPPED;
+	_modem_state = MODEM_POWERED_DOWN;
 
 	success = true;
 LOOP_BEGIN:
-	if (success == false) {
-		// Errors at this point are unrecoverable	
-		// so we send our error to the main process
-		// and then go into a dead loop.
-		for (;;) 
-			printf("Error: %s\n", error);
-	}
+	if (success == false)
+		gw_core_panic(GW_CORE_FAILURE);
 
 	printf("Heading into main loop\n");
 
@@ -126,29 +129,33 @@ LOOP_BEGIN:
 		_command_buffer_execute();
 
 		switch (_modem_state) {
+		case MODEM_POWERED_DOWN:
+			if (cbuffer_empty(_modem_buffer_out))
+				break;
+
+			sim7080g_toggle_power(_gateway);
+			_modem_state = MODEM_STOPPED;
+			break;
+
 		case MODEM_STOPPED:
+			
 			// If we are stopped and have nothing to do
-			if (!_start_command_issued) {
-				sleep_ms(10);
+			if (cbuffer_empty(_modem_buffer_out)) {
+				if (sim7080g_power_down(_gateway))
+					_modem_state = MODEM_POWERED_DOWN;
+
 				break;
 			}
 			
 			// Try to start
-			if (!sim7080g_is_ready(_gateway) || !sim7080g_config(_gateway)) {
-				if (_modem_power_toggled == false) {
-					printf("toggling power\n");
-					sim7080g_toggle_power(_gateway);
-					_modem_power_toggled = true;
-				}
-
+			if (!sim7080g_is_ready(_gateway) || !sim7080g_config(_gateway))
 				break;
-			}
 
 			_modem_state = MODEM_STARTED;
 			break;
 
 		case MODEM_STARTED:
-			if (!sim7080g_is_ready(_gateway)) {
+			if (!sim7080g_is_ready(_gateway) || cbuffer_empty(_modem_buffer_out)) {
 				_modem_state = MODEM_STOPPED;
 				break;
 			}
@@ -163,44 +170,49 @@ LOOP_BEGIN:
 			break;
 
 		case MODEM_CN_ACTIVE:
-			if (!sim7080g_cn_is_active(_gateway)) {
+			if (!sim7080g_cn_is_active(_gateway) || cbuffer_empty(_modem_buffer_out)) {
+				sim7080g_cn_activate(_gateway, false);
 				_modem_state = MODEM_STARTED;
 				break;
 			}
 
+			printf("trying here\n");
 			if (!sim7080g_tcp_open(_gateway, strlen(SERVER_IP), SERVER_IP, 8086))
 				break;
 
-			sim7080g_ssl_enable(_gateway,false);
+			//sim7080g_ssl_enable(_gateway,false);
 
 			_modem_state = MODEM_SERVER_CONNECTED;
 			break;
 
 		case MODEM_SERVER_CONNECTED:
-			if (!sim7080g_tcp_is_open(_gateway)) {
+			if (!sim7080g_tcp_is_open(_gateway) 
+					|| ((cbuffer_empty(_modem_buffer_out) && !_modem_send_incomplete))) {
 				_modem_state = MODEM_CN_ACTIVE;
 				sim7080g_tcp_close(_gateway);
 			}
 
-			// send data
+			printf("sending message\n");
 			char *message = "Hello!";
 			uint16_t packet[10] = {[0] = htons(0), [1] = htons(strlen(message))};
 			memcpy(&packet[2], message, strlen(message));
-			sim7080g_tcp_send(_gateway, 
-					strlen(message) + (sizeof (uint16_t) * 2), (uint8_t *)packet);
-			
+			for (int i = 0; i < 10; i++)
+				sim7080g_tcp_send(_gateway, 10, ((uint8_t *)packet)+i);
+
+			//_modem_send_incomplete = !_modem_buffer_send();
+
 			break;
 		}
 
-		printf("\nstate: %u\n", _modem_state);
+		printf("state: %u\n", _modem_state);
 
-LOOP_CONTINUE:
+LOOP_CONTINUE:;
 		sleep_ms(1000);
 	}
 }
 
 static bool _modem_cn_available(void) {
-	if (_modem_state ==  MODEM_UNINITIALIZED || _modem_state == MODEM_STOPPED)
+	if (_modem_state <= MODEM_STOPPED)
 		return false;
 
 	return sim7080g_cn_available(_gateway);
@@ -238,20 +250,21 @@ static void _dispatch_message_buffer(uint32_t buffer) {
 	if (new_message) {
 		message_type = buffer;
 		new_message = false;
-	} else {
-		uint rval = 0;
-		switch(message_type) {
-		case GATEWAY_COMMAND:
-			rval = _build_command(buffer);
-			// Unrecoverable error if rval < 0
-			if (rval < 0) gw_core_panic(GW_CORE_FAILURE);
-			if (rval == COMMAND_DISPATCHED) new_message = true;
-			break;
-		case PACKED_DATA:
-			printf("data: %u\n", buffer);
-			new_message = true;
-			break;
-		}
+		return;
+	} 
+	uint rval = 0;
+	switch(message_type) {
+	case GATEWAY_COMMAND:
+		rval = _build_command(buffer);
+		// Unrecoverable error if rval < 0
+		if (rval < 0) gw_core_panic(GW_CORE_FAILURE);
+		if (rval == COMMAND_DISPATCHED) new_message = true;
+		break;
+	case PACKED_DATA:
+		rval = _build_packed(buffer);
+		if (rval < 0) gw_core_panic(GW_CORE_FAILURE);
+		if (rval == PACKED_COMPLETE) new_message = true;
+		break;
 	}
 }
 
@@ -280,9 +293,36 @@ static int _build_command(uint32_t buffer) {
 
 	// TODO: Need some better way to deal with full command buffer. How to reissue command or tell
 	// main core that command failed?
-	if (rval == COMMAND_DISPATCHED || rval == COMMAND_BUFFER_FULL) new_command = true;
+	if (rval == COMMAND_DISPATCHED) new_command = true;
 
 	return rval;
+}
+
+static int _build_packed(uint32_t buffer) {
+	static bool new_packed = true;
+	static uint32_t packed_size;
+	static uint buffer_size = sizeof buffer;
+
+	if (new_packed) {
+		packed_size = buffer;
+		printf("packed_size: %u\n", packed_size);
+		new_packed = false;
+		return PACKED_INCOMPLETE;
+	}
+
+	uint push_size = buffer_size < packed_size ? buffer_size : packed_size;
+	if(_modem_buffer_push(&buffer, push_size)) {
+		printf("pb pushed: %u\n", push_size);
+		packed_size -= push_size;
+		printf("packed_size remaining: %u\n", packed_size);
+	}
+
+	if (!packed_size) {
+		new_packed = true;
+		return PACKED_COMPLETE;
+	}
+
+	return PACKED_INCOMPLETE;
 }
 
 static bool _command_buffer_push(void *command, uint size) {
@@ -290,6 +330,15 @@ static bool _command_buffer_push(void *command, uint size) {
 	if (size > cbuffer_remaining(_modem_buffer_command)) return false;	
 
 	cbuffer_push(_modem_buffer_command, command, size);
+
+	return true;
+}
+
+static bool _modem_buffer_push(void *buffer, uint size) {
+	printf("pbl: %u | size: %u\n", cbuffer_length(_modem_buffer_out), size);
+	if (size > cbuffer_remaining(_modem_buffer_out)) return false;	
+
+	cbuffer_push(_modem_buffer_out, buffer, size);
 
 	return true;
 }
@@ -310,58 +359,35 @@ static void _command_buffer_execute(void) {
 			new_command = true;
 			break;
 		case GATEWAY_STOP:
-			if (sim7080g_power_down(_gateway)) {
-				_modem_state = MODEM_STOPPED;
-
-				// Reset all state flags on shutdown
-				_start_command_issued = false;
-				_modem_power_toggled = false;
-				_modem_ssl_configured = false;
-			}
+			_start_command_issued = false;
+			_modem_power_toggled = false;
+			_modem_power_down = true;
 			new_command = true;
 			break;	
 		}
 	}
 }
 
-//void modem_test(void) {
-//	printf("Starting modem... ");
-//
-//	Modem *modem = modem_start(
-//			MODEM_APN,
-//			UART_PORT,
-//			UART_PIN_TX,
-//			UART_PIN_RX,
-//			MODEM_PIN_PWR
-//	);
-//
-//	if (modem) printf("success!\n");
-//	else {
-//		printf("fail\n");
-//		return;
-//	}
-//	
-//	if (modem_cn_activate(modem, true)) printf("Network activated\n");
-//
-//	if (modem_ssl_enable(modem, false)) printf("SSL disabled\n");
-//
-//	if (modem_tcp_open(modem, strlen(SERVER_URL), SERVER_URL, SERVER_PORT)) {
-//		printf("TCP connection opened\n");
-//	}
-//
-//	uint8_t *msg = "PING";
-//	if (modem_tcp_send(modem, strlen(msg), msg)) printf("Data sent!\n");
-//
-//	if (modem_tcp_recv_ready_within_us(modem, 1000 * 1000 * 10)) {
-//		uint8_t dst[100] = {0};
-//		size_t received = modem_tcp_recv(modem, 100, dst);
-//		printf("received: %u\n", received);
-//		printf("%.*s\n", received, dst);
-//	}
-//
-//	if (modem_tcp_close(modem)) printf("TCP connection closed\n");
-//
-//	if (modem_cn_activate(modem, false)) printf("Network deactivated\n");
-//
-//	if (modem_power_down(modem)) printf("Modem powered down\n");
-//}
+static bool _modem_buffer_send(void) {
+	static uint8_t data;
+	static int popped;
+	static bool data_buffered = false;
+
+	while (!cbuffer_empty(_modem_buffer_out) || data_buffered) {
+		if (!data_buffered) {
+			popped = cbuffer_pop(_modem_buffer_out, &data, sizeof data);
+			printf("popped: %u\n", popped);
+			printf("cblen: %u\n", cbuffer_length(_modem_buffer_out));
+			data_buffered = true;
+		}
+
+		if (!sim7080g_tcp_send(_gateway, popped, &data))
+			continue;
+
+		data_buffered = false;
+		printf("%02X ", data);
+	}
+	if (!data_buffered) printf("\n");
+	
+	return !data_buffered;
+}

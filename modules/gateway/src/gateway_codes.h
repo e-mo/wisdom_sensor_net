@@ -5,7 +5,6 @@ typedef enum _gateway_codes {
 	GATEWAY_ERROR,
 	GATEWAY_COMMAND,
 	PACKED_DATA
-
 } GATEWAY_CODE_T;
 
 typedef enum _gateway_commands {

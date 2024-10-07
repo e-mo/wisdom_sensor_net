@@ -71,24 +71,22 @@ int cbuffer_push(cbuffer_t *buffer, void *src, size_t size) {
 }
 
 int cbuffer_pop(cbuffer_t *buffer, void *dest, size_t num) {
-	if (buffer == NULL) return -1;
+	if (buffer == NULL || dest == NULL) return -1;
 
 	uint8_t *dest_bytes = (uint8_t *)dest;
 	int popped = 0;
-	for (int i = 0; i < num && cbuffer_empty(buffer) == false; i++) {
+	for (int i = 0; i < num && !cbuffer_empty(buffer); i++) {
 		if (dest != NULL)
 			dest_bytes[i] = *buffer->base_p;
 
 		buffer->base_p++;
 		popped++;
+		buffer->write_index--;
 
 		// If we are at end of buffer, cycle to beginning
 		if (buffer->base_p == buffer->end_p)
 			buffer->base_p = buffer->buff;
 	}
-
-	// Normalize write index on pop
-	buffer->write_index -= popped;
 
 	return popped;
 }

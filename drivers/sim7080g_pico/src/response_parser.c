@@ -37,13 +37,11 @@ void rp_parse(ResponseParser *rp, uint8_t *src, uint32_t src_len) {
 
 	for (int i = 0; i < src_len; i++) {
 		if (src[i] == '\r') {
-			//printf("\\r");
 			continue;
 		}
 
 		if (src[i] == '\n') {
 
-			//printf("\\n");
 			
 			if (non_standard_response) {
 				non_standard_response = false;
@@ -56,7 +54,6 @@ void rp_parse(ResponseParser *rp, uint8_t *src, uint32_t src_len) {
 				continue;
 			}
 
-			printf("\n");
 
 			rp_close_response(rp, response_len);
 			prefix = false;
@@ -67,7 +64,6 @@ void rp_parse(ResponseParser *rp, uint8_t *src, uint32_t src_len) {
 		if (!prefix) {
 			non_standard_response = true;
 		}
-		printf("%c", src[i]);
 		rp->buffer[rp->num_messages][response_len] = src[i];
 		response_len++;
 		if (response_len > RP_RESPONSE_LEN_MAX) break;

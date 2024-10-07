@@ -34,10 +34,16 @@ void gateway_stop(void) {
 	gw_queue_main_send((uint8_t *)command, (sizeof (uint32_t)) * 2);
 }
 
-void gateway_send(void *data, uint size) {
+void gateway_send(void *data, uint32_t size) {
 	uint32_t header = PACKED_DATA; 	
 
 	gw_queue_main_send((uint8_t *)&header, (sizeof (uint32_t)));
+	gw_queue_main_send((uint8_t *)&size, sizeof (uint32_t));
 	gw_queue_main_send((uint8_t *)data, size);
 
+}
+
+bool gateway_recv(void *data, uint size) {
+
+	return 0;
 }
