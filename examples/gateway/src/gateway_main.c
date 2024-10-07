@@ -41,7 +41,7 @@ int main() {
 	memcpy(&packet[2], message, strlen(message));
 
 	for(;;) {
-		gateway_send(&packet, 10);
+		//gateway_send(&packet, 10);
 		sleep_ms(30000);
 	}
     

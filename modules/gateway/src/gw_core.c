@@ -117,6 +117,9 @@ void gw_core_entry(void) {
 	_modem_state = MODEM_POWERED_DOWN;
 
 	success = true;
+
+	int _stub = 10;
+	cbuffer_push(_modem_buffer_out, &_stub, sizeof _stub);
 LOOP_BEGIN:
 	if (success == false)
 		gw_core_panic(GW_CORE_FAILURE);
@@ -186,8 +189,8 @@ LOOP_BEGIN:
 			break;
 
 		case MODEM_SERVER_CONNECTED:
-			if (!sim7080g_tcp_is_open(_gateway) 
-					|| ((cbuffer_empty(_modem_buffer_out) && !_modem_send_incomplete))) {
+			if (!sim7080g_tcp_is_open(_gateway)) {
+				//	|| ((cbuffer_empty(_modem_buffer_out) && !_modem_send_incomplete))) {
 				_modem_state = MODEM_CN_ACTIVE;
 				sim7080g_tcp_close(_gateway);
 			}
@@ -196,8 +199,7 @@ LOOP_BEGIN:
 			char *message = "Hello!";
 			uint16_t packet[10] = {[0] = htons(0), [1] = htons(strlen(message))};
 			memcpy(&packet[2], message, strlen(message));
-			for (int i = 0; i < 10; i++)
-				sim7080g_tcp_send(_gateway, 10, ((uint8_t *)packet)+i);
+			sim7080g_tcp_send(_gateway, 10, ((uint8_t *)packet));
 
 			//_modem_send_incomplete = !_modem_buffer_send();
 
