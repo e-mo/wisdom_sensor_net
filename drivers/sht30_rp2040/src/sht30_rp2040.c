@@ -16,7 +16,7 @@ const uint8_t sht30_command_lookup[SHT30_COMMANDS_MAX][2] = {
 	[SHT30_SSDA_LOW] = {0x24, 0x16},
 };
 
-bool sht30_rp2040_read(uint i2c_index, struct sht30_rp2040_reading_s *reading) {
+bool sht30_rp2040_read(uint i2c_index, struct sht30_reading_s *reading) {
 
 	uint8_t read_buffer[SHT30_READING_SIZE] = {0x00};
 

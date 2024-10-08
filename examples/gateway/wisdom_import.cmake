@@ -9,6 +9,10 @@ set(WISDOM_MODULES_PATH "${WISDOM_PROJECT_PATH}/modules")
 message("wisdom_init: building gateway module")
 add_subdirectory(${WISDOM_MODULES_PATH}/gateway gateway_module)
 
+# Sensor Interface
+message("wisdom_init: initializing radio module")
+add_subdirectory(${WISDOM_PROJECT_PATH}/sensor_interface sensor_interface)
+
 # Load local config
 message("wisdom_init: loading local wisdom_config.cmake file")
 include(wisdom_config.cmake)

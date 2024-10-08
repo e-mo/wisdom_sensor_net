@@ -24,9 +24,15 @@
 #include <stdio.h>
 
 #include "pico/stdlib.h"
+#include "hardware/i2c.h"
 #include "tusb.h"
 
 #include "gateway.h"
+#include "wisdom_sensors.h"
+
+#define I2C_INST (i2c0)
+#define PIN_SCL  (5)
+#define PIN_SDA  (4)
 
 int main() {
     stdio_init_all(); // To be able to use printf
@@ -36,13 +42,22 @@ int main() {
 
 	gateway_init();
 
-	char *message = "Hello!";
-	uint16_t packet[10] = {[0] = htons(0), [1] = htons(strlen(message))};
-	memcpy(&packet[2], message, strlen(message));
+	sht30_wsi_t sht30 = {0};
+	sht30_wsi_init(&sht30, 0);
 
-	for(;;) {
-		//gateway_send(&packet, 10);
-		sleep_ms(30000);
+	i2c_init(I2C_INST, 500 * 1000);
+	gpio_set_function(PIN_SCL, GPIO_FUNC_I2C);
+	gpio_set_function(PIN_SDA, GPIO_FUNC_I2C);
+	gpio_pull_up(PIN_SCL);
+	gpio_pull_up(PIN_SDA);
+
+	uint16_t buf[100] = {1};
+	for (;;) {
+		sensor_read((sensor_t *)&sht30);
+		buf[1] = sensor_pack((sensor_t *)&sht30, buf, 100);
+		memcpy(&buf[2], buf, buf[1]);
+		gateway_send(&buf, buf[1]);
+		sleep_ms(60000);
 	}
     
     return 0;

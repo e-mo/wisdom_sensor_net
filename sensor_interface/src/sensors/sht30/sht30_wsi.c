@@ -39,17 +39,3 @@ bool sht30_wsi_read(struct _sensor_generic *sensor) {
 
 	return sht30_rp2040_read(sht30->i2c_index, &sht30->reading);
 }
-
-struct _sensor_generic *sht30_wsi_unpack(uint8_t *buffer) {
-	sht30_wsi_t *sensor = malloc(sizeof *sensor);
-	if (!sensor) return NULL;
-
-	sht30_wsi_init(sensor, 0);
-
-	buffer += sizeof (SENSOR_TYPE);
-	memcpy(&sensor->reading.temperature, buffer, sizeof (float));
-	buffer += sizeof (float);
-	memcpy(&sensor->reading.humidity, buffer, sizeof (float));
-	
-	return (struct _sensor_generic *) sensor;
-}

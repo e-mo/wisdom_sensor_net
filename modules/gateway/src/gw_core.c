@@ -118,8 +118,6 @@ void gw_core_entry(void) {
 
 	success = true;
 
-	int _stub = 10;
-	cbuffer_push(_modem_buffer_out, &_stub, sizeof _stub);
 LOOP_BEGIN:
 	if (success == false)
 		gw_core_panic(GW_CORE_FAILURE);
@@ -129,7 +127,7 @@ LOOP_BEGIN:
 	// Main loop
 	for (;;) {
 		_message_queue_process();
-		_command_buffer_execute();
+		//_command_buffer_execute();
 
 		switch (_modem_state) {
 		case MODEM_POWERED_DOWN:
@@ -189,19 +187,12 @@ LOOP_BEGIN:
 			break;
 
 		case MODEM_SERVER_CONNECTED:
-			if (!sim7080g_tcp_is_open(_gateway)) {
-				//	|| ((cbuffer_empty(_modem_buffer_out) && !_modem_send_incomplete))) {
+			if (!sim7080g_tcp_is_open(_gateway) || ((cbuffer_empty(_modem_buffer_out) && !_modem_send_incomplete))) {
 				_modem_state = MODEM_CN_ACTIVE;
 				sim7080g_tcp_close(_gateway);
 			}
 
-			printf("sending message\n");
-			char *message = "Hello!";
-			uint16_t packet[10] = {[0] = htons(0), [1] = htons(strlen(message))};
-			memcpy(&packet[2], message, strlen(message));
-			sim7080g_tcp_send(_gateway, 10, ((uint8_t *)packet));
-
-			//_modem_send_incomplete = !_modem_buffer_send();
+			_modem_send_incomplete = !_modem_buffer_send();
 
 			break;
 		}
@@ -209,7 +200,7 @@ LOOP_BEGIN:
 		printf("state: %u\n", _modem_state);
 
 LOOP_CONTINUE:;
-		sleep_ms(1000);
+		sleep_ms(10);
 	}
 }
 
@@ -371,20 +362,20 @@ static void _command_buffer_execute(void) {
 }
 
 static bool _modem_buffer_send(void) {
-	static uint8_t data;
+	static uint8_t data[20];
 	static int popped;
 	static bool data_buffered = false;
 
 	while (!cbuffer_empty(_modem_buffer_out) || data_buffered) {
 		if (!data_buffered) {
-			popped = cbuffer_pop(_modem_buffer_out, &data, sizeof data);
+			popped = cbuffer_pop(_modem_buffer_out, data, sizeof data);
 			printf("popped: %u\n", popped);
 			printf("cblen: %u\n", cbuffer_length(_modem_buffer_out));
 			data_buffered = true;
 		}
 
-		if (!sim7080g_tcp_send(_gateway, popped, &data))
-			continue;
+		if (!sim7080g_tcp_send(_gateway, popped, data))
+			break;
 
 		data_buffered = false;
 		printf("%02X ", data);

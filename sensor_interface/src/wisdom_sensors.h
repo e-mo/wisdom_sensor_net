@@ -15,10 +15,6 @@ typedef unsigned uint;
 // data or buffer is NULL.
 int sensor_pack(sensor_t *sensor, uint8_t *buffer, uint buffer_len);
 
-// Takes a buffer containing sensor data and allocates a sensor data struct
-// of the correct type. Returns generic type.
-sensor_t * sensor_unpack(uint8_t *buffer);
-
 bool sensor_read(sensor_t *sensor);
 
 #endif // WISDOM_SENSORS_H

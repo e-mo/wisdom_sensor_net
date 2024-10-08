@@ -7,7 +7,7 @@
 typedef struct _sht30_wsi_s {
 	struct _sensor_generic header;
 	uint i2c_index;
-	struct sht30_rp2040_reading_s reading;
+	struct sht30_reading_s reading;
 } sht30_wsi_t;
 
 void sht30_wsi_init(sht30_wsi_t *sensor, uint i2c_index);
@@ -19,6 +19,5 @@ int sht30_wsi_pack(
 );
 
 bool sht30_wsi_read(struct _sensor_generic *sensor);
-struct _sensor_generic *sht30_wsi_unpack(uint8_t *buffer);
 
 #endif // SHT30_WSI_H
