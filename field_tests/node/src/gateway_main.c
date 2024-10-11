@@ -38,7 +38,7 @@
 #define PIN_SDA  (4)
 
 sht30_wsi_t sht30 = {0};
-//struct date_time_s add = { .minutes = 1 };
+struct date_time_s add = { .minutes = 1 };
 
 void send_message(char *message) {
 	radio_send(message, strlen(message) + 1, 0x02);
@@ -50,7 +50,6 @@ void send_reading(struct date_time_s *dt) {
 	static uint16_t buf[1024] = {1};
 	sensor_read((sensor_t *)&sht30);
 	buf[1] = sensor_pack((sensor_t *)&sht30, (uint8_t *)&buf[2], 1024);
-	gateway_queue_push(&buf, buf[1] + 4);
 	uint8_t *bp = ((uint8_t *)buf) + buf[1] + 4;
 	scheduler_date_time_get_packed(bp);
 	if (!radio_send(buf, buf[1] + 4 + 5, 0x00))
@@ -84,26 +83,26 @@ int main() {
 	for (;;) {
 		if (!scheduler_date_time_get(&sched)) {
 			send_message("rtc failure");
-			goto idle_loop;
+			goto IDLE_LOOP;
 		}
 
 		date_time_add(&sched, &add);
-		collect_and_send(&sched);
+		send_reading(&sched);
 
-		scheduler_return_t s_return = scheduler_run();
+		SCHEDULER_RETURN_T s_return = scheduler_run();
 
 		switch (s_return) {
-		case scheduler_ok:
+		case SCHEDULER_OK:
 			send_message("scheduler ok\n");
 			break;
-		case rtc_failure:
+		case RTC_FAILURE:
 			send_message("rtc failure\n");
-			goto idle_loop;
+			goto IDLE_LOOP;
 		}
 
 		sleep_ms(100);
 	}
-idle_loop:
+IDLE_LOOP:
 	for (;;) sleep_ms(1000);
     
     return 0;

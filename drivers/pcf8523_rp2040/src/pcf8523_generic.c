@@ -1164,11 +1164,13 @@ bool pcf8523_am_pm_get(uint i2c_inst, AM_PM_T *am_pm) {
 	if (!pcf8523_hour_mode_get(i2c_inst, &hm))
 		goto RETURN;
 
+	uint8_t hours;
+	uint8_t buf;
 	switch (hm) {
 	// If in 24 hour mode, am_pm is just based on the time
 	// of day.
 	case HOUR_MODE_24:
-		uint8_t hours;
+		hours = 0;
 		if (!pcf8523_hours_get(i2c_inst, &hours))
 			goto RETURN;
 
@@ -1178,7 +1180,7 @@ bool pcf8523_am_pm_get(uint i2c_inst, AM_PM_T *am_pm) {
 		break;
 
 	case HOUR_MODE_12:
-		uint8_t buf = 0;
+		buf = 0;
 		if (!pcf8523_hours_reg_get(i2c_inst, &buf))
 			goto RETURN;
 
@@ -1200,12 +1202,13 @@ bool pcf8523_am_pm_set(uint i2c_inst, AM_PM_T am_pm) {
 	if (!pcf8523_hour_mode_get(i2c_inst, &hm))
 		goto RETURN;
 
+	uint8_t hours = 0;
+	uint8_t buf = 0;
 	switch (hm) {
 	// If am_pm is set in 24 hour mode, time is automatically
 	// adjusted. (23h set to AM == 11h). Nothing happens if am_pm
 	// isn't actually changing.
 	case HOUR_MODE_24:
-		uint8_t hours;
 		if (!pcf8523_hours_get(i2c_inst, &hours))
 			goto RETURN;
 
@@ -1220,7 +1223,6 @@ bool pcf8523_am_pm_set(uint i2c_inst, AM_PM_T am_pm) {
 		break;
 
 	case HOUR_MODE_12:
-		uint8_t buf = 0;
 		if (!pcf8523_hours_reg_get(i2c_inst, &buf))
 			goto RETURN;
 

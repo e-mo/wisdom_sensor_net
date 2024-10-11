@@ -18,5 +18,5 @@ message("wisdom_init: initializing radio module")
 add_subdirectory(${WISDOM_PROJECT_PATH}/modules/radio modules/radio)
 
 # Scheduler module
-#message("wisdom_init: initializing scheduler module")
-#add_subdirectory(${WISDOM_PROJECT_PATH}/modules/scheduler modules/scheduler)
+message("wisdom_init: initializing scheduler module")
+add_subdirectory(${WISDOM_PROJECT_PATH}/modules/scheduler modules/scheduler)
