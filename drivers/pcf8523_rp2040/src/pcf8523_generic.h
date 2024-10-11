@@ -159,19 +159,19 @@ bool pcf8523_date_set_all(uint i2c_inst, struct pcf8523_date_s *date);
 bool pcf8523_seconds_reg_get(uint i2c_inst, uint8_t *reg);
 bool pcf8523_seconds_reg_set(uint i2c_inst, uint8_t reg);
 
-bool pcf8523_seconds_get(uint i2c_inst, uint *seconds);
+bool pcf8523_seconds_get(uint i2c_inst, uint8_t *seconds);
 bool pcf8523_seconds_set(uint i2c_inst, uint seconds);
 
 bool pcf8523_minutes_reg_get(uint i2c_inst, uint8_t *reg);
 bool pcf8523_minutes_reg_set(uint i2c_inst, uint8_t reg);
 
-bool pcf8523_minutes_get(uint i2c_inst, uint *minutes);
+bool pcf8523_minutes_get(uint i2c_inst, uint8_t *minutes);
 bool pcf8523_minutes_set(uint i2c_inst, uint minutes);
 
 bool pcf8523_hours_reg_get(uint i2c_inst, uint8_t *reg);
 bool pcf8523_hours_reg_set(uint i2c_inst, uint8_t reg);
 
-bool pcf8523_hours_get(uint i2c_inst, uint *hours);
+bool pcf8523_hours_get(uint i2c_inst, uint8_t *hours);
 bool pcf8523_hours_set(uint i2c_inst, uint hours);
 
 typedef enum _AM_PM_E {
@@ -184,7 +184,7 @@ bool pcf8523_am_pm_set(uint i2c_inst, AM_PM_T am_pm);
 bool pcf8523_days_reg_get(uint i2c_inst, uint8_t *reg);
 bool pcf8523_days_reg_set(uint i2c_inst, uint8_t reg);
 
-bool pcf8523_days_get(uint i2c_inst, uint *day);
+bool pcf8523_days_get(uint i2c_inst, uint8_t *day);
 bool pcf8523_days_set(uint i2c_inst, uint day);
 
 typedef enum _WEEKDAY_E {
@@ -211,7 +211,7 @@ bool pcf8523_months_set(uint i2c_inst, MONTH_T month);
 bool pcf8523_years_reg_get(uint i2c_inst, uint8_t *reg);
 bool pcf8523_years_reg_set(uint i2c_inst, uint8_t reg);
 
-bool pcf8523_years_get(uint i2c_inst, uint *years);
+bool pcf8523_years_get(uint i2c_inst, uint8_t *years);
 bool pcf8523_years_set(uint i2c_inst, uint years);
 
 // Minute alarm

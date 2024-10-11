@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <ctype.h>
 
 #include "pico/time.h"
 #include "hardware/gpio.h"
@@ -44,9 +45,9 @@ void sim7080g_init(
 	uart_set_hw_flow(uart, false, false);
 
 	// gpio stuff
-	gpio_pull_up(context->pin_power);
 	gpio_init(context->pin_power);
 	gpio_set_dir(context->pin_power, GPIO_OUT);
+	gpio_pull_up(context->pin_power);
 	gpio_put(context->pin_power, 1);
 
 	gpio_set_function(context->pin_tx, GPIO_FUNC_UART);
@@ -422,6 +423,58 @@ bool sim7080g_tcp_send(
 	}
 
 	return true;
+}
+
+bool sim7080g_tcp_ack(sim7080g_context_t *context, uint *sent, uint *unack) {
+	uint8_t buffer[100];
+	uint8_t buffer_len;
+	uint8_t read_buffer[RX_BUFFER_SIZE];
+	uint32_t received;
+
+	CommandBuffer *cb = cb_reset(&(CommandBuffer) {0});
+	ResponseParser *rp = rp_reset(&(ResponseParser) {0});
+
+	buffer_len = sprintf(buffer, "+CAACK=0");
+
+	cb_reset(cb);
+	cb_at_prefix_set(cb);
+	cb_write(cb, buffer, buffer_len);
+	sim7080g_cb_write_blocking(context, cb);
+
+	received = sim7080g_read_blocking(context, read_buffer, RX_BUFFER_SIZE);
+
+	rp_reset(rp);
+	rp_parse(rp, read_buffer, received);
+
+	uint8_t index;
+	if (!rp_contains(rp, "+CAACK:", 7, &index)) return false;
+
+	uint8_t *return_message;
+	uint32_t message_len;
+	rp_get(rp, index, &return_message, &message_len);
+	return_message[message_len] = '\0';
+
+	// Find and return values
+	char *cp = return_message;
+	while (!isdigit(*cp)) cp++;
+	int digits = 0;
+
+	char num_str[10];
+	while (isdigit(*cp)) {
+		num_str[digits] = *cp++;
+		digits++;
+	}
+	num_str[digits] = '\0';
+	*sent = atoi(num_str);
+	cp++;
+	digits = 0; 
+	while (isdigit(*cp)) {
+		num_str[digits] = *cp++;
+		digits++;
+	}
+	num_str[digits] = '\0';
+
+	*unack = atoi(num_str);
 }
 
 size_t sim7080g_tcp_recv(

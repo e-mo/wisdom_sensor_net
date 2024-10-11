@@ -6,8 +6,8 @@ set(WISDOM_DRIVERS_PATH "${WISDOM_PROJECT_PATH}/drivers")
 set(WISDOM_MODULES_PATH "${WISDOM_PROJECT_PATH}/modules")
 
 # GATEWAY_MODULE 
-message("wisdom_init: building gateway module")
-add_subdirectory(${WISDOM_MODULES_PATH}/gateway gateway_module)
+#message("wisdom_init: building gateway module")
+#add_subdirectory(${WISDOM_MODULES_PATH}/gateway gateway_module)
 
 # Sensor Interface
 message("wisdom_init: initializing sensor interface")
@@ -18,5 +18,5 @@ message("wisdom_init: initializing radio module")
 add_subdirectory(${WISDOM_PROJECT_PATH}/modules/radio modules/radio)
 
 # Scheduler module
-message("wisdom_init: initializing scheduler module")
-add_subdirectory(${WISDOM_PROJECT_PATH}/modules/scheduler modules/scheduler)
+#message("wisdom_init: initializing scheduler module")
+#add_subdirectory(${WISDOM_PROJECT_PATH}/modules/scheduler modules/scheduler)

@@ -1,4 +1,3 @@
-#include <stdio.h> // for sprintf
 #include <string.h>
 
 #include "pico/stdlib.h"

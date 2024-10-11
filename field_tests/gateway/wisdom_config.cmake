@@ -20,10 +20,10 @@ list(APPEND includes
 # pico_stdlib included by default
 list(APPEND libraries
 	gateway_module
-	wisdom_sensor_interface
+	#wisdom_sensor_interface
 	radio_module
 	scheduler_module
-	hardware_i2c
+	#hardware_i2c
 )
 
 #list(APPEND definitions

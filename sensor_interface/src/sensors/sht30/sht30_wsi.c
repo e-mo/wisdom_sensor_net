@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 
 #include "sensors/sht30/sht30_wsi.h"
@@ -26,6 +25,8 @@ int sht30_wsi_pack(
 	sht30_wsi_t *sht30 = (sht30_wsi_t *)sensor;
 
 	*((SENSOR_TYPE *)buffer) = (SENSOR_TYPE)sht30->header.type;
+	uint16_t type = *(uint16_t *)buffer;
+
 	buffer += sizeof (SENSOR_TYPE);
 	memcpy(buffer, &sht30->reading.temperature, sizeof (float));
 	buffer += sizeof (float);

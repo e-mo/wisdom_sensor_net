@@ -28,7 +28,7 @@
 #include "hardware/i2c.h"
 //#include "tusb.h"
 
-#include "gateway.h"
+//#include "gateway.h"
 #include "radio.h"
 #include "scheduler_module.h"
 #include "wisdom_sensors.h"
@@ -38,68 +38,34 @@
 #define PIN_SDA  (4)
 
 sht30_wsi_t sht30 = {0};
-struct date_time_s add = { .minutes = 1 };
+//struct date_time_s add = { .minutes = 1 };
 
 void send_message(char *message) {
 	radio_send(message, strlen(message) + 1, 0x02);
 }
 
-void send_data(struct date_time_s *dt) {
-	static uint16_t buf[100] = {1};
+void send_reading(struct date_time_s *dt) {
 
-
-	send_message("farting...");
+	send_message("NODE SENDING");
+	static uint16_t buf[1024] = {1};
 	sensor_read((sensor_t *)&sht30);
-	buf[1] = sensor_pack((sensor_t *)&sht30, (uint8_t *)&buf[2], 100);
+	buf[1] = sensor_pack((sensor_t *)&sht30, (uint8_t *)&buf[2], 1024);
 	gateway_queue_push(&buf, buf[1] + 4);
-	int8_t now[5] = {0};
-	scheduler_date_time_get_packed(now);
-	gateway_queue_push(now, 5);
+	uint8_t *bp = ((uint8_t *)buf) + buf[1] + 4;
+	scheduler_date_time_get_packed(bp);
+	if (!radio_send(buf, buf[1] + 4 + 5, 0x00))
+		send_message("data send failed");
 
-	int rval = gateway_pump();
-	
-	while (rval != MODEM_POWERED_DOWN) {
-		switch (rval) {
-		case MODEM_POWERED_DOWN:
-			send_message("State: MODEM_POWERED_DOWN");
-			break;
-		case MODEM_STOPPED:
-			send_message("State: MODEM_STOPPED");
-			break;
-		case MODEM_STARTED:
-			send_message("State: MODEM_STARTED");
-			break;
-		case MODEM_CN_ACTIVE:
-			send_message("State: MODEM_CN_ACTIVE");
-			break;
-		case MODEM_SERVER_CONNECTED:
-			send_message("State: MODEM_SERVER_CONNECTED");
-			break;
-		}
-
-		sleep_ms(1000);
-		rval = gateway_pump();
-	}
-
-	send_message("farted!");
 	date_time_add(dt, &add);
-	schedule_process(dt, send_data);
+	schedule_process(dt, send_reading);
 }
 
 int main() {
-	// Wait for USB serial connection
-	//while (!tud_cdc_connected()) { sleep_ms(100); };
-	
 	// Sechduler and radio init
 	scheduler_module_init();
 	if (!radio_init()) goto IDLE_LOOP;
+	// Gateway address 0
 	radio_address_set(0x01);
-
-	// Gate init
-	if (!gateway_init()) {
-		send_message("gateway_init fail");
-		goto IDLE_LOOP;
-	}
 
 	i2c_init(I2C_INST, 500 * 1000);
 	gpio_set_function(PIN_SCL, GPIO_FUNC_I2C);
@@ -113,31 +79,31 @@ int main() {
 	// date_time objects
 	struct date_time_s sched = {0};
 
-	send_message("FART!");
+	send_message("FART NODE!");
 
 	for (;;) {
 		if (!scheduler_date_time_get(&sched)) {
 			send_message("rtc failure");
-			goto IDLE_LOOP;
+			goto idle_loop;
 		}
 
 		date_time_add(&sched, &add);
-		schedule_process(&sched, send_data);
+		collect_and_send(&sched);
 
-		SCHEDULER_RETURN_T s_return = scheduler_run();
+		scheduler_return_t s_return = scheduler_run();
 
 		switch (s_return) {
-		case SCHEDULER_OK:
+		case scheduler_ok:
 			send_message("scheduler ok\n");
 			break;
-		case RTC_FAILURE:
+		case rtc_failure:
 			send_message("rtc failure\n");
-			goto IDLE_LOOP;
+			goto idle_loop;
 		}
 
+		sleep_ms(100);
 	}
-
-IDLE_LOOP:
+idle_loop:
 	for (;;) sleep_ms(1000);
     
     return 0;

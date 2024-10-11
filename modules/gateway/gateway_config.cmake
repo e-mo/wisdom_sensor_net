@@ -11,9 +11,9 @@ set(target "gateway_module")
 list(APPEND sources
 	src/gateway_sim7080g.c
 	src/gateway_error.c
-	src/gw_core.c
-	src/gw_core_error.c
-	src/gateway_queue.c
+	#src/gw_core.c
+	#src/gw_core_error.c
+	#src/gateway_queue.c
 )
 
 list(APPEND includes
@@ -22,7 +22,7 @@ list(APPEND includes
 
 list(APPEND libraries
 	pico_stdlib
-	pico_multicore
+	#pico_multicore
 	sim7080g_pico
 	circle_buffer
 )

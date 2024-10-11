@@ -25,36 +25,51 @@
 #include <string.h>
 
 #include "pico/stdlib.h"
-#include "hardware/i2c.h"
+//#include "hardware/i2c.h"
 //#include "tusb.h"
 
 #include "gateway.h"
 #include "radio.h"
 #include "scheduler_module.h"
-#include "wisdom_sensors.h"
+//#include "wisdom_sensors.h"
 
-#define I2C_INST (i2c0)
-#define PIN_SCL  (5)
-#define PIN_SDA  (4)
+//#define I2C_INST (i2c0)
+//#define PIN_SCL  (5)
+//#define PIN_SDA  (4)
 
-sht30_wsi_t sht30 = {0};
+//sht30_wsi_t sht30 = {0};
 struct date_time_s add = { .minutes = 1 };
 
 void send_message(char *message) {
 	radio_send(message, strlen(message) + 1, 0x02);
 }
 
-void send_data(struct date_time_s *dt) {
-	static uint16_t buf[100] = {1};
+bool collect_data(void *buf, uint buf_len, uint *received) {
 
+	return radio_recv(buf, buf_len, received);
+}
 
+void collect_and_send(struct date_time_s *dt) {
 	send_message("farting...");
-	sensor_read((sensor_t *)&sht30);
-	buf[1] = sensor_pack((sensor_t *)&sht30, (uint8_t *)&buf[2], 100);
-	gateway_queue_push(&buf, buf[1] + 4);
-	int8_t now[5] = {0};
-	scheduler_date_time_get_packed(now);
-	gateway_queue_push(now, 5);
+	static uint8_t data[1024] = {0};
+	uint received = 0;
+
+	if (!collect_data(data, 1024, &received)) {
+		send_message("SHIT EVERYWHERE!");
+		return;
+	}
+
+	send_message("Received some stuff...");
+
+	gateway_queue_push(data, received);
+
+	//static uint16_t buf[100] = {1};
+	//sensor_read((sensor_t *)&sht30);
+	//buf[1] = sensor_pack((sensor_t *)&sht30, (uint8_t *)&buf[2], 100);
+	//gateway_queue_push(&buf, buf[1] + 4);
+	//int8_t now[5] = {0};
+	//scheduler_date_time_get_packed(now);
+	//gateway_queue_push(now, 5);
 
 	int rval = gateway_pump();
 	
@@ -77,13 +92,13 @@ void send_data(struct date_time_s *dt) {
 			break;
 		}
 
-		sleep_ms(1000);
+		sleep_ms(500);
 		rval = gateway_pump();
 	}
 
 	send_message("farted!");
 	date_time_add(dt, &add);
-	schedule_process(dt, send_data);
+	schedule_process(dt, collect_and_send);
 }
 
 int main() {
@@ -93,7 +108,8 @@ int main() {
 	// Sechduler and radio init
 	scheduler_module_init();
 	if (!radio_init()) goto IDLE_LOOP;
-	radio_address_set(0x01);
+	// Gateway address 0
+	radio_address_set(0x00);
 
 	// Gate init
 	if (!gateway_init()) {
@@ -101,14 +117,14 @@ int main() {
 		goto IDLE_LOOP;
 	}
 
-	i2c_init(I2C_INST, 500 * 1000);
-	gpio_set_function(PIN_SCL, GPIO_FUNC_I2C);
-	gpio_set_function(PIN_SDA, GPIO_FUNC_I2C);
-	gpio_pull_up(PIN_SCL);
-	gpio_pull_up(PIN_SDA);
+	//i2c_init(I2C_INST, 500 * 1000);
+	//gpio_set_function(PIN_SCL, GPIO_FUNC_I2C);
+	//gpio_set_function(PIN_SDA, GPIO_FUNC_I2C);
+	//gpio_pull_up(PIN_SCL);
+	//gpio_pull_up(PIN_SDA);
 
 	// Sensor init
-	sht30_wsi_init(&sht30, 0);
+	//sht30_wsi_init(&sht30, 0);
 
 	// date_time objects
 	struct date_time_s sched = {0};
@@ -122,7 +138,7 @@ int main() {
 		}
 
 		date_time_add(&sched, &add);
-		schedule_process(&sched, send_data);
+		schedule_process(&sched, collect_and_send);
 
 		SCHEDULER_RETURN_T s_return = scheduler_run();
 
@@ -135,8 +151,8 @@ int main() {
 			goto IDLE_LOOP;
 		}
 
+		//sleep_ms(100);
 	}
-
 IDLE_LOOP:
 	for (;;) sleep_ms(1000);
     

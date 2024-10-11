@@ -28,11 +28,11 @@ extern const char *month_string_lookup[];
 // Weekday is left out for simplicity.
 // Might reconsider this later.
 struct date_time_s {
-	uint minutes; // 0-59
-	uint hours;   // 0-23
-	uint days;    // 1-31 (month/year dependant)
-	uint months;  // 1-12
-	uint years;   // 0-99
+	uint8_t minutes; // 0-59
+	uint8_t hours;   // 0-23
+	uint8_t days;    // 1-31 (month/year dependant)
+	uint8_t months;  // 1-12
+	uint8_t years;   // 0-99
 	// Century flag is to prevent incorrect year comparisons.
 	// e.g. 1999 vs 2001 since limitation in PCF8523 hardware would
 	// represent those years as 99 and 01.

@@ -968,7 +968,7 @@ RETURN:
 	return success;
 }
 
-bool pcf8523_seconds_get(uint i2c_inst, uint *seconds) {
+bool pcf8523_seconds_get(uint i2c_inst, uint8_t *seconds) {
 	bool success = false;
 
 	uint8_t buf = 0;
@@ -1026,7 +1026,7 @@ RETURN:
 	return success;
 }
 
-bool pcf8523_minutes_get(uint i2c_inst, uint *minutes) {
+bool pcf8523_minutes_get(uint i2c_inst, uint8_t *minutes) {
 	bool success = false;
 
 	uint8_t buf = 0;
@@ -1083,7 +1083,7 @@ RETURN:
 	return success;
 }
 
-bool pcf8523_hours_get(uint i2c_inst, uint *hours) {
+bool pcf8523_hours_get(uint i2c_inst, uint8_t *hours) {
 	bool success = false;
 
 	HOUR_MODE_T hm;
@@ -1168,7 +1168,7 @@ bool pcf8523_am_pm_get(uint i2c_inst, AM_PM_T *am_pm) {
 	// If in 24 hour mode, am_pm is just based on the time
 	// of day.
 	case HOUR_MODE_24:
-		uint hours;
+		uint8_t hours;
 		if (!pcf8523_hours_get(i2c_inst, &hours))
 			goto RETURN;
 
@@ -1205,7 +1205,7 @@ bool pcf8523_am_pm_set(uint i2c_inst, AM_PM_T am_pm) {
 	// adjusted. (23h set to AM == 11h). Nothing happens if am_pm
 	// isn't actually changing.
 	case HOUR_MODE_24:
-		uint hours;
+		uint8_t hours;
 		if (!pcf8523_hours_get(i2c_inst, &hours))
 			goto RETURN;
 
@@ -1260,7 +1260,7 @@ RETURN:
 	return success;
 }
 
-bool pcf8523_days_get(uint i2c_inst, uint *days) {
+bool pcf8523_days_get(uint i2c_inst, uint8_t *days) {
 	bool success = false;
 
 	uint8_t buf = 0;
@@ -1451,7 +1451,7 @@ RETURN:
 	return success;
 }
 
-bool pcf8523_years_get(uint i2c_inst, uint *years) {
+bool pcf8523_years_get(uint i2c_inst, uint8_t *years) {
 	bool success = false;
 
 	uint8_t buf = 0;

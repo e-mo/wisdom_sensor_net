@@ -112,10 +112,10 @@ bool scheduler_date_time_get(struct date_time_s *dst) {
 	uint index = I2C_NUM(I2C_INST);
 	// Check if rtc is responding and if clock time can be trusted
 	// otherwise return false.
-	bool is_set = false;
-    if (!pcf8523_ci_warning_flag_is_set(index, &is_set))
-		goto RETURN;
-	if (is_set) goto RETURN;
+	//bool is_set = false;
+    //if (!pcf8523_ci_warning_flag_is_set(index, &is_set))
+	//	goto RETURN;
+	//if (is_set) goto RETURN;
 
 	pcf8523_minutes_get(index, &dst->minutes);	
 	pcf8523_hours_get(index, &dst->hours);	
@@ -130,6 +130,25 @@ bool scheduler_date_time_get(struct date_time_s *dst) {
 	dst->century = false;
 
 	success = true;
+RETURN:
+	return success;
+}
+
+bool scheduler_date_time_get_packed(uint8_t dst[5]) {
+	bool success = false;
+
+	uint index = I2C_NUM(I2C_INST);
+
+	pcf8523_minutes_get(index, &dst[0]);	
+	pcf8523_hours_get(index, &dst[1]);	
+
+	MONTH_T months;
+	pcf8523_months_get(index, &months);
+	dst[2] = (uint8_t) months;
+
+	pcf8523_days_get(index, &dst[3]);
+	pcf8523_years_get(index, &dst[4]);
+
 RETURN:
 	return success;
 }
@@ -164,7 +183,7 @@ static void execute_next_process(void) {
 	struct schedule_entry *ep = process_queue.head;
 	process_queue.head = process_queue.head->next;
 
-	printf("Executing process: %u\n", ep->process_id);
+	//printf("Executing process: %u\n", ep->process_id);
 	// Execute process
 	ep->process(&ep->sched_time);
 

@@ -10,8 +10,8 @@ message("wisdom_init: building gateway module")
 add_subdirectory(${WISDOM_MODULES_PATH}/gateway gateway_module)
 
 # Sensor Interface
-message("wisdom_init: initializing sensor interface")
-add_subdirectory(${WISDOM_PROJECT_PATH}/sensor_interface sensor_interface)
+#message("wisdom_init: initializing sensor interface")
+#add_subdirectory(${WISDOM_PROJECT_PATH}/sensor_interface sensor_interface)
 
 # Radio
 message("wisdom_init: initializing radio module")

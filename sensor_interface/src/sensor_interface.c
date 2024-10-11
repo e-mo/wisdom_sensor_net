@@ -1,7 +1,6 @@
 #include <stddef.h>
 
 #include "sensor_interface.h"
-#include "sensor_unpack.h"
 
 void sensor_data_init(
 	struct _sensor_generic *sd,

@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <stdbool.h>
-#include <stdio.h>
 
 #include "response_parser.h"
 
@@ -41,7 +40,6 @@ void rp_parse(ResponseParser *rp, uint8_t *src, uint32_t src_len) {
 		}
 
 		if (src[i] == '\n') {
-
 			
 			if (non_standard_response) {
 				non_standard_response = false;

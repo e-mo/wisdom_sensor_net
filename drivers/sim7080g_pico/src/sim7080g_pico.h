@@ -240,6 +240,8 @@ bool sim7080g_tcp_send(
 		uint8_t data[static data_len]
 );
 
+bool sim7080g_tcp_ack(sim7080g_context_t *context, uint *sent, uint *unack);
+
 size_t sim7080g_tcp_recv(
 		sim7080g_context_t *context,
 		size_t dst_len,

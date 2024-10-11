@@ -13,7 +13,7 @@ set(PICO_SDK_PATH "~/pico/pico-sdk")
 
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
-include(pico_extras_import.cmake)
+#include(pico_extras_import.cmake)
 
 if (PICO_SDK_VERSION_STRING VERSION_LESS "2.0.0")
   message(FATAL_ERROR "Raspberry Pi Pico SDK version 1.4.0 (or later) required. Your version is ${PICO_SDK_VERSION_STRING}")

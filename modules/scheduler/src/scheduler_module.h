@@ -19,6 +19,7 @@ typedef enum scheduler_return_e {
 SCHEDULER_RETURN_T scheduler_run(void);
 
 bool scheduler_date_time_get(struct date_time_s *dst);
+bool scheduler_date_time_get_packed(uint8_t dst[5]);
 
 bool schedule_process(
 		struct date_time_s *sched_time, 
