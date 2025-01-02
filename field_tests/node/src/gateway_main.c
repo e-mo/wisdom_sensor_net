@@ -38,7 +38,7 @@
 #define PIN_SDA  (4)
 
 sht30_wsi_t sht30 = {0};
-struct date_time_s add = { .minutes = 1 };
+struct date_time_s add = { .hours = 1 };
 
 void send_message(char *message) {
 	radio_send(message, strlen(message) + 1, 0x02);
@@ -87,7 +87,7 @@ int main() {
 		}
 
 		date_time_add(&sched, &add);
-		send_reading(&sched);
+		schedule_process(&sched, send_reading);
 
 		SCHEDULER_RETURN_T s_return = scheduler_run();
 

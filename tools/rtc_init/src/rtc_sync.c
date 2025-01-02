@@ -51,7 +51,6 @@ int rp2x_serial_open(char *dev, int vtime, int vmin) {
 	tty.c_cc[VTIME] = vtime;		// Wait for up to 1s (10 deciseconds), returning as soon as any data is received.
 	tty.c_cc[VMIN] = vmin;
 
-	// Set in/out baud rate to be 9600
 	cfsetispeed(&tty, B115200);
 	cfsetospeed(&tty, B115200);
 
@@ -87,7 +86,7 @@ int main(int argc, char **argv) {
 
 	if (rval == -1) goto ERRNO;
 	if (rval == 0 || rval < sizeof buf) {
-		printf("rval: %u\n", rval);
+		printf("rval: %lu\n", rval);
 		goto TIMEOUT;
 	}
 
@@ -112,7 +111,7 @@ int main(int argc, char **argv) {
 
 	if (rval == -1) goto ERRNO;
 	if (rval == 0 || rval < sizeof buf) {
-		printf("rval: %u\n", rval);
+		printf("rval: %lu\n", rval);
 		goto TIMEOUT;
 	}
 

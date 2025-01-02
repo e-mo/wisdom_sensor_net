@@ -23,11 +23,11 @@ const char *weekday_string_lookup[] = {
 };
 
 void print_rtc_info(uint index) {
-	uint seconds;
+	uint8_t seconds;
 	pcf8523_seconds_get(index, &seconds);	
-	uint minutes;
+	uint8_t minutes;
 	pcf8523_minutes_get(index, &minutes);	
-	uint hours;
+	uint8_t hours;
 	pcf8523_hours_get(index, &hours);	
 	AM_PM_T am_pm;
 	pcf8523_am_pm_get(index, &am_pm);
@@ -40,9 +40,9 @@ void print_rtc_info(uint index) {
 	pcf8523_months_get(index, &month);
 	WEEKDAY_T weekday;
 	pcf8523_weekdays_get(index, &weekday);
-	uint days;
+	uint8_t days;
 	pcf8523_days_get(index, &days);
-	uint years;
+	uint8_t years;
 	pcf8523_years_get(index, &years);
 
 	pcf8523_second_int_enable(index);
@@ -74,11 +74,11 @@ void main() {
 
 	uint index = I2C_NUM(I2C_INST);
 
-	gpio_set_irq_enabled_with_callback(2, GPIO_IRQ_EDGE_FALL, true, &alarm);
-	pcf8523_second_int_flag_clear(index);
+	//gpio_set_irq_enabled_with_callback(2, GPIO_IRQ_EDGE_FALL, true, &alarm);
+	//pcf8523_second_int_flag_clear(index);
 
 	for(int i = 0;; i++) {
-		//print_rtc_info(index);
+		print_rtc_info(index);
 
 		sleep_ms(1000);
 	}

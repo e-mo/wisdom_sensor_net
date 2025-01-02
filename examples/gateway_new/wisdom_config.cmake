@@ -5,11 +5,11 @@
 
 # DO NOT MODIFY THE FORMATTING OF THIS LINE
 # Only change the target name
-set(target "sim7080g_repl")
+set(target "gateway_init")
 
 # Source files
 list(APPEND sources
-	src/repl.c	
+	src/gateway_main.c	
 )
 
 # Include file locations
@@ -19,14 +19,16 @@ list(APPEND includes
 
 # pico_stdlib included by default
 list(APPEND libraries
-	sim7080g_rp2x
-	hardware_uart
-	circle_buffer
+	gateway_module
+	radio_module
+	scheduler_module
+	wisdom_sensor_interface
+	hardware_i2c
 )
 
-list(APPEND definitions
-)
+#list(APPEND definitions
+#)
 
 # Only one of these should be enabled
 set(stdio_uart_enable 0)
-set(stdio_usb_enable 1)
+set(stdio_usb_enable 0)
