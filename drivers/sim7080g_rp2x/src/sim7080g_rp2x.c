@@ -44,6 +44,10 @@ void sim7080g_pwr_toggle(sim7080g_context_t *context) {
 	_pwr_switch(context);
 }
 
+void sim7080g_pwr_set(sim7080g_context_t *context, bool level) {
+	gpio_put(context->pin_pwr, level);
+}
+
 //static void _atr_app_pdp_parse(sim7080g_context_t *context) {
 //	uint8_t *buffer = context->parse_buffer;
 //	buffer++; // Skip space

@@ -6,28 +6,28 @@
 
 typedef unsigned uint;
 
-typedef enum {
-	MODEM_CN_INACTIVE,
-	MODEM_CN_ACTIVE
-} SIM7080G_CN_STATE;
+//typedef enum {
+//	MODEM_CN_INACTIVE,
+//	MODEM_CN_ACTIVE
+//} SIM7080G_CN_STATE;
 
 struct sim7080g_config {
 	uint uart_index;
 	uint pin_pwr;
 };
 
-typedef enum {
-	ATR_SEARCHING,
-	ATR_CONFIRMING,
-	ATR_PARSING
-} ATR_PARSING_STATE;
-
-typedef enum {
-	AT_RESPONSE_CLEAR,
-	AT_RESPONSE_OK,
-	AT_RESPONSE_ERROR,
-	AT_RESPONSE_CME_ERROR
-} AT_RESPONSE_STATE;
+//typedef enum {
+//	ATR_SEARCHING,
+//	ATR_CONFIRMING,
+//	ATR_PARSING
+//} ATR_PARSING_STATE;
+//
+//typedef enum {
+//	AT_RESPONSE_CLEAR,
+//	AT_RESPONSE_OK,
+//	AT_RESPONSE_ERROR,
+//	AT_RESPONSE_CME_ERROR
+//} AT_RESPONSE_STATE;
 
 #define MODEM_CN_MAX (4)
 typedef struct sim7080g_context {
