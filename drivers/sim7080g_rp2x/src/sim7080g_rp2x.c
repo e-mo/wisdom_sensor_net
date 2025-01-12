@@ -15,22 +15,7 @@ void sim7080g_init(sim7080g_context_t *context, const struct sim7080g_config con
 	gpio_init(context->pin_pwr);
 	gpio_set_dir(context->pin_pwr, GPIO_OUT);
 	gpio_put(context->pin_pwr, 1);
-
-	//memset(context->cn_state, MODEM_CN_INACTIVE, MODEM_CN_MAX);
-	//context->cn_state;
-
-	//context->parsing_state = ATR_SEARCHING;	
-	//context->needle_index = 1;
-	//context->parse_index = 0;
-
-	//context->response_state = AT_RESPONSE_CLEAR;
 }
-
-//AT_RESPONSE_STATE sim7080g_response_state(sim7080g_context_t *context) {
-//	return context->response_state;
-//}
-
-//void sim7080g_response_clear
 
 static bool _pwr_switch(sim7080g_context_t *context) {
 	bool level = gpio_get(context->pin_pwr);
@@ -47,110 +32,6 @@ void sim7080g_pwr_toggle(sim7080g_context_t *context) {
 void sim7080g_pwr_set(sim7080g_context_t *context, bool level) {
 	gpio_put(context->pin_pwr, level);
 }
-
-//static void _atr_app_pdp_parse(sim7080g_context_t *context) {
-//	uint8_t *buffer = context->parse_buffer;
-//	buffer++; // Skip space
-//	buffer[1] = '\0';	
-//	uint cn_index = atoi(buffer);
-//	fflush(stdout);
-//	const char state = buffer[2];
-//	switch (state) {
-//	case 'A':
-//		context->cn_state[cn_index] = MODEM_CN_ACTIVE; 
-//		break;
-//	case 'D':
-//		context->cn_state[cn_index] = MODEM_CN_INACTIVE; 
-//		break;
-//	}
-//}
-//
-//static void _parse_response(sim7080g_context_t *context, uint8_t c) {
-//	switch (context->parsing_state) {
-//	case ATR_SEARCHING:
-//		for (int i = ATR_OK; i < AT_STRING_COUNT; i++)
-//			if (c == at_string_lookup[i][0]) {
-//				context->parsing_state = ATR_CONFIRMING;
-//				context->match_index = i;
-//				break;
-//			}
-//
-//		printf("searching\n");
-//		break;
-//	case ATR_CONFIRMING:
-//		// If not still matching
-//		printf("confirming\n");
-//		if (c != at_string_lookup[context->match_index][context->needle_index]) {
-//			// Reset needle index
-//			context->needle_index = 1;
-//			context->parsing_state = ATR_SEARCHING;
-//			break;
-//		}
-//
-//		context->needle_index++;
-//
-//		// If we have reached the null, we have a match.
-//		if (at_string_lookup[context->match_index][context->needle_index] == '\0') {
-//			context->parsing_state = ATR_PARSING;
-//		}
-//
-//		break;
-//	case ATR_PARSING:
-//	
-//		switch (context->match_index) {
-//		case ATR_OK:
-//			printf("OKAYYYYY!\n");
-//			context->response_state = AT_RESPONSE_OK;
-//
-//			goto PARSE_CLEANUP;
-//			break;
-//		case ATR_ERROR:
-//			context->response_state = AT_RESPONSE_ERROR;
-//
-//			goto PARSE_CLEANUP;
-//			break;
-//		case ATR_CME_ERROR:
-//			context->response_state = AT_RESPONSE_CME_ERROR;
-//
-//			goto PARSE_CLEANUP;
-//			break;
-//		case ATR_APP_PDP:
-//			if (c != '\r') {
-//				context->parse_buffer[context->parse_index++] = c;
-//				break;
-//			}
-//
-//			printf("Here!\n");
-//
-//			_atr_app_pdp_parse(context);
-//
-//			goto PARSE_CLEANUP;
-//			break;
-//		case ATR_CAOPEN:
-//			goto PARSE_CLEANUP;
-//			break;
-//		case ATR_CACLOSE:
-//			goto PARSE_CLEANUP;
-//			break;
-//		case ATR_CASTATE:
-//			goto PARSE_CLEANUP;
-//			break;
-//		case ATR_NPD:
-//			// Set all CN to inactive
-//			memset(context->cn_state, MODEM_CN_INACTIVE, MODEM_CN_MAX);
-//			goto PARSE_CLEANUP;
-//			break;
-//		}
-//
-//		break;
-//
-//PARSE_CLEANUP:
-//		context->parse_index = 0; // Reset parse index
-//		context->parsing_state = ATR_SEARCHING;
-//		break;
-//	}
-//
-//}
 
 uint sim7080g_uart_read(sim7080g_context_t *context, void *buffer, size_t size) {
 	uint count = 0;
