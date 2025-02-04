@@ -27,10 +27,10 @@ enum {
 	ATC_CASTATE,
 
 	// Responses
+	ATR_OK,
 	ATR_ERROR,
 	ATR_CME_ERROR,
 
-	ATR_OK,
 	ATR_APP_PDP,
 	ATR_CAOPEN,
 	ATR_CACLOSE,

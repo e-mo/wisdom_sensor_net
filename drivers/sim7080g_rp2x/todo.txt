@@ -1,0 +1,35 @@
+Build initial parser
+	- parse for error
+	- parse for OK
+	- Recognize unsolicited resonses
+	- Recognize garbage data
+
+	Parser should be fed a data stream which can be parsed
+	User should then be able to step through the responses with an easy way to identify
+	what type of response it is if contents are unimportant.
+
+	Internally, circle buffer makes the most sense so that it is easy to just add and remove
+	parsed/unparsed data without affecting any currently incomplete responses at the end
+	of the buffer.
+
+Continue building any necessary helper functions (non-checking)
+
+- Configure modem
+- Configure CN
+- Check SIM status
+- Connect to carrier network
+- check carrier network states
+- Connect/disconnect to TCP
+- Send/Recv TCP
+- Check TCP send packet status
+
+Build checking (w timeout) helper functions for when waiting for response is wanted.
+Because responses are never guaranteed even with a proper command, all blocking helper functions
+should receive a timeout time in us if no valid return value is recieved.
+
+Implement security key file functionality - should be pulled in during build.
+Implement SLS security
+
+Build a model for gateway-server communication.
+Begin rebuild of server with more moduler design. Current server is messy and hard
+to modify. Time to code with some intentionality.

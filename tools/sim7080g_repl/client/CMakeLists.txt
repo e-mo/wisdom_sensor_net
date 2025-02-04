@@ -13,5 +13,5 @@ add_subdirectory(${WISDOM_LIBS_PATH}/rp2x_serial libs/rp2x_serial)
 
 project(repl_client C)
 add_executable(repl_client src/repl_client.c)
-target_link_libraries(repl_client rp2x_serial)
+target_link_libraries(repl_client rp2x_serial_lib)
 target_include_directories(repl_client PRIVATE .)

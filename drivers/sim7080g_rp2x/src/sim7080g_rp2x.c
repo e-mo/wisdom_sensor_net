@@ -77,6 +77,11 @@ void sim7080g_uart_write_all(sim7080g_context_t *context, const void *buffer, si
 	}
 }
 
+// HELPER FUNCTIONS FOR SENDING AT COMMANDS.
+// THEY DO NOT CHECK FOR RETURN.
+// TODO: Create blocking (timeout?) functions for choosing to wait 
+//       for a response.
+
 void sim7080g_cn_state(sim7080g_context_t *context) {
 	const char *str = at_string_lookup[AT_PREFIX];
 	sim7080g_uart_write(context, str, strlen(str));		

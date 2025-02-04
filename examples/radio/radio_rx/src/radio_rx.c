@@ -5,7 +5,7 @@
 //	Amelia Vlahogiannis
 //	Noelle Steil
 //	Jordan Allen
-//	Sam Colwell
+//	Sam Cowan
 //	Rachel Cleminson
 
 //	This program is free software: you can redistribute it and/or modify
