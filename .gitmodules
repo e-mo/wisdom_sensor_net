@@ -1,9 +1,6 @@
 [submodule "server"]
 	path = server
 	url = git@github.com:e-mo/wisdom_server.git
-[submodule "drivers/rfm69_rp2040"]
-	path = drivers/rfm69_rp2040
-	url = https://github.com/e-mo/rfm69_rp2040.git
 [submodule "drivers/no-OS-FatFS-SD-SPI-RPi-Pico"]
 	path = drivers/no-OS-FatFS-SD-SPI-RPi-Pico
 	url = https://github.com/carlk3/no-OS-FatFS-SD-SPI-RPi-Pico.git
