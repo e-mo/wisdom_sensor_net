@@ -101,9 +101,15 @@ void main() {
 	if (rfm69_rudp_init(&rfm, &config) == false)
 		goto ERROR_LOOP;
 
-	uint8_t payload[] = {'m', 'e', 'o', 'w', '\0'};
+	// Fill sequential buffer for testing
+//#define PAYLOAD_SIZE (VP_TX_PAYLOAD_MAX)
+#define PAYLOAD_SIZE (200)
+	uint8_t payload[PAYLOAD_SIZE];
+	for (int i = 0; i < PAYLOAD_SIZE; i++)
+		payload[i] = i;
+
 	for (;;) {
-		if (rfm69_tx_variable_packet(&rfm, 1, payload, 5))
+		if (rfm69_tx_variable_packet(&rfm, 1, payload, PAYLOAD_SIZE))
 			printf("Packet sent!\n");
 		sleep_ms(1000);
 	}

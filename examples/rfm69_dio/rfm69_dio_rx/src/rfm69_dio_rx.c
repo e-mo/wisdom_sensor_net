@@ -29,6 +29,7 @@
 #include <stdbool.h>
 #include "pico/stdlib.h"
 #include "hardware/sync.h"
+#include "tusb.h"
 
 #include "rp2x_rfm69_rudp.h"
 
@@ -70,6 +71,7 @@ void callback(uint gpio, uint32_t events) {
 
 void main() {
 	stdio_init_all();
+	while (!tud_cdc_connected()) { sleep_ms(100); };
 
 	// SPI init
     spi_init(RFM69_SPI, 1000*1000);
@@ -96,18 +98,23 @@ void main() {
 		goto ERROR_LOOP;
 
 	rfm69_node_address_set(&rfm, 0x01);
-
-	uint8_t payload[64] = {0};
+#define PAYLOAD_BUFFER_SIZE (VP_RX_BUFFER_MAX)
 	for (;;) {
+		uint8_t payload[PAYLOAD_BUFFER_SIZE] = {0};
 
-		if (rfm69_rx_variable_packet(&rfm, payload, 64, 10000) == true)
-			printf("Packet received!\n");
+		VP_RX_ERROR_T rval = rfm69_rx_variable_packet(
+				&rfm, payload, PAYLOAD_BUFFER_SIZE, 10000);
 
-		else
-			printf("RX Failed\n");
+		if (rval == VP_RX_OK || rval == VP_RX_CRC_FAILURE) {
+			if (rval == VP_RX_CRC_FAILURE)
+				printf("CRC failed!\n");
 
-		printf("%.4s\n", &payload[2]);
-
+			printf("received: %u\n", payload[0]);
+			printf("address: %u\n", payload[1]);
+			printf("last: %u\n", payload[payload[0]]);
+		} else {
+			printf("error: %i\n", rval);
+		}
 	}
 
 	// Loop forever with error
