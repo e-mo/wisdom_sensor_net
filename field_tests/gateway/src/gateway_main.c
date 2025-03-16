@@ -25,54 +25,17 @@
 #include <string.h>
 
 #include "pico/stdlib.h"
-//#include "hardware/i2c.h"
-//#include "tusb.h"
 
 #include "gateway.h"
-#include "radio.h"
-#include "scheduler_module.h"
-//#include "wisdom_sensors.h"
+#include "rp2x_rfm69_rudp.h"
 
-//#define I2C_INST (i2c0)
-//#define PIN_SCL  (5)
-//#define PIN_SDA  (4)
+rfm69_context_t rfm;
 
-//sht30_wsi_t sht30 = {0};
-struct date_time_s add = { .hours = 1 };
+void collect_and_send(void) {
+	uint8_t buf[100] = {0};
+	rfm69_rx_variable_packet(&rfm, buf, 100, 10000);
 
-void send_message(char *message) {
-	radio_send(message, strlen(message) + 1, 0x02);
-}
-
-bool collect_data(void *buf, uint buf_len, uint *received) {
-
-	return radio_recv(buf, buf_len, received);
-}
-
-void collect_and_send(struct date_time_s *dt) {
-	send_message("farting...");
-	static uint8_t data[1024] = {0};
-	uint received = 0;
-
-	int tries = 5;
-RETRY:;
-	if (!collect_data(data, 1024, &received)) {
-		send_message("No data! Sending Ping...");
-
-		tries--;
-		if (tries) goto RETRY;
-
-		char *ping = "Ping!";
-		uint16_t message[5] = {0};
-		message[1] = 5;
-		memcpy(&message[2], ping, 5);
-		gateway_queue_push(&message, message[1] + 4);
-
-		goto PUMP;
-	}
-
-	send_message("Received some stuff...");
-	gateway_queue_push(data, received);
+	gateway_queue_push(buf, 100);
 
 PUMP:;
 	int rval = gateway_pump();
@@ -80,19 +43,19 @@ PUMP:;
 	while (rval != MODEM_POWERED_DOWN) {
 		switch (rval) {
 		case MODEM_POWERED_DOWN:
-			send_message("State: MODEM_POWERED_DOWN");
+			printf("State: MODEM_POWERED_DOWN");
 			break;
 		case MODEM_STOPPED:
-			send_message("State: MODEM_STOPPED");
+			printf("State: MODEM_STOPPED");
 			break;
 		case MODEM_STARTED:
-			send_message("State: MODEM_STARTED");
+			printf("State: MODEM_STARTED");
 			break;
 		case MODEM_CN_ACTIVE:
-			send_message("State: MODEM_CN_ACTIVE");
+			printf("State: MODEM_CN_ACTIVE");
 			break;
 		case MODEM_SERVER_CONNECTED:
-			send_message("State: MODEM_SERVER_CONNECTED");
+			printf("State: MODEM_SERVER_CONNECTED");
 			break;
 		}
 
@@ -100,64 +63,49 @@ PUMP:;
 		rval = gateway_pump();
 	}
 
-	send_message("farted!");
-	date_time_add(dt, &add);
-	schedule_process(dt, collect_and_send);
+	printf("farted!");
 }
 
 int main() {
+	stdio_init_all();
 	// Wait for USB serial connection
 	//while (!tud_cdc_connected()) { sleep_ms(100); };
-	
-	// Sechduler and radio init
-	scheduler_module_init();
-	if (!radio_init()) goto IDLE_LOOP;
-	// Gateway address 0
-	radio_address_set(0x00);
+	//
+	// SPI init
+    spi_init(RFM69_SPI, 1000*1000);
+    gpio_set_function(RFM69_PIN_MISO, GPIO_FUNC_SPI);
+    gpio_set_function(RFM69_PIN_SCK,  GPIO_FUNC_SPI);
+    gpio_set_function(RFM69_PIN_MOSI, GPIO_FUNC_SPI);
+
+	// Drive CS pin high
+    gpio_init(RFM69_PIN_CS);
+    gpio_set_dir(RFM69_PIN_CS, GPIO_OUT);
+    gpio_put(RFM69_PIN_CS, 1);
+
+	struct rfm69_config_s config = {
+		.spi      = RFM69_SPI,
+		.pin_cs   = RFM69_PIN_CS,
+		.pin_rst  = RFM69_PIN_RST,
+		.pin_dio0 = RFM69_PIN_DIO0,
+		.pin_dio1 = RFM69_PIN_DIO1,
+		.pin_dio2 = RFM69_PIN_DIO2
+	};
+
+	rfm69_context_t rfm;
+	if (rfm69_rudp_init(&rfm, &config) == false)
+		goto IDLE_LOOP;
+
+	rfm69_node_address_set(&rfm,0x00);
 
 	// Gate init
 	if (!gateway_init()) {
-		send_message("gateway_init fail");
+		printf("gateway_init fail");
 		goto IDLE_LOOP;
 	}
 
-	//i2c_init(I2C_INST, 500 * 1000);
-	//gpio_set_function(PIN_SCL, GPIO_FUNC_I2C);
-	//gpio_set_function(PIN_SDA, GPIO_FUNC_I2C);
-	//gpio_pull_up(PIN_SCL);
-	//gpio_pull_up(PIN_SDA);
-
-	// Sensor init
-	//sht30_wsi_init(&sht30, 0);
-
-	// date_time objects
-	struct date_time_s sched = {0};
-
-	send_message("FART!");
-
 	for (;;) {
-		if (!scheduler_date_time_get(&sched)) {
-			send_message("rtc failure");
-			goto IDLE_LOOP;
-		}
-
-		date_time_add(&sched, &add);
-		sched.minutes = 0;
-
-		schedule_process(&sched, collect_and_send);
-
-		SCHEDULER_RETURN_T s_return = scheduler_run();
-
-		switch (s_return) {
-		case SCHEDULER_OK:
-			send_message("scheduler ok\n");
-			break;
-		case RTC_FAILURE:
-			send_message("rtc failure\n");
-			goto IDLE_LOOP;
-		}
-
-		//sleep_ms(100);
+		collect_and_send();
+		sleep_ms(1000);
 	}
 IDLE_LOOP:
 	for (;;) sleep_ms(1000);
