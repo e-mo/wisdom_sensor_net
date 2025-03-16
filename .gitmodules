@@ -10,3 +10,6 @@
 [submodule "libs/rp2x_serial"]
 	path = libs/rp2x_serial
 	url = https://github.com/e-mo/rp2x_serial
+[submodule "drivers/rp2x_rfm69_rudp"]
+	path = drivers/rp2x_rfm69_rudp
+	url = https://github.com/e-mo/rp2x_rfm69_rudp.git
