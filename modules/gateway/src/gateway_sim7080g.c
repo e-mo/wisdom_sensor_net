@@ -38,7 +38,9 @@ static bool _modem_send_incomplete = false;
 
 // Data output buffer
 #define MODEM_BUFFER_OUT_SIZE (1024 * 10) // 10 KB
-static cbuffer_t *_modem_buffer_out = NULL;
+static cbuffer_t _modem_buffer_out_base;
+static cbuffer_t *_modem_buffer_out = &_modem_buffer_out_base;
+uint8_t _modem_buffer_array[MODEM_BUFFER_OUT_SIZE];
 
 // Command buffer
 // Should only need to hold several commands at a time
@@ -56,9 +58,7 @@ static bool _modem_buffer_send(void);
 
 bool gateway_init(void) {
 	bool success = false;
-
-	_modem_buffer_out = cbuffer_create(MODEM_BUFFER_OUT_SIZE);
-	//_modem_buffer_command = cbuffer_create(MODEM_BUFFER_COMMAND_SIZE);
+	cbuffer_init(_modem_buffer_out, _modem_buffer_array, MODEM_BUFFER_OUT_SIZE);
 
 	if (!_modem_buffer_out) // || !_modem_buffer_command)
 		goto RETURN_SUCCESS;

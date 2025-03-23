@@ -26,6 +26,7 @@
 #include <stdbool.h>
 #include "pico/stdlib.h"
 #include "hardware/sync.h"
+#include "tusb.h"
 
 #include "rp2x_rfm69_rudp.h"
 
@@ -76,6 +77,7 @@ int64_t alarm_callback(alarm_id_t id, __unused void *user_data) {
 
 void main() {
 	stdio_init_all();
+	while (!tud_cdc_connected()) { sleep_ms(100); };
 
 	// SPI init
     spi_init(RFM69_SPI, 1000*1000);

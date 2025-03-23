@@ -24,7 +24,7 @@ list(APPEND libraries
 	pico_stdlib
 	#pico_multicore
 	sim7080g_pico
-	circle_buffer
+	circle_buffer_lib
 )
 
 list(APPEND definitions
