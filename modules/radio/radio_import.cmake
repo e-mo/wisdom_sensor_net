@@ -5,7 +5,7 @@ set(WISDOM_DRIVERS_PATH "${WISDOM_PROJECT_PATH}/drivers")
 
 # RFM69
 message("wisdom_init: building rfm69_pico library")
-add_subdirectory(${WISDOM_DRIVERS_PATH}/rfm69_rp2040 rfm69_rp2040)
+add_subdirectory(${WISDOM_DRIVERS_PATH}/rp2x_rfm69_rudp rp2x_rfm69_rudp)
 
 # Load local config
 message("wisdom_init: loading local radio_config.cmake file")

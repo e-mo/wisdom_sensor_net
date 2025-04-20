@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+
 #include "pico/stdlib.h"
 #include "hardware/sync.h"
 #include "tusb.h"
@@ -77,7 +78,7 @@ int64_t alarm_callback(alarm_id_t id, __unused void *user_data) {
 
 void main() {
 	stdio_init_all();
-	while (!tud_cdc_connected()) { sleep_ms(100); };
+	//while (!tud_cdc_connected()) { sleep_ms(100); };
 
 	// SPI init
     spi_init(RFM69_SPI, 1000*1000);
@@ -90,7 +91,8 @@ void main() {
     gpio_set_dir(RFM69_PIN_CS, GPIO_OUT);
     gpio_put(RFM69_PIN_CS, 1);
 
-	struct rfm69_config_s config = {
+	rfm69_context_t rfm;
+	struct rfm69_config_s rfm_config = {
 		.spi      = RFM69_SPI,
 		.pin_cs   = RFM69_PIN_CS,
 		.pin_rst  = RFM69_PIN_RST,
@@ -99,20 +101,40 @@ void main() {
 		.pin_dio2 = RFM69_PIN_DIO2
 	};
 
-	rfm69_context_t rfm;
-	if (rfm69_rudp_init(&rfm, &config) == false)
+	rudp_context_t rudp;
+	struct rudp_config_s rudp_config = {
+		.rfm = &rfm,
+		.rfm_config = &rfm_config,
+		.tx_resend_max = 10,
+		.tx_resend_timeout = 100
+	};
+
+	if (rudp_init(&rudp, &rudp_config) == false)
 		goto ERROR_LOOP;
 
+	rfm69_node_address_set(&rfm, 0x00);
 	// Fill sequential buffer for testing
 //#define PAYLOAD_SIZE (VP_TX_PAYLOAD_MAX)
-#define PAYLOAD_SIZE (200)
+#define PAYLOAD_SIZE (300)
 	uint8_t payload[PAYLOAD_SIZE];
 	for (int i = 0; i < PAYLOAD_SIZE; i++)
 		payload[i] = i;
 
 	for (;;) {
-		if (rfm69_tx_variable_packet(&rfm, 1, payload, PAYLOAD_SIZE))
-			printf("Packet sent!\n");
+		RUDP_TX_STATUS_T status = rudp_tx(&rudp, 1, payload, PAYLOAD_SIZE);
+
+		switch (status) {
+		case RUDP_TX_SUCCESS:
+			printf("success!\n");
+			break;
+		case RUDP_TX_RESEND_MAX_REACHED:
+			printf("tx failed: max resends reached\n");
+			break;
+		case RUDP_TX_HARDWARE_ERROR:
+			printf("tx failed: hardware error\n");
+			break;
+		}
+
 		sleep_ms(1000);
 	}
 

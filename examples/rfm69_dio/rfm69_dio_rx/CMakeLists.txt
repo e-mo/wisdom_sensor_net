@@ -21,14 +21,11 @@ endif()
 include(wisdom_import.cmake)
 include(wisdom_config.cmake)
 
-# step back one level on includes and sources because we are hiding CMakeLists file
-
+// target var declared in wisdom_config.cmake
 project(${target} C CXX ASM)
 
 # Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
-
-# Add executable. Default name is the project name, version 0.1
 
 add_executable(${target} ${sources})
 

@@ -84,7 +84,8 @@ void main() {
     gpio_set_dir(RFM69_PIN_CS, GPIO_OUT);
     gpio_put(RFM69_PIN_CS, 1);
 
-	struct rfm69_config_s config = {
+	rfm69_context_t rfm;
+	struct rfm69_config_s rfm_config = {
 		.spi      = RFM69_SPI,
 		.pin_cs   = RFM69_PIN_CS,
 		.pin_rst  = RFM69_PIN_RST,
@@ -93,28 +94,48 @@ void main() {
 		.pin_dio2 = RFM69_PIN_DIO2
 	};
 
-	rfm69_context_t rfm;
-	if (rfm69_rudp_init(&rfm, &config) == false)
+	rudp_context_t rudp;
+	struct rudp_config_s rudp_config = {
+		.rfm = &rfm,
+		.rfm_config = &rfm_config,
+		.rx_wait_timeout = 10000,
+		.rx_drop_timeout = 2000
+	};
+
+	if (rudp_init(&rudp, &rudp_config) == false)
 		goto ERROR_LOOP;
 
 	rfm69_node_address_set(&rfm, 0x01);
-#define PAYLOAD_BUFFER_SIZE (VP_RX_BUFFER_MAX)
+#define PAYLOAD_BUFFER_SIZE (1024 * 5)
 	for (;;) {
 		uint8_t payload[PAYLOAD_BUFFER_SIZE] = {0};
 
-		VP_RX_ERROR_T rval = rfm69_rx_variable_packet(
-				&rfm, payload, PAYLOAD_BUFFER_SIZE, 10000);
+		uint32_t received;
+		RUDP_RX_STATUS_T status = rudp_rx(
+				&rudp, payload, PAYLOAD_BUFFER_SIZE, &received);
 
-		if (rval == VP_RX_OK || rval == VP_RX_CRC_FAILURE) {
-			if (rval == VP_RX_CRC_FAILURE)
-				printf("CRC failed!\n");
-
-			printf("received: %u\n", payload[0]);
-			printf("address: %u\n", payload[1]);
-			printf("last: %u\n", payload[payload[0]]);
-		} else {
-			printf("error: %i\n", rval);
+		switch (status) {
+		case RUDP_RX_SUCCESS_UNCONFIRMED:
+			printf("Unconfirmed - ");
+		case RUDP_RX_SUCCESS:
+			printf("Success!\n");
+			printf("received: %u\n", received);	
+			printf("last: %u\n", payload[received - 1]);
+			break;
+		case RUDP_RX_TIMEOUT:
+			printf("timeout!\n");
 		}
+
+		//if (rval == VP_RX_OK || rval == VP_RX_CRC_FAILURE) {
+		//	if (rval == VP_RX_CRC_FAILURE)
+		//		printf("CRC failed!\n");
+
+		//	printf("received: %u\n", payload[0]);
+		//	printf("address: %u\n", payload[1]);
+		//	printf("last: %u\n", payload[payload[0]]);
+		//} else {
+		//	printf("error: %i\n", rval);
+		//}
 	}
 
 	// Loop forever with error
