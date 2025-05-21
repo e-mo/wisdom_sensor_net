@@ -26,28 +26,36 @@
 
 #include <stdio.h>
 #include "pico/stdlib.h"
+#include "hardware/flash.h"
+#include "hardware/sync.h"
 #include "tusb.h"
 
-#include "whale.h"
+#include "wisdom_hal.h"
+
+extern uint32_t ADDR_PERSISTENT[];
 
 void main() {
 	stdio_init_all();
 	while (!tud_cdc_connected()) { sleep_ms(100); };
 
-	if (whale_init() == false)
+	if (whal_init() == false)
 		goto ERROR_LOOP;
 
-	whale_radio_node_address_set(0x01);
-#define PAYLOAD_BUFFER_SIZE (1024 * 5)
-	for (;;) {
-		uint8_t buffer[PAYLOAD_BUFFER_SIZE] = {0};
-		uint32_t received;
+	uint32_t buf[FLASH_PAGE_SIZE/sizeof(uint32_t)];
+	buf[0] = 0x45;
 
-		if (!whale_radio_recv(buffer, PAYLOAD_BUFFER_SIZE, &received))
-			printf("Rx failed\n");
-		else {
-			printf("Received: %u\n", received);
-		}
+	uint32_t address = (uint32_t)ADDR_PERSISTENT;
+	uint32_t flash_address = (address - XIP_BASE);
+
+	uint32_t ints = save_and_disable_interrupts();
+	//flash_range_program(flash_address, (uint8_t *)buf, FLASH_PAGE_SIZE);
+	uint32_t out = *(uint32_t *)address;
+	restore_interrupts(ints);
+
+	for (;;) {
+		printf("address: 0x%X\n", address);
+		printf("value: 0x%X\n", out);
+		sleep_ms(1000);
 	}
 
 ERROR_LOOP:

@@ -1,47 +1,48 @@
 # Generated Cmake Pico project file
-
 cmake_minimum_required(VERSION 3.13)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 
-# Initialise pico_sdk from installed location
-# (note this can come from environment, CMake cache etc)
-set(PICO_SDK_PATH "~/pico/pico-sdk")
+if (NOT DEFINED ENV{PICO_SDK_PATH})
+	set(PICO_SDK_PATH "~/pico/pico-sdk")
+else()
+	set(PICO_SDK_PATH "$ENV{PICO_SDK_PATH}")
+endif()
 
-#set(PICO_BOARD pico CACHE STRING "Board type")
+if (NOT DEFINED ENV{WHALE_PATH})
+	set(WHALE_PATH "~/wisdom/whale")
+else()
+	set(WHALE_PATH "$ENV{WHALE_PATH}")
+endif()
+
+get_filename_component(WHALE_PATH "${WHALE_PATH}" REALPATH)
 
 # Pull in Raspberry Pi Pico SDK (must be before project)
-include(pico_sdk_import.cmake)
+include(external/pico_sdk_import.cmake)
+# Import Wisdom HAL Extension
+include(external/whale_import.cmake)
 
 if (PICO_SDK_VERSION_STRING VERSION_LESS "2.0.0")
   message(FATAL_ERROR "Raspberry Pi Pico SDK version 2.0.0 (or later) required. Your version is ${PICO_SDK_VERSION_STRING}")
 endif()
 
-include(wisdom_import.cmake)
-include(wisdom_config.cmake)
-
-# step back one level on includes and sources because we are hiding CMakeLists file
-
+set(target "radio_example_tx")
 project(${target} C CXX ASM)
+add_executable(${target})
 
-# Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
 
-# Add executable. Default name is the project name, version 0.1
-
-add_executable(${target} ${sources})
-
-pico_enable_stdio_uart(${target} ${stdio_uart_enable})
-pico_enable_stdio_usb(${target} ${stdio_usb_enable})
-
-# Add the standard library to the build
+# Add the pico standard library to the build
 target_link_libraries(${target} pico_stdlib)
-target_link_libraries(${target} ${libraries})
+# Add wisdom hal extension
+target_link_libraries(${target} wisdom_hal_extension)
 
-target_compile_definitions(${target} PUBLIC ${definitions})
+pico_enable_stdio_uart(${target} 0)
+pico_enable_stdio_usb(${target} 1)
 
-# Add the standard include files to the build
-target_include_directories(${target} PRIVATE ${includes})
+target_sources(${target} PRIVATE src/radio_tx.c)
+
+target_include_directories(${target} PRIVATE src)
 
 pico_add_extra_outputs(${target})

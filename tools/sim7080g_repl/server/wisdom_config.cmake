@@ -19,9 +19,9 @@ list(APPEND includes
 
 # pico_stdlib included by default
 list(APPEND libraries
+	circle_buffer_lib
 	sim7080g_rp2x
 	hardware_uart
-	circle_buffer
 )
 
 list(APPEND definitions

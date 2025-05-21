@@ -97,10 +97,17 @@ int main(int argc, char **argv) {
 			}
 		}
 
-		while ((result = read(serial_port, &c, 1)) == 1)
-			printf("%c", c);
+		while ((result = read(serial_port, &c, 1)) == 1) {
+			if (c == '\n') {
+				printf("\\n");
+				printf("%s", "\r\n");
+			}
+			else if (c == '\r') printf("\\r");
+			else
+				printf("%c", c);
+			fflush(stdout);
+		}
 
-		fflush(stdout);
 		usleep(1000);
 	}
 

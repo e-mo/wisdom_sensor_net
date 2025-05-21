@@ -5,8 +5,8 @@
 #include "hardware/uart.h"
 #include "tusb.h"
 
-#include "sim7080g_rp2x.h"
 #include "cbuffer.h"
+#include "sim7080g_rp2x.h"
 
 #define UART_INST (uart0)
 #define UART_BAUD (115200)

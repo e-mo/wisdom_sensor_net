@@ -43,11 +43,6 @@ void send_reading(void) {
 }
 
 int main() {
-	// SPI init
-    spi_init(RFM69_SPI, 1000*1000);
-    gpio_set_function(RFM69_PIN_MISO, GPIO_FUNC_SPI);
-    gpio_set_function(RFM69_PIN_SCK,  GPIO_FUNC_SPI);
-    gpio_set_function(RFM69_PIN_MOSI, GPIO_FUNC_SPI);
 
 	// Drive CS pin high
     gpio_init(RFM69_PIN_CS);

@@ -2,14 +2,11 @@
 # Maintainer:
 #	Evan Morse
 #   emorse8686@gmail.com
-
-# DO NOT MODIFY THE FORMATTING OF THIS LINE
-# Only change the target name
-set(target "radio_module_rx")
+set(target "flase_test")
 
 # Source files
 list(APPEND sources
-	src/radio_rx.c	
+	src/flash_test.c	
 )
 
 # Include file locations
@@ -19,7 +16,9 @@ list(APPEND includes
 
 # pico_stdlib included by default
 list(APPEND libraries
-	wisdom_hal_extension
+	wisdom_hal
+	hardware_flash
+	hardware_sync
 )
 
 list(APPEND definitions

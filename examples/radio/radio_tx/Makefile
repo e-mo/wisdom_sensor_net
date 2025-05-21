@@ -1,21 +1,42 @@
 MAKEFLAGS += --no-print-directory
 SHELL := /bin/bash
 
-# Pull in target from cmake config file
-target = ${shell cat wisdom_config.cmake | grep "set(target" | sed -E 's/.*"(.*)".*/\1/'}
-uf2 = build/$(target).uf2
+export PICO_SDK_PATH = ~/pico/pico-sdk
+export WHALE_PATH = ~/pico/wisdom_sensor_net/whale
 
-default:
-	@echo "Makefile: no default target"
+uf2 := $(wildcard build/*.uf2)
 
-build: clean
-	mkdir -p build
-	cd build; cmake ..; $(MAKE) -j8
+build: clean copy_build_files
+	@mkdir -p build
+	@cd build; cmake ..; $(MAKE) -j8
+	@${MAKE} splash
 
-load:
+copy_build_files:
+	@mkdir -p external
+	@cp ${PICO_SDK_PATH}/external/pico_sdk_import.cmake ./external
+	@cp ${WHALE_PATH}/external/whale_import.cmake ./external
+
+flash:
 	sudo picotool load $(uf2) -f
+	@${MAKE} splash
+
+splash:
+	@mkdir -p external
+	@cp ${WHALE_PATH}/external/whale_splash.txt ./external
+
+	@echo
+	@cat external/whale_splash.txt
+	@echo
+
+info:
+	@mkdir -p external
+	@cp ${WHALE_PATH}/external/whale_info.txt ./external
+
+	@${MAKE} splash
+	@cat external/whale_info.txt
+	@echo
 
 clean:
-	rm -rf build
+	@rm -rf build external
 
-.PHONY: build load clean
+.PHONY: build flash splash info clean

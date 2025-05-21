@@ -9,13 +9,10 @@
 	url = https://github.com/daschr/pico-ssd1306.git
 [submodule "libs/rp2x_serial"]
 	path = libs/rp2x_serial
-	url = https://github.com/e-mo/rp2x_serial
+	url = https://github.com/e-mo/rp2x_serial.git
 [submodule "drivers/rp2x_rfm69_rudp"]
 	path = drivers/rp2x_rfm69_rudp
 	url = https://github.com/e-mo/rp2x_rfm69_rudp.git
 [submodule "libs/circle_buffer"]
 	path = libs/circle_buffer
 	url = https://github.com/e-mo/no_alloc_circle_buffer.git
-[submodule "wisdom_hal"]
-	path = wisdom_hal
-	url = https://github.com/e-mo/wisdom_hal.git

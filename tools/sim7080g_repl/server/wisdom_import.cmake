@@ -7,7 +7,7 @@ set(WISDOM_LIBS_PATH "${WISDOM_PROJECT_PATH}/libs")
 
 # SIM7080G
 message("wisdom_init: building sim7080g_pico drivers")
-add_subdirectory(${WISDOM_DRIVERS_PATH}/sim7080g_rp2x build/sim7080g_rp2x)
+add_subdirectory(${WISDOM_DRIVERS_PATH}/rp2x_sim7080g build/sim7080g_rp2x)
 
 # Circle Buffer
 message("wisdom_init: loading circle_buffer lib")

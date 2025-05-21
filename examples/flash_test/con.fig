@@ -1,0 +1,4 @@
+[RADIO]
+radio_frequency = 915_000_000
+radio_node_address = 0
+radio_network_address

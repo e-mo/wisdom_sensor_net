@@ -1,11 +1,11 @@
-// radio_tx.c
+// radio_rx.c
 
 //	Copyright (C) 2024 
 //	Evan Morse
 //	Amelia Vlahogiannis
 //	Noelle Steil
 //	Jordan Allen
-//	Sam Colwell
+//	Sam Cowan
 //	Rachel Cleminson
 
 //	This program is free software: you can redistribute it and/or modify
@@ -23,57 +23,40 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
+
 #include "pico/stdlib.h"
-//#include "tusb.h"
+#include "tusb.h"
 
-#include "radio.h"
+#include "whale.h"
 
-void error_loop(char *error) {
-	for (;;) {
-		printf("Error: %s\n", error);
-		sleep_ms(3000);
-	}
-}
-
-int main() {
-    stdio_init_all(); // To be able to use printf
+void main() {
+	stdio_init_all();
+	//while (!tud_cdc_connected()) { sleep_ms(100); };
 	
-	bool success = false;
-	
-	if (radio_init() == false)
-		goto LOOP_BEGIN;	
+	if (!whale_init())
+		goto ERROR_LOOP;
 
-	success = true;
+#define PAYLOAD_SIZE (300)
+	uint8_t payload[PAYLOAD_SIZE];
+	for (int i = 0; i < PAYLOAD_SIZE; i++)
+		payload[i] = i;
 
-LOOP_BEGIN:;
-
-	char status_str[ERROR_STR_MAX];
-	if (success = false) {
-		radio_status(status_str);		
-		error_loop(status_str);
-	}
-
-	radio_address_set(0x01);
-
-	char *payload = "Hello, Receiver!";
-	uint payload_len = strlen(payload) + 1;
-
-	int i = 1;
 	for (;;) {
 
-		success = radio_send(payload, payload_len, 0x02);
+		if (!whale_radio_send(1, payload, PAYLOAD_SIZE))
+			printf("Send failed\n");
+		else {
+			printf("Success!\n");
+		}
 
-		printf("#%i\n", i);
-
-		if (!success) {
-			radio_status(status_str);		
-			printf("radio_send failed:\n%s\n", status_str);
-		} else 
-			printf("message_sent: %s\n\n", payload);
-		
-		i++;
 		sleep_ms(1000);
 	}
-    
-    return 0;
+
+	// Loop forever with error
+ERROR_LOOP:
+	for (;;) {
+		printf("HAL failed to initialize.\n");
+		sleep_ms(3000);
+	}
 }

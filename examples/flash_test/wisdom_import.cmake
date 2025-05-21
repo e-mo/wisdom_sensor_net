@@ -3,7 +3,5 @@ get_filename_component(WISDOM_PROJECT_PATH "${WISDOM_PROJECT_PATH}" REALPATH BAS
 set(WISDOM_PROJECT_PATH ${WISDOM_PROJECT_PATH} CACHE PATH "Root of Wisdom Repo" FORCE)
 set(WISDOM_DRIVERS_PATH "${WISDOM_PROJECT_PATH}/drivers")
 
-file(COPY ${
-
 # HAL
 add_subdirectory(${WISDOM_PROJECT_PATH}/wisdom_hal wisdom_hal)

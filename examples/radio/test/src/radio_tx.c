@@ -1,5 +1,4 @@
-//  rfm69_dio_rx
-//  2025.02.04
+// radio_rx.c
 
 //	Copyright (C) 2024 
 //	Evan Morse
@@ -22,34 +21,33 @@
 //	You should have received a copy of the GNU General Public License
 //	along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-// rfm69 packet rx/tx example utilizing gio interrupts.
-
 #include <stdio.h>
+#include <string.h>
+#include <stdbool.h>
+
 #include "pico/stdlib.h"
 #include "tusb.h"
 
-#include "whale.h"
+//#include "whale.h"
 
 void main() {
 	stdio_init_all();
-	while (!tud_cdc_connected()) { sleep_ms(100); };
+	//while (!tud_cdc_connected()) { sleep_ms(100); };
+	
+	whale_init();
 
-	if (whale_init() == false)
-		goto ERROR_LOOP;
+#define PAYLOAD_SIZE (300)
+	uint8_t payload[PAYLOAD_SIZE];
+	for (int i = 0; i < PAYLOAD_SIZE; i++)
+		payload[i] = i;
 
-	whale_radio_node_address_set(0x01);
-#define PAYLOAD_BUFFER_SIZE (1024 * 5)
 	for (;;) {
-		uint8_t buffer[PAYLOAD_BUFFER_SIZE] = {0};
-		uint32_t received;
 
-		if (!whale_radio_recv(buffer, PAYLOAD_BUFFER_SIZE, &received))
-			printf("Rx failed\n");
-		else {
-			printf("Received: %u\n", received);
-		}
+
+		sleep_ms(1000);
 	}
 
+	// Loop forever with error
 ERROR_LOOP:
 	for (;;) {
 		printf("HAL failed to initialize.\n");

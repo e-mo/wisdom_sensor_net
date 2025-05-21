@@ -29,6 +29,8 @@ pico_sdk_init()
 
 add_executable(${target} ${sources})
 
+pico_set_linker_script(${target} ${CMAKE_SOURCE_DIR}/memmap_wisdom.ld)
+
 pico_enable_stdio_uart(${target} ${stdio_uart_enable})
 pico_enable_stdio_usb(${target} ${stdio_usb_enable})
 
