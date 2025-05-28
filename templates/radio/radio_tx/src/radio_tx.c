@@ -38,7 +38,7 @@ void main() {
 	if (rval != WHALE_OK)
 		goto ERROR_LOOP;
 
-#define PAYLOAD_SIZE (300)
+#define PAYLOAD_SIZE (1024 * 5)
 	uint8_t payload[PAYLOAD_SIZE];
 	for (int i = 0; i < PAYLOAD_SIZE; i++)
 		payload[i] = i;
