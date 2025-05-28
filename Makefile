@@ -1,4 +1,4 @@
-default:
+meow:
 	@echo meow to you
 
 submodules:
