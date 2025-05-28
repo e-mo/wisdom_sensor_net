@@ -32,22 +32,24 @@
 
 void main() {
 	stdio_init_all();
-	//while (!tud_cdc_connected()) { sleep_ms(100); };
+	while (!tud_cdc_connected()) { sleep_ms(100); };
 	
-	if (!whale_init())
+	int rval = whale_init(W_RADIO_MODULE);
+	if (rval != WHALE_OK)
 		goto ERROR_LOOP;
 
-#define PAYLOAD_SIZE (300)
-	uint8_t payload[PAYLOAD_SIZE];
-	for (int i = 0; i < PAYLOAD_SIZE; i++)
-		payload[i] = i;
+	w_radio_node_address_set(0x01);
 
+#define PAYLOAD_BUFFER_SIZE (1024 * 5)
+	uint8_t buffer[PAYLOAD_BUFFER_SIZE] = {0};
+	int received = {0};
+	int tx_addr = {0};
 	for (;;) {
 
-		if (!whale_radio_send(1, payload, PAYLOAD_SIZE))
-			printf("Send failed\n");
+		if (w_radio_rx(buffer, PAYLOAD_BUFFER_SIZE, &received, &tx_addr) != W_RADIO_OK)
+			printf("Rx failed: %i\n", w_radio_error_get());
 		else {
-			printf("Success!\n");
+			printf("Received: %u\n", received);
 		}
 
 		sleep_ms(1000);
@@ -56,7 +58,8 @@ void main() {
 	// Loop forever with error
 ERROR_LOOP:
 	for (;;) {
-		printf("HAL failed to initialize.\n");
+		printf("Radio module failed to initialize: ");
+		printf("%u\n", w_module_state_query(W_RADIO_MODULE));
 		sleep_ms(3000);
 	}
 }

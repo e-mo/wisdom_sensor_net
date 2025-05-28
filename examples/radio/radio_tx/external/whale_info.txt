@@ -1,8 +1,0 @@
-[Software]
-    Wisdom HAL Extension
-    version: 0.1
-
-[Hardware]
-     mcu: RP2040
-   radio: RFM69HCW
-cellular: SIM7080G

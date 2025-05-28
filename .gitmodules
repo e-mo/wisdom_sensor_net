@@ -1,18 +1,15 @@
 [submodule "server"]
 	path = server
 	url = git@github.com:e-mo/wisdom_server.git
-[submodule "drivers/no-OS-FatFS-SD-SPI-RPi-Pico"]
-	path = drivers/no-OS-FatFS-SD-SPI-RPi-Pico
-	url = https://github.com/carlk3/no-OS-FatFS-SD-SPI-RPi-Pico.git
 [submodule "drivers/pico-ssd1306"]
 	path = drivers/pico-ssd1306
 	url = https://github.com/daschr/pico-ssd1306.git
 [submodule "libs/rp2x_serial"]
 	path = libs/rp2x_serial
 	url = https://github.com/e-mo/rp2x_serial.git
-[submodule "drivers/rp2x_rfm69_rudp"]
-	path = drivers/rp2x_rfm69_rudp
-	url = https://github.com/e-mo/rp2x_rfm69_rudp.git
 [submodule "libs/circle_buffer"]
 	path = libs/circle_buffer
 	url = https://github.com/e-mo/no_alloc_circle_buffer.git
+[submodule "whale"]
+	path = whale
+	url = https://github.com/e-mo/wisdom_hal.git

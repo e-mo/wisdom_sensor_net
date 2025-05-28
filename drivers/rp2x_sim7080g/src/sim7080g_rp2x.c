@@ -80,20 +80,20 @@ void sim7080g_uart_write_all(sim7080g_context_t *context, const void *buffer, si
 //       for a response.
 
 void sim7080g_cn_state(sim7080g_context_t *context) {
-	const char *str = at_string_lookup[AT_PREFIX];
+	const char *str = AT_PREFIX;
 	sim7080g_uart_write(context, str, strlen(str));		
 
-	str = at_string_lookup[ATC_CNACT];
+	str = ATC_CNACT;
 	sim7080g_uart_write(context, str, strlen(str));		
 
 	sim7080g_uart_write(context, "?\r", 2);		
 }
 
 void sim7080g_cn_activate(sim7080g_context_t *context, uint cn_index, bool activate) {
-	const char *str = at_string_lookup[AT_PREFIX];
+	const char *str = AT_PREFIX;
 	sim7080g_uart_write(context, str, strlen(str));		
 
-	str = at_string_lookup[ATC_CNACT];
+	str = ATC_CNACT;
 	sim7080g_uart_write(context, str, strlen(str));		
 
 	char format[6];
