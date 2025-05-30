@@ -39,17 +39,21 @@ void main() {
 		goto ERROR_LOOP;
 
 	w_radio_node_address_set(0x01);
+	w_radio_dbm_set(20);
 
 #define PAYLOAD_BUFFER_SIZE (1024 * 5)
 	uint8_t buffer[PAYLOAD_BUFFER_SIZE] = {0};
 	int received = {0};
 	int tx_addr = {0};
+	int rssi = 0;
 	for (;;) {
 
 		if (w_radio_rx(buffer, PAYLOAD_BUFFER_SIZE, &received, &tx_addr) != W_RADIO_OK)
 			printf("Rx failed: %i\n", w_radio_error_get());
 		else {
 			printf("Received: %u\n", received);
+			w_radio_rssi_get(&rssi);
+			printf("RSSI: %i\n", rssi);
 		}
 
 		sleep_ms(1000);

@@ -38,17 +38,23 @@ void main() {
 	if (rval != WHALE_OK)
 		goto ERROR_LOOP;
 
-#define PAYLOAD_SIZE (1024 * 5)
+#define PAYLOAD_SIZE (1024)
 	uint8_t payload[PAYLOAD_SIZE];
 	for (int i = 0; i < PAYLOAD_SIZE; i++)
 		payload[i] = i;
 
+	w_radio_dbm_set(20);
+
+	int rssi = 0;
 	for (;;) {
 		
 		if (w_radio_tx(0x01, payload, PAYLOAD_SIZE) != W_RADIO_OK)
 			printf("Tx failure\n");
-		else
+		else {
 			printf("Tx success\n");
+			w_radio_rssi_get(&rssi);
+			printf("RSSI: %i\n", rssi);
+		}
 
 		sleep_ms(1000);
 	}
