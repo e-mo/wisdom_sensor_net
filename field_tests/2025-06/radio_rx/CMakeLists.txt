@@ -36,7 +36,7 @@ pico_sdk_init()
 # Add the pico standard library to the build
 target_link_libraries(${target} pico_stdlib)
 # Add wisdom hal extension
-target_link_libraries(${target} wisdom_hal_extension)
+target_link_libraries(${target} wisdom_hal_extender)
 
 pico_enable_stdio_uart(${target} 0)
 pico_enable_stdio_usb(${target} 1)

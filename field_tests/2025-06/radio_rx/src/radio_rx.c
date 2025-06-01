@@ -64,8 +64,8 @@ void main() {
 			}
 		else {
 			printf("Received: %u\n", received);
-			if(w_radio_get_rssi(&rssi_raw) != W_RADIO_OK) rssi_raw = -101;
-			printf("rssi: %i\n", rssi_raw);
+			//if(w_radio_get_rssi(&rssi_raw) != W_RADIO_OK) rssi_raw = -101;
+			//printf("rssi: %i\n", rssi_raw);
 			//w_radio_tx(MONITOR_ADDR, &rssi, sizeof(rssi));
 		}
 		printf(".\n");
