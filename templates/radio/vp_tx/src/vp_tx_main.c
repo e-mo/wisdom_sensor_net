@@ -29,32 +29,36 @@
 #include "tusb.h"
 
 #include "whale.h"
+#include "rfm69_vp.h"
+#include "wtp-1_0.h"
+
+extern rfm69_context_t rfm69_ctx;
 
 void main() {
 	stdio_init_all();
-	//while (!tud_cdc_connected()) { sleep_ms(100); };
+	while (!tud_cdc_connected()) { sleep_ms(100); };
 	
 	int rval = whale_init(W_RADIO_MODULE);
 	if (rval != WHALE_OK)
 		goto ERROR_LOOP;
 
-#define PAYLOAD_SIZE (1024)
+	w_radio_node_address_set(0x01);
+	//w_radio_dbm_set(20);
+	
+	uint8_t header[WTP_HEADER_SIZE] = {0};
+	header[WTP_HEADER_RX_ADDR_OFFSET] = 0x01;
+
+#define PAYLOAD_SIZE (100)
 	uint8_t payload[PAYLOAD_SIZE];
 	for (int i = 0; i < PAYLOAD_SIZE; i++)
 		payload[i] = i;
 
-	w_radio_dbm_set(20);
-
-	int rssi = 0;
+	header[WTP_HEADER_PKT_SIZE_OFFSET] = WTP_HEADER_SIZE_EFFECTIVE + PAYLOAD_SIZE;
 	for (;;) {
-		
-		if (w_radio_tx(0x01, payload, PAYLOAD_SIZE) != W_RADIO_OK)
-			printf("Tx failure\n");
-		else {
-			printf("Tx success\n");
-			w_radio_rssi_get(&rssi);
-			printf("RSSI: %i\n", rssi);
-		}
+
+		printf("sending...\n");
+		if (rfm69_vp_tx(&rfm69_ctx, header, payload, PAYLOAD_SIZE) == VP_TX_OK)
+			printf("sent\n");
 
 		sleep_ms(1000);
 	}

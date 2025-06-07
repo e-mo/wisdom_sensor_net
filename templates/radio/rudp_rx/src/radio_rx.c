@@ -28,29 +28,43 @@
 #include "pico/stdlib.h"
 #include "tusb.h"
 
-//#include "whale.h"
+#include "whale.h"
 
 void main() {
 	stdio_init_all();
-	//while (!tud_cdc_connected()) { sleep_ms(100); };
+	while (!tud_cdc_connected()) { sleep_ms(100); };
 	
-	whale_init();
+	int rval = whale_init(W_RADIO_MODULE);
+	if (rval != WHALE_OK)
+		goto ERROR_LOOP;
 
-#define PAYLOAD_SIZE (300)
-	uint8_t payload[PAYLOAD_SIZE];
-	for (int i = 0; i < PAYLOAD_SIZE; i++)
-		payload[i] = i;
+	w_radio_node_address_set(0x01);
+	//w_radio_dbm_set(20);
 
+#define PAYLOAD_BUFFER_SIZE (1024 * 5)
+	uint8_t buffer[PAYLOAD_BUFFER_SIZE] = {0};
+	int received = {0};
+	int tx_addr = {0};
+	int rssi = 0;
+	int rtr_count = 0;
 	for (;;) {
 
-
-		sleep_ms(1000);
+		if (w_radio_rx(buffer, PAYLOAD_BUFFER_SIZE, &received, &tx_addr) != W_RADIO_OK)
+			printf("Rx failed: %i\n", w_radio_error_get());
+		else {
+			printf("Received: %u\n", received);
+			w_radio_rssi_get(&rssi);
+			w_radio_rtr_count_get(&rtr_count);
+			printf("RSSI: %i\n", rssi);
+			printf("rtr: %i\n", rtr_count);
+		}
 	}
 
 	// Loop forever with error
 ERROR_LOOP:
 	for (;;) {
-		printf("HAL failed to initialize.\n");
+		printf("Radio module failed to initialize: ");
+		printf("%u\n", w_module_state_query(W_RADIO_MODULE));
 		sleep_ms(3000);
 	}
 }
